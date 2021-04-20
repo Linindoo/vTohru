@@ -1,9 +1,9 @@
 package cn.olange.vboot;
-import io.micronaut.runtime.Micronaut;
+import cn.olange.vboot.runtime.VertBoot;
 
 public class Application {
 
     public static void main(String[] args) {
-        Micronaut.run(Application.class);
+        VertBoot.run(Application.class);
     }
 }

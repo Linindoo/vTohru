@@ -1,17 +1,17 @@
 package cn.olange.vboot.event;
 
-import cn.olange.vboot.annotation.Verticle;
 import io.micronaut.context.event.ApplicationEvent;
 import io.micronaut.core.annotation.NonNull;
+import io.vertx.core.Context;
 
 public class VerticleTerminatedEvent extends ApplicationEvent {
 
-    public VerticleTerminatedEvent(@NonNull Verticle source) {
+    public VerticleTerminatedEvent(@NonNull Context source) {
         super(source);
     }
     @Override
     @NonNull
-    public Verticle getSource() {
-        return (Verticle) super.getSource();
+    public Context getSource() {
+        return (Context) super.getSource();
     }
 }

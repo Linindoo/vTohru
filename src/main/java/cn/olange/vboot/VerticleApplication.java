@@ -1,6 +1,7 @@
 package cn.olange.vboot;
 
-import cn.olange.vboot.context.VerticleContext;
+import cn.olange.vboot.context.VerticleApplicationContext;
+import cn.olange.vboot.scope.VerticleCustomScope;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextLifeCycle;
 import io.micronaut.context.annotation.Requires;
@@ -9,26 +10,27 @@ import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.EmbeddedApplication;
 import io.micronaut.runtime.event.ApplicationShutdownEvent;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Vertx;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 
 import javax.inject.Singleton;
 import java.util.Collection;
-import java.util.Map;
 
 @Singleton
 @Requires(missingBeans = EmbeddedApplication.class)
 public class VerticleApplication implements EmbeddedApplication {
+    private static final Logger logger = LoggerFactory.getLogger(VerticleCustomScope.class);
 
-    private final ApplicationContext applicationContext;
+    private final VerticleApplicationContext applicationContext;
     private final ApplicationConfiguration configuration;
 
     public VerticleApplication(ApplicationContext applicationContext, ApplicationConfiguration configuration) {
-        this.applicationContext = applicationContext;
+        this.applicationContext = (VerticleApplicationContext) applicationContext;
         this.configuration = configuration;
     }
 
     @Override
-    public ApplicationContext getApplicationContext() {
+    public VerticleApplicationContext getApplicationContext() {
         return applicationContext;
     }
 
@@ -51,22 +53,28 @@ public class VerticleApplication implements EmbeddedApplication {
     public VerticleApplication start() {
         Collection<BeanDefinition<AbstractVerticle>> beanDefinitions = applicationContext.getBeanDefinitions(AbstractVerticle.class);
         for (BeanDefinition<AbstractVerticle> beanDefinition : beanDefinitions) {
-            Vertx vertx = Vertx.vertx();
             AbstractVerticle bean = applicationContext.getBean(beanDefinition.getBeanType());
-            vertx.deployVerticle(bean).onSuccess(System.out::println).onFailure(Throwable::printStackTrace);
-            String name = bean.getClass().getName();
-            VerticleContext.set(name, vertx);
+            applicationContext.getVertx().deployVerticle(bean).onSuccess(x->{
+                logger.info("deploy Verticle : " + bean.getClass().getName() + " success as " + x);
+            }).onFailure(e->{
+                logger.error("deploy Verticle : " + bean.getClass().getName() + " fail",  e);
+            });
         }
         return this;
     }
 
     @Override
     public ApplicationContextLifeCycle stop() {
-        ApplicationContext applicationContext = getApplicationContext();
+        VerticleApplicationContext applicationContext = getApplicationContext();
         if (applicationContext != null && applicationContext.isRunning()) {
-            Map<String, Vertx> map = VerticleContext.getMap();
-            for (Map.Entry<String, Vertx> entry : map.entrySet()) {
-                entry.getValue().undeploy(entry.getKey()).onSuccess(System.out::println).onFailure(Throwable::printStackTrace);
+            Collection<BeanDefinition<AbstractVerticle>> beanDefinitions = applicationContext.getBeanDefinitions(AbstractVerticle.class);
+            for (BeanDefinition<AbstractVerticle> beanDefinition : beanDefinitions) {
+                AbstractVerticle bean = applicationContext.getBean(beanDefinition.getBeanType());
+                applicationContext.getVertx().undeploy(bean.deploymentID()).onSuccess(x -> {
+                    logger.info("undeploy Verticle : " + bean.getClass().getName() + " success");
+                }).onFailure(e -> {
+                    logger.error("undeploy Verticle : " + bean.getClass().getName() + " fail", e);
+                });
             }
             applicationContext.stop();
             applicationContext.publishEvent(new ApplicationShutdownEvent(this));
