@@ -1,14 +1,14 @@
 package cn.olange.vboot.controller;
 
-import cn.olange.vboot.annotation.Verticle;
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Get;
 
 
-@Verticle
+@Controller
 public class TestController {
-    public TestController() {
-    }
 
-    public void hello() {
-        System.out.println("hello");
+    @Get("/hello")
+    public String hello() {
+        return "world";
     }
 }
