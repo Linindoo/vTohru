@@ -6,17 +6,30 @@ import cn.olange.vboot.annotation.HttpMethodMapping;
 import cn.olange.vboot.context.VerticleApplicationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
+import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.Session;
 
 import javax.inject.Singleton;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.function.Consumer;
@@ -69,7 +82,8 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
             for (String uri : uris) {
                 String[] consumes = resolveConsumes(method);
                 String[] produces = resolveProduces(method);
-                router.route(HttpMethod.PUT, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes));
+                router.route(HttpMethod.PUT, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes))
+                        .handler(invokeHandler(bean, method));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: {}" + uri);
                 }
@@ -189,6 +203,130 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
                     }
                 }
         );
+    }
+
+    private Handler<RoutingContext> invokeHandler(BeanDefinition<?> beanDefinition, ExecutableMethod<Object, ?> method) {
+        Handler<RoutingContext> handler = routingContext -> {
+            Object[] args = getArgs(routingContext, method);
+            Object bean = this.context.getBean(beanDefinition);
+            Object result = method.invoke(bean, args);
+        };
+        return handler;
+    }
+
+    private Object[] getArgs(RoutingContext routingContext,ExecutableMethod<?, ?> method){
+        Argument[] arguments = method.getArguments();
+        Object[] objects = new Object[arguments.length];
+        int i =0;
+        for (Argument argInfo : arguments) {
+            if (argInfo.isAnnotationPresent(Context.class)) {
+                objects[i] = getContext(routingContext, argInfo);
+            } else if (argInfo.isAnnotationPresent(QueryParam.class)) {
+                objects[i] = getQueryParamArg(routingContext, argInfo);
+            } else if (argInfo.isAnnotationPresent(FormParam.class)) {
+                objects[i] = getFromParamArg(routingContext, argInfo);
+            } else if (argInfo.isAnnotationPresent(PathParam.class)) {
+                objects[i] = getPathParamArg(routingContext, argInfo);
+            } else if (argInfo.isAnnotationPresent(BeanParam.class)) {
+                objects[i] = getBeanParamArg(routingContext, argInfo);
+            } else {
+                objects[i] = null;
+            }
+            i++;
+        }
+        return objects;
+    }
+    private Object getPathParamArg(RoutingContext routingContext, Argument argInfo){
+        AnnotationValue<PathParam> annotation = argInfo.getAnnotation(PathParam.class);
+        if (annotation != null) {
+            String paramName = annotation.stringValue().orElse("");
+            String q = routingContext.request().getParam(paramName);
+            return covertType(argInfo.getType(), q);
+        }
+        return null;
+
+    }
+
+    private Object getBeanParamArg(RoutingContext routingContext,Argument argInfo){
+        try {
+            String q = routingContext.getBodyAsString();
+            if (!StringUtils.isEmpty(q)){
+                return covertType(argInfo.getType(), q);
+            }
+        }catch (Exception e){
+            logger.error(e.getMessage());
+        }
+        return null;
+    }
+
+    private Object getFromParamArg(RoutingContext routingContext, Argument argInfo) {
+        AnnotationValue<FormParam> annotation = argInfo.getAnnotation(FormParam.class);
+        if (annotation != null) {
+            String paramName = annotation.stringValue().orElse("");
+            String q = routingContext.request().getParam(paramName);
+            return covertType(argInfo.getType(), q);
+        }
+        return null;
+    }
+
+    private Object getQueryParamArg(RoutingContext routingContext, Argument argInfo) {
+        try {
+            AnnotationValue<QueryParam> annotation = argInfo.getAnnotation(QueryParam.class);
+            if (annotation != null && annotation.isPresent("value")) {
+                String paramName = annotation.stringValue().orElse("");
+                String q = routingContext.request().getParam(paramName);
+                return covertType(argInfo.getType(), q);
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+
+        return null;
+    }
+
+    private Object covertType(Class type,String v) {
+        if (v == null) {
+            return null;
+        }
+        String typeName = type.getTypeName();
+        if (type == String.class){
+            return v;
+        }
+        if (type == Integer.class||typeName.equals("int")){
+            return Integer.parseInt(v);
+        }
+        if (type == Long.class||typeName.equals("long")){
+            return Long.parseLong(v);
+        }
+        if (type == Float.class||typeName.equals("float")){
+            return Float.parseFloat(v);
+        }
+        if (type == Double.class||typeName.equals("double")){
+            return Double.parseDouble(v);
+        }
+        if (type == JsonArray.class) {
+            return new JsonArray(v);
+        }
+        if (type == JsonObject.class) {
+            return new JsonObject(v);
+        }
+        return null;
+    }
+
+    private Object getContext(RoutingContext routingContext,Argument argInfo){
+        Class clz = argInfo.getType();
+        if (clz ==RoutingContext.class){
+            return routingContext;
+        }else if (clz == HttpServerRequest.class){
+            return routingContext.request();
+        }else if (clz == HttpServerResponse.class){
+            return routingContext.response();
+        }else if (clz == Session.class){
+            return routingContext.session();
+        }else if (clz == Vertx.class){
+            return routingContext.vertx();
+        }
+        return null;
     }
 
     /**
