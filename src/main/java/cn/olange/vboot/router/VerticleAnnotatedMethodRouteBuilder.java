@@ -1,318 +1,177 @@
 package cn.olange.vboot.router;
 
-import io.micronaut.context.ExecutionHandleLocator;
-import io.micronaut.context.annotation.Replaces;
+import cn.olange.vboot.annotation.Controller;
+import cn.olange.vboot.annotation.Error;
+import cn.olange.vboot.annotation.HttpMethodMapping;
+import cn.olange.vboot.context.VerticleApplicationContext;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
-import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.core.util.StringUtils;
-import io.micronaut.http.HttpMethod;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.annotation.*;
-import io.micronaut.http.annotation.Error;
-import io.micronaut.http.uri.UriTemplate;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
-import io.micronaut.web.router.AnnotatedMethodRouteBuilder;
-import io.micronaut.web.router.DefaultRouteBuilder;
-import io.micronaut.web.router.Route;
-import io.micronaut.web.router.UriRoute;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.ext.web.Router;
 
 import javax.inject.Singleton;
+import javax.ws.rs.*;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.function.Consumer;
 
 @Singleton
-@Replaces(AnnotatedMethodRouteBuilder.class)
-public class VerticleAnnotatedMethodRouteBuilder extends DefaultRouteBuilder implements ExecutableMethodProcessor<Controller> {
-    private static final MediaType[] DEFAULT_MEDIA_TYPES = {MediaType.APPLICATION_JSON_TYPE};
+public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProcessor<Controller> {
+    private static final Logger logger = LoggerFactory.getLogger(VerticleAnnotatedMethodRouteBuilder.class);
+    private static final String[] DEFAULT_MEDIA_TYPES = new String[]{"application/json"};
     private final Map<Class, Consumer<VerticleAnnotatedMethodRouteBuilder.RouteDefinition>> httpMethodsHandlers = new LinkedHashMap<>();
+    private VerticleApplicationContext context;
+    private Router router;
 
-    /**
-     * @param executionHandleLocator The execution handler locator
-     * @param uriNamingStrategy The URI naming strategy
-     * @param conversionService The conversion service
-     */
-    public VerticleAnnotatedMethodRouteBuilder(ExecutionHandleLocator executionHandleLocator, UriNamingStrategy uriNamingStrategy, ConversionService<?> conversionService) {
-        super(executionHandleLocator, uriNamingStrategy, conversionService);
-        httpMethodsHandlers.put(Get.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
+    public VerticleAnnotatedMethodRouteBuilder(ApplicationContext context) {
+        this.context = (VerticleApplicationContext) context;
+        router = Router.router(this.context.getVertx());
+        httpMethodsHandlers.put(GET.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
             final BeanDefinition bean = definition.beanDefinition;
             final ExecutableMethod method = definition.executableMethod;
-            Set<String> uris = CollectionUtils.setOf(method.stringValues(Get.class, "uris"));
-            uris.add(method.stringValue(HttpMethodMapping.class).orElse(UriMapping.DEFAULT_URI));
-            for (String uri: uris) {
-                MediaType[] produces = resolveProduces(method);
-                UriRoute route = GET(resolveUri(bean, uri,
-                        method,
-                        uriNamingStrategy),
-                        bean,
-                        method).produces(produces);
-
-                if (definition.port > -1) {
-                    route.exposedPort(definition.port);
-                }
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Created Route: {}", route);
-                }
-                if (method.booleanValue(Get.class, "headRoute").orElse(true)) {
-                    route = HEAD(resolveUri(bean, uri,
-                            method,
-                            uriNamingStrategy),
-                            bean,
-                            method).produces(produces);
-                    if (definition.port > -1) {
-                        route.exposedPort(definition.port);
-                    }
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Created Route: {}", route);
-                    }
+            Set<String> uris = CollectionUtils.setOf(method.stringValues(GET.class, "uris"));
+            for (String uri : uris) {
+                String[] produces = resolveProduces(method);
+                router.route(HttpMethod.GET, uri)
+                        .produces(String.join(";", produces));
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Created Route: " + uri);
                 }
             }
         });
 
-        httpMethodsHandlers.put(Post.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
+        httpMethodsHandlers.put(POST.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
             final ExecutableMethod method = definition.executableMethod;
             final BeanDefinition bean = definition.beanDefinition;
-            Set<String> uris = CollectionUtils.setOf(method.stringValues(Post.class, "uris"));
-            uris.add(method.stringValue(HttpMethodMapping.class).orElse(UriMapping.DEFAULT_URI));
-            for (String uri: uris) {
-                MediaType[] consumes = resolveConsumes(method);
-                MediaType[] produces = resolveProduces(method);
-                UriRoute route = POST(resolveUri(bean, uri,
-                        method,
-                        uriNamingStrategy),
-                        bean,
-                        method);
-                route = route.consumes(consumes).produces(produces);
-                if (definition.port > -1) {
-                    route.exposedPort(definition.port);
-                }
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Created Route: {}", route);
-                }
-            }
-        });
-
-        httpMethodsHandlers.put(CustomHttpMethod.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
-            final ExecutableMethod method = definition.executableMethod;
-            final BeanDefinition bean = definition.beanDefinition;
-
-            Set<String> uris = CollectionUtils.setOf(method.stringValues(CustomHttpMethod.class, "uris"));
-            uris.add(method.stringValue(HttpMethodMapping.class).orElse(UriMapping.DEFAULT_URI));
-            for (String uri: uris) {
-                MediaType[] consumes = resolveConsumes(method);
-                MediaType[] produces = resolveProduces(method);
-                String methodName = method.stringValue(CustomHttpMethod.class, "method").get();
-                UriRoute route = buildBeanRoute(methodName, HttpMethod.CUSTOM, resolveUri(bean, uri,
-                        method,
-                        uriNamingStrategy),
-                        bean,
-                        method);
-                route = route.consumes(consumes).produces(produces);
-                if (definition.port > -1) {
-                    route.exposedPort(definition.port);
-                }
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Created Route: {}", route);
-                }
-            }
-        });
-
-        httpMethodsHandlers.put(Put.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
-            final ExecutableMethod method = definition.executableMethod;
-            final BeanDefinition bean = definition.beanDefinition;
-
-            Set<String> uris = CollectionUtils.setOf(method.stringValues(Put.class, "uris"));
-            uris.add(method.stringValue(HttpMethodMapping.class).orElse(UriMapping.DEFAULT_URI));
-            for (String uri: uris) {
-                MediaType[] consumes = resolveConsumes(method);
-                MediaType[] produces = resolveProduces(method);
-                UriRoute route = PUT(resolveUri(bean, uri,
-                        method,
-                        uriNamingStrategy),
-                        bean,
-                        method);
-                route = route.consumes(consumes).produces(produces);
-                if (definition.port > -1) {
-                    route.exposedPort(definition.port);
-                }
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Created Route: {}", route);
-                }
-            }
-        });
-
-        httpMethodsHandlers.put(Patch.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
-            final ExecutableMethod method = definition.executableMethod;
-            final BeanDefinition bean = definition.beanDefinition;
-
-            Set<String> uris = CollectionUtils.setOf(method.stringValues(Patch.class, "uris"));
-            uris.add(method.stringValue(HttpMethodMapping.class).orElse(UriMapping.DEFAULT_URI));
-            for (String uri: uris) {
-                MediaType[] consumes = resolveConsumes(method);
-                MediaType[] produces = resolveProduces(method);
-                UriRoute route = PATCH(resolveUri(bean, uri,
-                        method,
-                        uriNamingStrategy),
-                        bean,
-                        method);
-                route = route.consumes(consumes).produces(produces);
-                if (definition.port > -1) {
-                    route.exposedPort(definition.port);
-                }
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Created Route: {}", route);
-                }
-            }
-        });
-
-        httpMethodsHandlers.put(Delete.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
-            final ExecutableMethod method = definition.executableMethod;
-            final BeanDefinition bean = definition.beanDefinition;
-
-            Set<String> uris = CollectionUtils.setOf(method.stringValues(Delete.class, "uris"));
-            uris.add(method.stringValue(HttpMethodMapping.class).orElse(UriMapping.DEFAULT_URI));
-            for (String uri: uris) {
-                MediaType[] consumes = resolveConsumes(method);
-                MediaType[] produces = resolveProduces(method);
-                UriRoute route = DELETE(resolveUri(bean, uri,
-                        method,
-                        uriNamingStrategy),
-                        bean,
-                        method);
-                route = route.consumes(consumes).produces(produces);
-                if (definition.port > -1) {
-                    route.exposedPort(definition.port);
-                }
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Created Route: {}", route);
+            Set<String> uris = CollectionUtils.setOf(method.stringValues(POST.class, "uris"));
+            for (String uri : uris) {
+                String[] consumes = resolveConsumes(method);
+                String[] produces = resolveProduces(method);
+                router.route(HttpMethod.POST, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes));
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Created Route: {}" + uri);
                 }
             }
         });
 
 
-        httpMethodsHandlers.put(Head.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
+        httpMethodsHandlers.put(PUT.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
             final ExecutableMethod method = definition.executableMethod;
             final BeanDefinition bean = definition.beanDefinition;
 
-            Set<String> uris = CollectionUtils.setOf(method.stringValues(Head.class, "uris"));
-            uris.add(method.stringValue(HttpMethodMapping.class).orElse(UriMapping.DEFAULT_URI));
-            for (String uri: uris) {
-                UriRoute route = HEAD(resolveUri(bean, uri,
-                        method,
-                        uriNamingStrategy),
-                        bean,
-                        method);
-                if (definition.port > -1) {
-                    route.exposedPort(definition.port);
-                }
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Created Route: {}", route);
+            Set<String> uris = CollectionUtils.setOf(method.stringValues(PUT.class, "uris"));
+            for (String uri : uris) {
+                String[] consumes = resolveConsumes(method);
+                String[] produces = resolveProduces(method);
+                router.route(HttpMethod.PUT, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes));
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Created Route: {}" + uri);
                 }
             }
         });
 
-        httpMethodsHandlers.put(Options.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
+        httpMethodsHandlers.put(PATCH.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
             final ExecutableMethod method = definition.executableMethod;
             final BeanDefinition bean = definition.beanDefinition;
 
-            Set<String> uris = CollectionUtils.setOf(method.stringValues(Options.class, "uris"));
-            uris.add(method.stringValue(HttpMethodMapping.class).orElse(UriMapping.DEFAULT_URI));
-            for (String uri: uris) {
-                MediaType[] consumes = resolveConsumes(method);
-                MediaType[] produces = resolveProduces(method);
-                UriRoute route = OPTIONS(resolveUri(bean, uri,
-                        method,
-                        uriNamingStrategy),
-                        bean,
-                        method);
-                route = route.consumes(consumes).produces(produces);
-                if (definition.port > -1) {
-                    route.exposedPort(definition.port);
-                }
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Created Route: {}", route);
+            Set<String> uris = CollectionUtils.setOf(method.stringValues(PATCH.class, "uris"));
+            for (String uri : uris) {
+                String[] consumes = resolveConsumes(method);
+                String[] produces = resolveProduces(method);
+                router.route(HttpMethod.PATCH, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes));
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Created Route: {}" + uri);
                 }
             }
         });
 
-        httpMethodsHandlers.put(Trace.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
+        httpMethodsHandlers.put(DELETE.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
             final ExecutableMethod method = definition.executableMethod;
             final BeanDefinition bean = definition.beanDefinition;
 
-            Set<String> uris = CollectionUtils.setOf(method.stringValues(Trace.class, "uris"));
-            uris.add(method.stringValue(HttpMethodMapping.class).orElse(UriMapping.DEFAULT_URI));
-            for (String uri: uris) {
-                UriRoute route = TRACE(resolveUri(bean, uri,
-                        method,
-                        uriNamingStrategy),
-                        bean,
-                        method);
-                if (definition.port > -1) {
-                    route.exposedPort(definition.port);
-                }
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Created Route: {}", route);
+            Set<String> uris = CollectionUtils.setOf(method.stringValues(DELETE.class, "uris"));
+            for (String uri : uris) {
+                String[] consumes = resolveConsumes(method);
+                String[] produces = resolveProduces(method);
+                router.route(HttpMethod.DELETE, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes));
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Created Route: {}" + uri);
                 }
             }
         });
 
-        httpMethodsHandlers.put(io.micronaut.http.annotation.Error.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
-                    final ExecutableMethod method = definition.executableMethod;
-                    final BeanDefinition bean = definition.beanDefinition;
 
-                    boolean isGlobal = method.isTrue(io.micronaut.http.annotation.Error.class, "global");
-                    Class declaringType = bean.getBeanType();
-                    if (method.isPresent(io.micronaut.http.annotation.Error.class, "status")) {
-                        Optional<HttpStatus> value = method.enumValue(io.micronaut.http.annotation.Error.class, "status", HttpStatus.class);
-                        value.ifPresent(httpStatus -> {
-                            if (isGlobal) {
-                                status(httpStatus, declaringType, method.getMethodName(), method.getArgumentTypes());
-                            } else {
-                                status(declaringType, httpStatus, declaringType, method.getMethodName(), method.getArgumentTypes());
-                            }
-                        });
-                    } else {
-                        Class exceptionType = null;
-                        if (method.isPresent(io.micronaut.http.annotation.Error.class, AnnotationMetadata.VALUE_MEMBER)) {
-                            Optional<Class> annotationValue = method.classValue(Error.class);
-                            if (annotationValue.isPresent() && Throwable.class.isAssignableFrom(annotationValue.get())) {
-                                exceptionType = annotationValue.get();
-                            }
-                        }
-                        if (exceptionType == null) {
-                            exceptionType = Arrays.stream(method.getArgumentTypes())
-                                    .filter(Throwable.class::isAssignableFrom)
-                                    .findFirst()
-                                    .orElse(Throwable.class);
-                        }
+        httpMethodsHandlers.put(HEAD.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
+            final ExecutableMethod method = definition.executableMethod;
+            final BeanDefinition bean = definition.beanDefinition;
 
-                        if (isGlobal) {
-                            //noinspection unchecked
-                            error(exceptionType, declaringType, method.getMethodName(), method.getArgumentTypes());
-                        } else {
-                            //noinspection unchecked
-                            error(declaringType, exceptionType, declaringType, method.getMethodName(), method.getArgumentTypes());
-                        }
-                    }
+            Set<String> uris = CollectionUtils.setOf(method.stringValues(HEAD.class, "uris"));
+            for (String uri : uris) {
+                String[] consumes = resolveConsumes(method);
+                String[] produces = resolveProduces(method);
+                router.route(HttpMethod.DELETE, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes));
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Created Route: {}" + uri);
                 }
+            }
+        });
+
+        httpMethodsHandlers.put(OPTIONS.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
+            final ExecutableMethod method = definition.executableMethod;
+            final BeanDefinition bean = definition.beanDefinition;
+
+            Set<String> uris = CollectionUtils.setOf(method.stringValues(OPTIONS.class, "uris"));
+            for (String uri : uris) {
+                String[] consumes = resolveConsumes(method);
+                String[] produces = resolveProduces(method);
+                router.route(HttpMethod.DELETE, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes));
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Created Route: {}" + uri);
+                }
+            }
+        });
+
+        httpMethodsHandlers.put(Error.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
+                final ExecutableMethod method = definition.executableMethod;
+                final BeanDefinition bean = definition.beanDefinition;
+
+                boolean isGlobal = method.isTrue(Error.class, "global");
+                Class declaringType = bean.getBeanType();
+                OptionalInt status = method.intValue(Error.class, "status");
+                Optional<Class> annotationValue = method.classValue(Error.class);
+                Class exceptionType = null;
+                if (annotationValue.isPresent() && Throwable.class.isAssignableFrom(annotationValue.get())) {
+                    exceptionType = annotationValue.get();
+                }
+                if (exceptionType == null) {
+                    exceptionType = Arrays.stream(method.getArgumentTypes())
+                            .filter(Throwable.class::isAssignableFrom)
+                            .findFirst()
+                            .orElse(Throwable.class);
+                }
+                router.errorHandler(status.orElse(500), handler -> {
+                    handler.end("error");
+                });
+            }
         );
     }
 
-    private MediaType[] resolveConsumes(ExecutableMethod method) {
-        MediaType[] consumes = MediaType.of(method.stringValues(Consumes.class));
+    private String[] resolveConsumes(ExecutableMethod method) {
+        String[] consumes = method.stringValues(Consumes.class);
         if (ArrayUtils.isEmpty(consumes)) {
             consumes = DEFAULT_MEDIA_TYPES;
         }
         return consumes;
     }
 
-    private MediaType[] resolveProduces(ExecutableMethod method) {
-        MediaType[] produces = MediaType.of(method.stringValues(Produces.class));
+    private String[] resolveProduces(ExecutableMethod method) {
+        String[] produces = method.stringValues(Produces.class);
         if (ArrayUtils.isEmpty(produces)) {
             produces = DEFAULT_MEDIA_TYPES;
         }
@@ -330,33 +189,6 @@ public class VerticleAnnotatedMethodRouteBuilder extends DefaultRouteBuilder imp
                     }
                 }
         );
-
-        if (!actionAnn.isPresent() && method.isDeclaredAnnotationPresent(UriMapping.class)) {
-            Set<String> uris = CollectionUtils.setOf(method.stringValues(UriMapping.class, "uris"));
-            uris.add(method.stringValue(UriMapping.class).orElse(UriMapping.DEFAULT_URI));
-            for (String uri: uris) {
-                MediaType[] produces = MediaType.of(method.stringValues(Produces.class));
-                Route route = GET(resolveUri(beanDefinition, uri,
-                        method,
-                        uriNamingStrategy),
-                        method.getDeclaringType(),
-                        method.getMethodName(),
-                        method.getArgumentTypes()).produces(produces);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Created Route: {}", route);
-                }
-            }
-        }
-
-    }
-
-    private String resolveUri(BeanDefinition bean, String value, ExecutableMethod method, UriNamingStrategy uriNamingStrategy) {
-        UriTemplate rootUri = UriTemplate.of(uriNamingStrategy.resolveUri(bean));
-        if (StringUtils.isNotEmpty(value)) {
-            return rootUri.nest(value).toString();
-        } else {
-            return rootUri.nest(uriNamingStrategy.resolveUri(method.getMethodName())).toString();
-        }
     }
 
     /**
@@ -372,5 +204,13 @@ public class VerticleAnnotatedMethodRouteBuilder extends DefaultRouteBuilder imp
             this.executableMethod = executableMethod;
             this.port = port;
         }
+    }
+
+    public Router getRouter() {
+        return router;
+    }
+
+    public void setRouter(Router router) {
+        this.router = router;
     }
 }

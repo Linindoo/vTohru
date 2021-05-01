@@ -1,13 +1,16 @@
 package cn.olange.vboot.controller;
 
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
+import cn.olange.vboot.annotation.Controller;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 
 @Controller
 public class TestController {
 
-    @Get("/hello")
+    @GET
+    @Path("/hello")
     public String hello() {
         return "world";
     }
