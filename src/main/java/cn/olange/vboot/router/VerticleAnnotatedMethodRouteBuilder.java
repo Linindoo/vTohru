@@ -4,6 +4,7 @@ import cn.olange.vboot.annotation.Controller;
 import cn.olange.vboot.annotation.Error;
 import cn.olange.vboot.annotation.HttpMethodMapping;
 import cn.olange.vboot.context.VerticleApplicationContext;
+import cn.olange.vboot.web.ResponseHandler;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -23,6 +24,7 @@ import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
@@ -48,11 +50,12 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
         httpMethodsHandlers.put(GET.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
             final BeanDefinition bean = definition.beanDefinition;
             final ExecutableMethod method = definition.executableMethod;
-            Set<String> uris = CollectionUtils.setOf(method.stringValues(GET.class, "uris"));
+            Set<String> uris = CollectionUtils.setOf(method.stringValues(Path.class));
             for (String uri : uris) {
                 String[] produces = resolveProduces(method);
-                router.route(HttpMethod.GET, uri)
-                        .produces(String.join(";", produces));
+                Route route = router.route(HttpMethod.GET, uri);
+                route.produces(String.join(";", produces));
+                route.handler(invokeHandler(bean, method));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: " + uri);
                 }
@@ -62,11 +65,12 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
         httpMethodsHandlers.put(POST.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
             final ExecutableMethod method = definition.executableMethod;
             final BeanDefinition bean = definition.beanDefinition;
-            Set<String> uris = CollectionUtils.setOf(method.stringValues(POST.class, "uris"));
+            Set<String> uris = CollectionUtils.setOf(method.stringValues(Path.class));
             for (String uri : uris) {
                 String[] consumes = resolveConsumes(method);
                 String[] produces = resolveProduces(method);
-                router.route(HttpMethod.POST, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes));
+                router.route(HttpMethod.POST, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes))
+                        .handler(invokeHandler(bean, method));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: {}" + uri);
                 }
@@ -98,7 +102,8 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
             for (String uri : uris) {
                 String[] consumes = resolveConsumes(method);
                 String[] produces = resolveProduces(method);
-                router.route(HttpMethod.PATCH, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes));
+                router.route(HttpMethod.PATCH, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes))
+                        .handler(invokeHandler(bean, method));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: {}" + uri);
                 }
@@ -113,7 +118,8 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
             for (String uri : uris) {
                 String[] consumes = resolveConsumes(method);
                 String[] produces = resolveProduces(method);
-                router.route(HttpMethod.DELETE, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes));
+                router.route(HttpMethod.DELETE, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes))
+                        .handler(invokeHandler(bean, method));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: {}" + uri);
                 }
@@ -129,7 +135,8 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
             for (String uri : uris) {
                 String[] consumes = resolveConsumes(method);
                 String[] produces = resolveProduces(method);
-                router.route(HttpMethod.DELETE, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes));
+                router.route(HttpMethod.HEAD, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes))
+                        .handler(invokeHandler(bean, method));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: {}" + uri);
                 }
@@ -144,36 +151,36 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
             for (String uri : uris) {
                 String[] consumes = resolveConsumes(method);
                 String[] produces = resolveProduces(method);
-                router.route(HttpMethod.DELETE, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes));
+                router.route(HttpMethod.OPTIONS, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes))
+                        .handler(invokeHandler(bean, method));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: {}" + uri);
                 }
             }
         });
-
-        httpMethodsHandlers.put(Error.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
-                final ExecutableMethod method = definition.executableMethod;
-                final BeanDefinition bean = definition.beanDefinition;
-
-                boolean isGlobal = method.isTrue(Error.class, "global");
-                Class declaringType = bean.getBeanType();
-                OptionalInt status = method.intValue(Error.class, "status");
-                Optional<Class> annotationValue = method.classValue(Error.class);
-                Class exceptionType = null;
-                if (annotationValue.isPresent() && Throwable.class.isAssignableFrom(annotationValue.get())) {
-                    exceptionType = annotationValue.get();
-                }
-                if (exceptionType == null) {
-                    exceptionType = Arrays.stream(method.getArgumentTypes())
-                            .filter(Throwable.class::isAssignableFrom)
-                            .findFirst()
-                            .orElse(Throwable.class);
-                }
-                router.errorHandler(status.orElse(500), handler -> {
-                    handler.end("error");
-                });
-            }
-        );
+//        httpMethodsHandlers.put(Error.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
+//                final ExecutableMethod method = definition.executableMethod;
+//                final BeanDefinition bean = definition.beanDefinition;
+//
+//                boolean isGlobal = method.isTrue(Error.class, "global");
+//                Class declaringType = bean.getBeanType();
+//                OptionalInt status = method.intValue(Error.class, "status");
+//                Optional<Class> annotationValue = method.classValue(Error.class);
+//                Class exceptionType = null;
+//                if (annotationValue.isPresent() && Throwable.class.isAssignableFrom(annotationValue.get())) {
+//                    exceptionType = annotationValue.get();
+//                }
+//                if (exceptionType == null) {
+//                    exceptionType = Arrays.stream(method.getArgumentTypes())
+//                            .filter(Throwable.class::isAssignableFrom)
+//                            .findFirst()
+//                            .orElse(Throwable.class);
+//                }
+//                router.errorHandler(status.orElse(500), handler -> {
+//                    handler.end("error");
+//                });
+//            }
+//        );
     }
 
     private String[] resolveConsumes(ExecutableMethod method) {
@@ -206,12 +213,13 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
     }
 
     private Handler<RoutingContext> invokeHandler(BeanDefinition<?> beanDefinition, ExecutableMethod<Object, ?> method) {
-        Handler<RoutingContext> handler = routingContext -> {
+        return routingContext -> {
             Object[] args = getArgs(routingContext, method);
             Object bean = this.context.getBean(beanDefinition);
             Object result = method.invoke(bean, args);
+            ResponseHandler responseHandler = this.context.getBean(ResponseHandler.class);
+            responseHandler.handler(routingContext, result);
         };
-        return handler;
     }
 
     private Object[] getArgs(RoutingContext routingContext,ExecutableMethod<?, ?> method){
