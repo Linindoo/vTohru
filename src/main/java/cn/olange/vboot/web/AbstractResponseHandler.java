@@ -5,6 +5,7 @@ import io.vertx.core.Promise;
 import io.vertx.ext.web.RoutingContext;
 
 public abstract class AbstractResponseHandler implements ResponseHandler {
+
     @Override
     public void handler(RoutingContext context, Object result) {
         if (result instanceof Promise) {

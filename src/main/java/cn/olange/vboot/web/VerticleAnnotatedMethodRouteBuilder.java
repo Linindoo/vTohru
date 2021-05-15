@@ -1,20 +1,17 @@
-package cn.olange.vboot.router;
+package cn.olange.vboot.web;
 
 import cn.olange.vboot.annotation.Controller;
-import cn.olange.vboot.annotation.Error;
-import cn.olange.vboot.annotation.HttpMethodMapping;
 import cn.olange.vboot.context.VerticleApplicationContext;
-import cn.olange.vboot.web.ResponseHandler;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
@@ -32,6 +29,7 @@ import io.vertx.ext.web.Session;
 import javax.inject.Singleton;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.function.Consumer;
@@ -42,20 +40,26 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
     private static final String[] DEFAULT_MEDIA_TYPES = new String[]{"application/json"};
     private final Map<Class, Consumer<VerticleAnnotatedMethodRouteBuilder.RouteDefinition>> httpMethodsHandlers = new LinkedHashMap<>();
     private VerticleApplicationContext context;
+    private ResponseHandlerRegister responseHandlerRegister;
+    private ErrorHandlerRegister errorHandlerRegister;
     private Router router;
 
-    public VerticleAnnotatedMethodRouteBuilder(ApplicationContext context) {
+    public VerticleAnnotatedMethodRouteBuilder(ApplicationContext context, @NonNull ResponseHandlerRegister responseHandlerRegister,
+                                               ErrorHandlerRegister errorHandlerRegister) {
         this.context = (VerticleApplicationContext) context;
+        this.responseHandlerRegister = responseHandlerRegister;
+        this.errorHandlerRegister = errorHandlerRegister;
         router = Router.router(this.context.getVertx());
         httpMethodsHandlers.put(GET.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
             final BeanDefinition bean = definition.beanDefinition;
             final ExecutableMethod method = definition.executableMethod;
             Set<String> uris = CollectionUtils.setOf(method.stringValues(Path.class));
+            String[] produces = resolveProduces(method);
+            MediaType mediaType = Arrays.stream(produces).findFirst().map(MediaType::valueOf).orElse(MediaType.APPLICATION_JSON_TYPE);
             for (String uri : uris) {
-                String[] produces = resolveProduces(method);
                 Route route = router.route(HttpMethod.GET, uri);
                 route.produces(String.join(";", produces));
-                route.handler(invokeHandler(bean, method));
+                route.handler(invokeHandler(bean, method, mediaType));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: " + uri);
                 }
@@ -66,11 +70,12 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
             final ExecutableMethod method = definition.executableMethod;
             final BeanDefinition bean = definition.beanDefinition;
             Set<String> uris = CollectionUtils.setOf(method.stringValues(Path.class));
+            String[] consumes = resolveConsumes(method);
+            String[] produces = resolveProduces(method);
+            MediaType mediaType = Arrays.stream(produces).findFirst().map(MediaType::valueOf).orElse(MediaType.APPLICATION_JSON_TYPE);
             for (String uri : uris) {
-                String[] consumes = resolveConsumes(method);
-                String[] produces = resolveProduces(method);
                 router.route(HttpMethod.POST, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes))
-                        .handler(invokeHandler(bean, method));
+                        .handler(invokeHandler(bean, method, mediaType));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: {}" + uri);
                 }
@@ -83,11 +88,12 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
             final BeanDefinition bean = definition.beanDefinition;
 
             Set<String> uris = CollectionUtils.setOf(method.stringValues(PUT.class, "uris"));
+            String[] consumes = resolveConsumes(method);
+            String[] produces = resolveProduces(method);
+            MediaType mediaType = Arrays.stream(produces).findFirst().map(MediaType::valueOf).orElse(MediaType.APPLICATION_JSON_TYPE);
             for (String uri : uris) {
-                String[] consumes = resolveConsumes(method);
-                String[] produces = resolveProduces(method);
                 router.route(HttpMethod.PUT, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes))
-                        .handler(invokeHandler(bean, method));
+                        .handler(invokeHandler(bean, method, mediaType));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: {}" + uri);
                 }
@@ -95,15 +101,16 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
         });
 
         httpMethodsHandlers.put(PATCH.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
-            final ExecutableMethod method = definition.executableMethod;
-            final BeanDefinition bean = definition.beanDefinition;
-
+            ExecutableMethod method = definition.executableMethod;
+            BeanDefinition bean = definition.beanDefinition;
+            String[] consumes = resolveConsumes(method);
+            String[] produces = resolveProduces(method);
+            MediaType mediaType = Arrays.stream(produces).findFirst().map(MediaType::valueOf).orElse(MediaType.APPLICATION_JSON_TYPE);
             Set<String> uris = CollectionUtils.setOf(method.stringValues(PATCH.class, "uris"));
             for (String uri : uris) {
-                String[] consumes = resolveConsumes(method);
-                String[] produces = resolveProduces(method);
+
                 router.route(HttpMethod.PATCH, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes))
-                        .handler(invokeHandler(bean, method));
+                        .handler(invokeHandler(bean, method, mediaType));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: {}" + uri);
                 }
@@ -111,32 +118,32 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
         });
 
         httpMethodsHandlers.put(DELETE.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
-            final ExecutableMethod method = definition.executableMethod;
-            final BeanDefinition bean = definition.beanDefinition;
-
+            ExecutableMethod method = definition.executableMethod;
+            BeanDefinition bean = definition.beanDefinition;
+            String[] consumes = resolveConsumes(method);
+            String[] produces = resolveProduces(method);
+            MediaType mediaType = Arrays.stream(produces).findFirst().map(MediaType::valueOf).orElse(MediaType.APPLICATION_JSON_TYPE);
             Set<String> uris = CollectionUtils.setOf(method.stringValues(DELETE.class, "uris"));
             for (String uri : uris) {
-                String[] consumes = resolveConsumes(method);
-                String[] produces = resolveProduces(method);
+
                 router.route(HttpMethod.DELETE, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes))
-                        .handler(invokeHandler(bean, method));
+                        .handler(invokeHandler(bean, method, mediaType));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: {}" + uri);
                 }
             }
         });
 
-
         httpMethodsHandlers.put(HEAD.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
             final ExecutableMethod method = definition.executableMethod;
             final BeanDefinition bean = definition.beanDefinition;
-
+            String[] consumes = resolveConsumes(method);
+            String[] produces = resolveProduces(method);
+            MediaType mediaType = Arrays.stream(produces).findFirst().map(MediaType::valueOf).orElse(MediaType.APPLICATION_JSON_TYPE);
             Set<String> uris = CollectionUtils.setOf(method.stringValues(HEAD.class, "uris"));
             for (String uri : uris) {
-                String[] consumes = resolveConsumes(method);
-                String[] produces = resolveProduces(method);
                 router.route(HttpMethod.HEAD, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes))
-                        .handler(invokeHandler(bean, method));
+                        .handler(invokeHandler(bean, method, mediaType));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: {}" + uri);
                 }
@@ -146,41 +153,21 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
         httpMethodsHandlers.put(OPTIONS.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
             final ExecutableMethod method = definition.executableMethod;
             final BeanDefinition bean = definition.beanDefinition;
-
+            String[] consumes = resolveConsumes(method);
+            String[] produces = resolveProduces(method);
+            MediaType mediaType = Arrays.stream(produces).findFirst().map(MediaType::valueOf).orElse(MediaType.APPLICATION_JSON_TYPE);
             Set<String> uris = CollectionUtils.setOf(method.stringValues(OPTIONS.class, "uris"));
             for (String uri : uris) {
-                String[] consumes = resolveConsumes(method);
-                String[] produces = resolveProduces(method);
                 router.route(HttpMethod.OPTIONS, uri).produces(String.join(";", produces)).consumes(String.join(";", consumes))
-                        .handler(invokeHandler(bean, method));
+                        .handler(invokeHandler(bean, method, mediaType));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: {}" + uri);
                 }
             }
         });
-//        httpMethodsHandlers.put(Error.class, (VerticleAnnotatedMethodRouteBuilder.RouteDefinition definition) -> {
-//                final ExecutableMethod method = definition.executableMethod;
-//                final BeanDefinition bean = definition.beanDefinition;
-//
-//                boolean isGlobal = method.isTrue(Error.class, "global");
-//                Class declaringType = bean.getBeanType();
-//                OptionalInt status = method.intValue(Error.class, "status");
-//                Optional<Class> annotationValue = method.classValue(Error.class);
-//                Class exceptionType = null;
-//                if (annotationValue.isPresent() && Throwable.class.isAssignableFrom(annotationValue.get())) {
-//                    exceptionType = annotationValue.get();
-//                }
-//                if (exceptionType == null) {
-//                    exceptionType = Arrays.stream(method.getArgumentTypes())
-//                            .filter(Throwable.class::isAssignableFrom)
-//                            .findFirst()
-//                            .orElse(Throwable.class);
-//                }
-//                router.errorHandler(status.orElse(500), handler -> {
-//                    handler.end("error");
-//                });
-//            }
-//        );
+        for (Map.Entry<Integer, ErrorHandler> errorHandlerEntry : errorHandlerRegister.getErrorHanderMap().entrySet()) {
+            router.errorHandler(errorHandlerEntry.getKey(), errorHandlerEntry.getValue());
+        }
     }
 
     private String[] resolveConsumes(ExecutableMethod method) {
@@ -201,23 +188,41 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
 
     @Override
     public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
-        Optional<Class<? extends Annotation>> actionAnn = method.getAnnotationTypeByStereotype(HttpMethodMapping.class);
+        Optional<Class<? extends Annotation>> actionAnn = method.getAnnotationTypeByStereotype(Controller.class);
         actionAnn.ifPresent(annotationClass -> {
-                    Consumer<VerticleAnnotatedMethodRouteBuilder.RouteDefinition> handler = httpMethodsHandlers.get(annotationClass);
-                    if (handler != null) {
-                        final int port = beanDefinition.intValue(Controller.class, "port").orElse(-1);
-                        handler.accept(new VerticleAnnotatedMethodRouteBuilder.RouteDefinition(beanDefinition, method, port));
-                    }
-                }
-        );
+            Consumer<VerticleAnnotatedMethodRouteBuilder.RouteDefinition> handler = httpMethodsHandlers.get(getMethdType(method));
+            if (handler != null) {
+                final int port = beanDefinition.intValue(Controller.class, "port").orElse(-1);
+                handler.accept(new VerticleAnnotatedMethodRouteBuilder.RouteDefinition(beanDefinition, method, port));
+            }
+        });
     }
 
-    private Handler<RoutingContext> invokeHandler(BeanDefinition<?> beanDefinition, ExecutableMethod<Object, ?> method) {
+    private Class getMethdType(ExecutableMethod<?, ?> method) {
+        if (method.hasAnnotation(GET.class)) {
+            return GET.class;
+        } else if (method.hasAnnotation(POST.class)) {
+            return POST.class;
+        } else if (method.hasAnnotation(DELETE.class)) {
+            return DELETE.class;
+        } else if (method.hasAnnotation(OPTIONS.class)) {
+            return OPTIONS.class;
+        } else if (method.hasAnnotation(HEAD.class)) {
+            return HEAD.class;
+        } else if (method.hasAnnotation(PUT.class)) {
+            return PUT.class;
+        } else if (method.hasAnnotation(PATCH.class)) {
+            return PATCH.class;
+        }
+        return null;
+    }
+
+    private Handler<RoutingContext> invokeHandler(BeanDefinition<?> beanDefinition, ExecutableMethod<Object, ?> method, MediaType mediaType) {
         return routingContext -> {
             Object[] args = getArgs(routingContext, method);
             Object bean = this.context.getBean(beanDefinition);
             Object result = method.invoke(bean, args);
-            ResponseHandler responseHandler = this.context.getBean(ResponseHandler.class);
+            ResponseHandler responseHandler = responseHandlerRegister.findResponseHandler(mediaType).orElse(this.context.getBean(JsonResponseHandler.class));
             responseHandler.handler(routingContext, result);
         };
     }
