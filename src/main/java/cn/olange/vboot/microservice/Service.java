@@ -1,5 +1,6 @@
-package cn.olange.vboot.annotation;
+package cn.olange.vboot.microservice;
 
+import cn.olange.vboot.annotation.Verticle;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.DefaultScope;
 import io.micronaut.context.annotation.Executable;
@@ -17,6 +18,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Bean
 @Executable
 @DefaultScope(Verticle.class)
-public @interface Controller {
-
+public @interface Service {
 }

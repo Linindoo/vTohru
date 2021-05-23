@@ -52,9 +52,6 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
                 bean = (T) scopedBeanMap.get(identifier);
                 if (bean == null) {
                     bean = provider.get();
-//                    if (bean instanceof RequestAware) {
-//                        ((RequestAware)bean).setRequest(httpRequest);
-//                    }
                     scopedBeanMap.put(identifier, bean);
                     scopedBeanDefinitionMap.put(identifier, beanDefinition);
                 }

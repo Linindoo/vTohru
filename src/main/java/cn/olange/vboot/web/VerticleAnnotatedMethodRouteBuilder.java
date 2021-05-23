@@ -165,7 +165,7 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
                 }
             }
         });
-        for (Map.Entry<Integer, ErrorHandler> errorHandlerEntry : errorHandlerRegister.getErrorHanderMap().entrySet()) {
+        for (Map.Entry<Integer, ErrorHandler> errorHandlerEntry : this.errorHandlerRegister.getErrorHanderMap().entrySet()) {
             router.errorHandler(errorHandlerEntry.getKey(), errorHandlerEntry.getValue());
         }
     }

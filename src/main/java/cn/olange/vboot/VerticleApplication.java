@@ -1,7 +1,6 @@
 package cn.olange.vboot;
 
 import cn.olange.vboot.context.VerticleApplicationContext;
-import cn.olange.vboot.scope.VerticleCustomScope;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextLifeCycle;
 import io.micronaut.context.annotation.Requires;
@@ -19,7 +18,7 @@ import java.util.Collection;
 @Singleton
 @Requires(missingBeans = EmbeddedApplication.class)
 public class VerticleApplication implements EmbeddedApplication {
-    private static final Logger logger = LoggerFactory.getLogger(VerticleCustomScope.class);
+    private static final Logger logger = LoggerFactory.getLogger(VerticleApplication.class);
 
     private final VerticleApplicationContext applicationContext;
     private final ApplicationConfiguration configuration;
