@@ -6,23 +6,31 @@ import io.micronaut.context.ApplicationContext;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.servicediscovery.Record;
+import io.vertx.servicediscovery.ServiceDiscoveryOptions;
 import io.vertx.servicediscovery.ServiceReference;
+import io.vertx.servicediscovery.impl.DiscoveryImpl;
+import io.vertx.servicediscovery.types.EventBusService;
 
 @Verticle
-public class MicroServiceDiscovery {
+public class MicroServiceDiscovery extends DiscoveryImpl {
     private VerticleApplicationContext verticleApplicationContext;
-    private io.vertx.servicediscovery.ServiceDiscovery serviceDiscovery;
 
     public MicroServiceDiscovery(ApplicationContext applicationContext) {
+        super(((VerticleApplicationContext) applicationContext).getVertx(), new ServiceDiscoveryOptions());
         this.verticleApplicationContext = (VerticleApplicationContext) applicationContext;
-        this.serviceDiscovery = io.vertx.servicediscovery.ServiceDiscovery.create(this.verticleApplicationContext.getVertx());
     }
 
-    public Future<Record> publish(Record serviceInfo) {
-        return this.serviceDiscovery.publish(serviceInfo);
+    public Future<Record> publishService(Record serviceInfo) {
+        return this.publish(serviceInfo);
     }
 
-    public Future<ServiceReference> getRecord(JsonObject config) {
-        return this.serviceDiscovery.getRecord(config).compose(record -> Future.succeededFuture(this.serviceDiscovery.getReference(record)));
+    public Future<ServiceReference> getService(JsonObject config) {
+        return this.getRecord(config).compose(x -> {
+            if (x.getType().equalsIgnoreCase(EventBusService.TYPE)) {
+                return Future.succeededFuture(new EventBusServiceReference(this.verticleApplicationContext, this, x, new JsonObject()));
+            } else {
+                return Future.succeededFuture(this.getReference(x));
+            }
+        });
     }
 }

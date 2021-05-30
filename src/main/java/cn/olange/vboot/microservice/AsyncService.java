@@ -1,9 +1,7 @@
 package cn.olange.vboot.microservice;
 
-import com.mongodb.lang.NonNull;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
-import io.vertx.servicediscovery.ServiceDiscovery;
 
 
 public abstract class AsyncService<T> {

@@ -5,15 +5,11 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.DefaultApplicationContextBuilder;
 import io.micronaut.context.banner.MicronautBanner;
 import io.micronaut.context.banner.ResourceBanner;
-import io.micronaut.context.env.CommandLinePropertySource;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertySource;
-import io.micronaut.context.env.SystemPropertiesPropertySource;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.cli.CommandLine;
 import io.micronaut.core.naming.Described;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.runtime.EmbeddedApplication;
 import io.micronaut.runtime.exceptions.ApplicationStartupException;
 import io.micronaut.runtime.server.EmbeddedServer;
@@ -30,7 +26,7 @@ import java.util.function.Function;
 
 public class VertBoot extends DefaultApplicationContextBuilder {
     private static final String BANNER_NAME = "micronaut-banner.txt";
-    private static final Logger LOG = LoggerFactory.getLogger(VertBoot.class);
+    private static final Logger logger = LoggerFactory.getLogger(VertBoot.class);
     private static final String SHUTDOWN_MONITOR_THREAD = "micronaut-shutdown-monitor-thread";
     private Map<Class<? extends Throwable>, Function<Throwable, Integer>> exitHandlers = new LinkedHashMap();
 
@@ -49,29 +45,29 @@ public class VertBoot extends DefaultApplicationContextBuilder {
                     long end;
                     long took;
                     if (embeddedApplication instanceof Described) {
-                        if (LOG.isInfoEnabled()) {
+                        if (logger.isInfoEnabled()) {
                             end = System.currentTimeMillis();
                             took = end - start;
                             String desc = ((Described)embeddedApplication).getDescription();
-                            LOG.info("Startup completed in {}ms. Server Running: {}", took, desc);
+                            logger.info("Startup completed in {}ms. Server Running: {}", took, desc);
                         }
 
                         keepAlive = embeddedApplication.isServer();
                     } else if (embeddedApplication instanceof EmbeddedServer) {
                         EmbeddedServer embeddedServer = (EmbeddedServer)embeddedApplication;
-                        if (LOG.isInfoEnabled()) {
+                        if (logger.isInfoEnabled()) {
                             long endx = System.currentTimeMillis();
                             long tookx = endx - start;
                             URL url = embeddedServer.getURL();
-                            LOG.info("Startup completed in {}ms. Server Running: {}", tookx, url);
+                            logger.info("Startup completed in {}ms. Server Running: {}", tookx, url);
                         }
 
                         keepAlive = embeddedServer.isKeepAlive();
                     } else {
-                        if (LOG.isInfoEnabled()) {
+                        if (logger.isInfoEnabled()) {
                             end = System.currentTimeMillis();
                             took = end - start;
-                            LOG.info("Startup completed in {}ms.", took);
+                            logger.info("Startup completed in {}ms.", took);
                         }
 
                         keepAlive = embeddedApplication.isServer();
@@ -81,8 +77,8 @@ public class VertBoot extends DefaultApplicationContextBuilder {
                     CountDownLatch countDownLatch = new CountDownLatch(1);
                     boolean finalKeepAlive = keepAlive;
                     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                        if (LOG.isInfoEnabled()) {
-                            LOG.info("Embedded Application shutting down");
+                        if (logger.isInfoEnabled()) {
+                            logger.info("Embedded Application shutting down");
                         }
 
                         if (embeddedApplication.isRunning()) {
@@ -111,8 +107,8 @@ public class VertBoot extends DefaultApplicationContextBuilder {
                         } catch (InterruptedException var12) {
                         }
 
-                        if (LOG.isInfoEnabled()) {
-                            LOG.info("Embedded Application shutting down");
+                        if (logger.isInfoEnabled()) {
+                            logger.info("Embedded Application shutting down");
                         }
                     }
 
@@ -120,12 +116,14 @@ public class VertBoot extends DefaultApplicationContextBuilder {
                         System.exit(0);
                     }
                 } catch (Throwable var13) {
+                    var13.printStackTrace();
+                    logger.error(var13.getMessage());
                     this.handleStartupException(applicationContext.getEnvironment(), var13);
                 }
 
             });
-            if (LOG.isInfoEnabled() && !embeddedContainerBean.isPresent()) {
-                LOG.info("No embedded container found. Running as CLI application");
+            if (logger.isInfoEnabled() && !embeddedContainerBean.isPresent()) {
+                logger.info("No embedded container found. Running as CLI application");
             }
 
             return applicationContext;
@@ -245,8 +243,8 @@ public class VertBoot extends DefaultApplicationContextBuilder {
         Function<Throwable, Integer> exitCodeMapper = this.exitHandlers.computeIfAbsent(exception.getClass(), (exceptionType) -> (throwable) -> 1);
         Integer code = exitCodeMapper.apply(exception);
         if (code > 0 && !environment.getActiveNames().contains("test")) {
-            if (LOG.isErrorEnabled()) {
-                LOG.error("Error starting VertBoot server: " + exception.getMessage(), exception);
+            if (logger.isErrorEnabled()) {
+                logger.error("Error starting VertBoot server: " + exception.getMessage(), exception);
             }
 
             System.exit(code);

@@ -20,16 +20,8 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
-                    <generatedSourcesDirectory>src/main/generated</generatedSourcesDirectory>
-                    <compilerArgs>
-                        <arg>-Acodegen.output=${project.basedir}/src/main</arg>
-                    </compilerArgs>
+                    <encoding>UTF-8</encoding>
                     <annotationProcessorPaths>
-                        <path>
-                            <groupId>io.vertx</groupId>
-                            <artifactId>vertx-codegen</artifactId>
-                            <version>${vertx.version}</version>
-                        </path>
                         <path>
                             <groupId>io.micronaut</groupId>
                             <artifactId>micronaut-inject-java</artifactId>
@@ -41,17 +33,6 @@
         </plugins>
     </build>
     <dependencies>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-codegen</artifactId>
-            <version>${vertx.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-service-proxy</artifactId>
-            <version>${vertx.version}</version>
-        </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-core</artifactId>
@@ -98,12 +79,6 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-service-proxy</artifactId>
             <version>${vertx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-codegen</artifactId>
-            <version>${vertx.version}</version>
-<!--            <scope>provided</scope>-->
         </dependency>
 <!--        <dependency>-->
 <!--            <groupId>io.micronaut</groupId>-->

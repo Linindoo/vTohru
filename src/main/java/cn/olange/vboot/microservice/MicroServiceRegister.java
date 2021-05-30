@@ -4,32 +4,44 @@ import cn.olange.vboot.annotation.Verticle;
 import cn.olange.vboot.context.VerticleApplicationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.BeanDefinition;
+import io.vertx.core.Future;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.json.JsonObject;
 import io.vertx.servicediscovery.Record;
 import io.vertx.servicediscovery.types.EventBusService;
-import io.vertx.serviceproxy.ServiceBinder;
+import io.vertx.serviceproxy.ServiceException;
+import io.vertx.serviceproxy.ServiceExceptionMessageCodec;
+
+import java.util.List;
+import java.util.function.Function;
 
 @Verticle
 public class MicroServiceRegister {
     private static final Logger logger = LoggerFactory.getLogger(MicroServiceRegister.class);
-
+    private boolean topLevel = true;
+    private long timeoutSeconds = 300L;
+    private List<Function<Message<JsonObject>, Future<Message<JsonObject>>>> interceptors;
+    private boolean includeDebugInfo = false;
     private VerticleApplicationContext verticleApplicationContext;
     private MicroServiceDiscovery serviceDiscovery;
-    private ServiceBinder serviceBinder;
 
     public MicroServiceRegister(ApplicationContext applicationContext, MicroServiceDiscovery serviceDiscovery) {
         this.verticleApplicationContext = (VerticleApplicationContext) applicationContext;
+        try {
+            this.verticleApplicationContext.getVertx().eventBus().registerDefaultCodec(ServiceException.class, new ServiceExceptionMessageCodec());
+        } catch (IllegalStateException ex) {}
         this.serviceDiscovery = serviceDiscovery;
-        this.serviceBinder = new ServiceBinder(this.verticleApplicationContext.getVertx());
     }
 
     public <T> void registerService(BeanDefinition<T> beanDefinition) {
-        this.serviceBinder.setAddress(beanDefinition.getName())
-                .register(beanDefinition.getBeanType(), this.verticleApplicationContext.getBean(beanDefinition));
+        ServiceProxyHandler<T> serviceProxyHandler = new ServiceProxyHandler<>(verticleApplicationContext, beanDefinition, topLevel, timeoutSeconds, includeDebugInfo);
+        serviceProxyHandler.register(verticleApplicationContext.getVertx().eventBus(), beanDefinition.getName());
         Record record = EventBusService.createRecord(beanDefinition.getName(), beanDefinition.getName(), beanDefinition.getBeanType());
-        this.serviceDiscovery.publish(record).onSuccess(x->{
+        this.serviceDiscovery.publishService(record).onSuccess(x->{
             logger.info("Service <" + x.getName() + "> published");
         }).onFailure(logger::error);
     }
+
 }

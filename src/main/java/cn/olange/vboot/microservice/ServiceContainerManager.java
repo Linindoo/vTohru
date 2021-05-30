@@ -1,14 +1,11 @@
 package cn.olange.vboot.microservice;
 
 import cn.olange.vboot.VerticleEvent;
-import cn.olange.vboot.annotation.WebServer;
-import io.micronaut.core.annotation.AnnotationValue;
+import cn.olange.vboot.annotation.Verticle;
 import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.Future;
 
-import javax.inject.Singleton;
-
-@Singleton
+@Verticle
 public class ServiceContainerManager extends VerticleEvent {
     private ServiceAnnotatedBuilder serviceAnnotatedBuilder;
     private MicroServiceRegister serviceRegister;
