@@ -1,8 +1,8 @@
 package cn.olange.vboot.microservice;
 
-import cn.olange.vboot.annotation.Verticle;
 import cn.olange.vboot.context.VerticleApplicationContext;
 import io.micronaut.aop.InterceptedMethod;
+import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.ApplicationContext;
@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 import java.util.Map;
 
 @Singleton
+@InterceptorBean(Service.class)
 public class MicroServiceClientIntroductionAdvice implements MethodInterceptor<Object, Object>, AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(MicroServiceClientIntroductionAdvice.class);
     private MicroServiceDiscovery serviceDiscovery;
@@ -31,7 +32,7 @@ public class MicroServiceClientIntroductionAdvice implements MethodInterceptor<O
 
     @Override
     public Object intercept(MethodInvocationContext context) {
-        if (context.hasAnnotation(Client.class)) {
+        if (context.hasAnnotation(Service.class)) {
             InterceptedMethod interceptedMethod = InterceptedMethod.of(context);
             logger.debug("process");
             Promise<Object> promise = Promise.promise();
@@ -46,20 +47,13 @@ public class MicroServiceClientIntroductionAdvice implements MethodInterceptor<O
                     _json.put(arguments[i].getName(), parameters.get(arguments[i].getName()));
                 }
             }
-            Handler handler = (Handler) parameters.get(arguments[arguments.length - 1]);
+            Handler handler = (Handler) parameters.get(arguments[arguments.length - 1].getName());
             DeliveryOptions _deliveryOptions =  new DeliveryOptions();
             _deliveryOptions.addHeader("action", context.getMethodName());
-
-            applicationContext.getVertx().eventBus().<String>request(context.getTarget().getClass().getName(), _json, _deliveryOptions, res -> {
-                if (res.failed()) {
-                    handler.handle(Future.failedFuture(res.cause()));
-                } else {
-                    handler.handle(Future.succeededFuture(res.result().body()));
-                }
-            });
-            return context.proceed();
+            applicationContext.getVertx().eventBus().<String>request(context.getTarget().getClass().getName(), _json, _deliveryOptions, handler);
+            return null;
         }
-        return context.proceed();
+        return null;
     }
 
     @Override

@@ -31,10 +31,10 @@ public class VertBoot extends DefaultApplicationContextBuilder {
     private Map<Class<? extends Throwable>, Function<Throwable, Integer>> exitHandlers = new LinkedHashMap();
 
     @NonNull
-    public ApplicationContext start() {
+    public VerticleApplicationContext start() {
         long start = System.currentTimeMillis();
         this.printBanner();
-        ApplicationContext applicationContext = super.build();
+        VerticleApplicationContext applicationContext = (VerticleApplicationContext) super.build();
         try {
             applicationContext.start();
             Optional<EmbeddedApplication> embeddedContainerBean = applicationContext.findBean(EmbeddedApplication.class);
@@ -125,7 +125,6 @@ public class VertBoot extends DefaultApplicationContextBuilder {
             if (logger.isInfoEnabled() && !embeddedContainerBean.isPresent()) {
                 logger.info("No embedded container found. Running as CLI application");
             }
-
             return applicationContext;
         } catch (Throwable var5) {
             this.handleStartupException(applicationContext.getEnvironment(), var5);

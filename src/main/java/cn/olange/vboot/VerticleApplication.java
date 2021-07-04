@@ -1,9 +1,13 @@
 package cn.olange.vboot;
 
 import cn.olange.vboot.context.VerticleApplicationContext;
+import cn.olange.vboot.runtime.VertBoot;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextLifeCycle;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.EmbeddedApplication;
@@ -80,4 +84,5 @@ public class VerticleApplication implements EmbeddedApplication {
         }
         return this;
     }
+
 }

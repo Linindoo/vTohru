@@ -1,5 +1,6 @@
 package cn.olange.vboot.context;
 
+import cn.olange.vboot.runtime.VertBoot;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextConfiguration;
 import io.micronaut.context.DefaultApplicationContext;
@@ -16,6 +17,7 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
         this.vertx = Vertx.vertx();
     }
 
+
     @Override
     public synchronized VerticleApplicationContext start() {
         super.start();
@@ -28,6 +30,12 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
 
     public void setVertx(Vertx vertx) {
         this.vertx = vertx;
+    }
+
+
+    @NonNull
+    public static VerticleApplicationContext run() {
+        return new VertBoot().start();
     }
 
 }

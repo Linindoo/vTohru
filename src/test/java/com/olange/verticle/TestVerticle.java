@@ -1,4 +1,4 @@
-package cn.olange.vboot.verticle;
+package com.olange.verticle;
 
 import cn.olange.vboot.annotation.VerticleContaner;
 import cn.olange.vboot.annotation.WebServer;
@@ -9,6 +9,6 @@ import javax.inject.Singleton;
 @Singleton
 @VerticleContaner
 @WebServer(port = 9099)
-public class WebVerticle extends AbstractVerticle {
+public class TestVerticle extends AbstractVerticle {
 
 }
