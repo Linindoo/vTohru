@@ -13,7 +13,6 @@ import java.util.*;
 
 @Verticle
 public class EventBusMessageAnnotatedBuilder implements ExecutableMethodProcessor<MessageListener> {
-    private List<BeanDefinition<?>> messageListener = new ArrayList<>();
     private VerticleApplicationContext applicationContext;
     private Map<BeanDefinition<?>,List<ExecutableMethod<?, ?>>> listenerMethodMap = new HashMap<>();
 
@@ -41,10 +40,8 @@ public class EventBusMessageAnnotatedBuilder implements ExecutableMethodProcesso
                     String method_address = methodAnnotation.stringValue().orElse("");
                     MessageType.Type msgType = methodAnnotation.getValue(MessageType.Type.class).orElse(MessageType.Type.PUBLISH);
                     EventBus eventBus = applicationContext.getVertx().eventBus();
-                    if (msgType == MessageType.Type.PUBLISH) {
-                        EventBusMessageHandler eventBusMessageHandler = new EventBusMessageHandler(applicationContext, beanDefinition, executableMethod);
-                        eventBusMessageHandler.register(eventBus, method_address);
-                    }
+                    EventBusMessageHandler<?> eventBusMessageHandler = new EventBusMessageHandler(applicationContext, beanDefinition, executableMethod,msgType);
+                    eventBusMessageHandler.register(eventBus, method_address);
                 }
             }
         }

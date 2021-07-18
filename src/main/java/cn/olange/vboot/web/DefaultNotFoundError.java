@@ -13,6 +13,7 @@ public class DefaultNotFoundError extends ErrorHandler{
 
     @Override
     public void handle(RoutingContext context) {
+        context.response().putHeader("content-type", "application/json;charset=utf-8");
         JsonObject data = new JsonObject();
         data.put("code", 0);
         data.put("msg", "无效的资源");

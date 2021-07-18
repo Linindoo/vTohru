@@ -26,9 +26,21 @@ public class HelloController {
     public Future<String> hello() {
         Promise<String> promise = Promise.promise();
         helloClient.hello("olange", x -> {
-
+            if (x.succeeded()) {
+                promise.complete(x.result());
+            } else {
+                promise.fail(x.cause());
+            }
         });
-        promise.complete("next");
+        return promise.future();
+    }
+
+    @GET
+    @Path("/bye")
+    public Future<String> bye() {
+        Promise<String> promise = Promise.promise();
+        helloClient.bye("olange");
+        promise.complete("bye");
         return promise.future();
     }
 }

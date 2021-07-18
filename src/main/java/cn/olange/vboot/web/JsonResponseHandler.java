@@ -15,6 +15,7 @@ public class JsonResponseHandler extends AbstractResponseHandler{
     @Override
     public void successHandler(RoutingContext context, Object result) {
         JsonObject ret = new JsonObject();
+        context.response().putHeader("content-type", "application/json;charset=utf-8");
         ret.put("code", 1);
         ret.put("data", result);
         ret.put("msg", "操作成功");
@@ -23,6 +24,7 @@ public class JsonResponseHandler extends AbstractResponseHandler{
 
     @Override
     public void exceptionHandler(RoutingContext context, Object result) {
+        context.response().putHeader("content-type", "application/json;charset=utf-8");
         JsonObject ret = new JsonObject();
         ret.put("code", 0);
         ret.put("data", result);

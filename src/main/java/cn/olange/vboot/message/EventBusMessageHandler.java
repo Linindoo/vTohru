@@ -1,6 +1,7 @@
 package cn.olange.vboot.message;
 
 import cn.olange.vboot.context.VerticleApplicationContext;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
@@ -14,6 +15,7 @@ import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.serviceproxy.HelperUtils;
 
+import javax.ws.rs.QueryParam;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
@@ -23,13 +25,15 @@ public class EventBusMessageHandler<T> implements Handler<Message<JsonObject>> {
     private VerticleApplicationContext applicationContext;
     private BeanDefinition<T> beanDefinition;
     private ExecutableMethod<T, Object> executableMethod;
+    private MessageType.Type msgType;
     private boolean includeDebugInfo = false;
 
 
-    public EventBusMessageHandler(VerticleApplicationContext applicationContext, BeanDefinition<T> beanDefinition, ExecutableMethod<T, Object> executableMethod) {
+    public EventBusMessageHandler(VerticleApplicationContext applicationContext, BeanDefinition<T> beanDefinition, ExecutableMethod<T, Object> executableMethod, MessageType.Type msgType) {
         this.applicationContext = applicationContext;
         this.beanDefinition = beanDefinition;
         this.executableMethod = executableMethod;
+        this.msgType = msgType;
     }
 
     @Override
@@ -42,7 +46,9 @@ public class EventBusMessageHandler<T> implements Handler<Message<JsonObject>> {
             if (argument.getType().isAssignableFrom(Handler.class)) {
                 params[i] = HelperUtils.createHandler(message, this.includeDebugInfo);
             } else {
-                params[i] = body.getMap().get(argument.getName());
+                AnnotationValue<QueryParam> annotation = argument.getAnnotation(QueryParam.class);
+                String paramName = annotation.stringValue().orElse(argument.getName());
+                params[i] = body.getMap().get(paramName);
             }
         }
         this.executableMethod.invoke(applicationContext.getBean(beanDefinition), params);
