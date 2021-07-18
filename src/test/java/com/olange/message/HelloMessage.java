@@ -21,4 +21,9 @@ public class HelloMessage {
     public void bye(@QueryParam("msg") String name) {
         System.out.println("recieve:" + name);
     }
+
+    @MessageAddress(value = "goodmorning",type = MessageType.Type.P2P)
+    public void goodMorning(@QueryParam("msg") String name) {
+        System.out.println("morning:" + name);
+    }
 }

@@ -43,4 +43,13 @@ public class HelloController {
         promise.complete("bye");
         return promise.future();
     }
+
+    @GET
+    @Path("/morning")
+    public Future<String> morning() {
+        Promise<String> promise = Promise.promise();
+        helloClient.goodMorning("olange");
+        promise.complete("morning");
+        return promise.future();
+    }
 }

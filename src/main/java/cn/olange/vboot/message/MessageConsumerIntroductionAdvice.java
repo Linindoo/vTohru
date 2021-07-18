@@ -44,7 +44,10 @@ public class MessageConsumerIntroductionAdvice implements MethodInterceptor<Obje
             JsonObject _json = new JsonObject();
             if (arguments.length > 0) {
                 for (int i = 0; i < arguments.length; i++) {
-                    _json.put(arguments[i].getName(), parameters.get(arguments[i].getName()));
+                    Argument argument = arguments[i];
+                    if (!argument.getType().isAssignableFrom(Handler.class)) {
+                        _json.put(arguments[i].getName(), parameters.get(arguments[i].getName()));
+                    }
                 }
             }
             DeliveryOptions deliveryOptions = new DeliveryOptions();

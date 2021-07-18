@@ -13,4 +13,7 @@ public interface HelloClient {
 
     @MessageAddress(value = "bye")
     void bye(String msg);
+
+    @MessageAddress(value = "goodmorning")
+    void goodMorning(String msg);
 }
