@@ -2,7 +2,6 @@ package com.olange.web;
 
 import cn.olange.vboot.annotation.Controller;
 import com.olange.message.HelloClient;
-import com.olange.service.HelloService;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 
@@ -10,14 +9,11 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
 @Controller
-@Path("/hello")
-public class HelloController {
+@Path("/message")
+public class MessageTestController {
     private HelloClient helloClient;
 
-    private HelloService helloService;
-
-    public HelloController(HelloService helloService, HelloClient helloClient) {
-        this.helloService = helloService;
+    public MessageTestController(HelloClient helloClient) {
         this.helloClient = helloClient;
     }
 

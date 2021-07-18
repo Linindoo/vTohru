@@ -15,9 +15,11 @@ public class ServiceAnnotatedBuilder implements ExecutableMethodProcessor<Servic
     private static final Logger logger = LoggerFactory.getLogger(ServiceAnnotatedBuilder.class);
     private Map<Class<?>, List<BeanDefinition<?>>> routerMap = new HashMap<>();
     private ApplicationContext context;
+    private MicroServiceRegister serviceRegister;
 
-    public ServiceAnnotatedBuilder(ApplicationContext context) {
+    public ServiceAnnotatedBuilder(ApplicationContext context, MicroServiceRegister serviceRegister) {
         this.context = context;
+        this.serviceRegister = serviceRegister;
     }
 
     @Override
@@ -27,6 +29,7 @@ public class ServiceAnnotatedBuilder implements ExecutableMethodProcessor<Servic
         List<BeanDefinition<?>> routerDefinitions = routerMap.get(declaringType);
         if (routerDefinitions == null) {
             routerDefinitions = new ArrayList<>();
+            routerMap.put(declaringType, routerDefinitions);
         }
         for (BeanDefinition<?> definition : beanDefinitions) {
             if (!definition.isPrimary()) {
@@ -35,7 +38,13 @@ public class ServiceAnnotatedBuilder implements ExecutableMethodProcessor<Servic
         }
     }
 
-    public Map<Class<?>, List<BeanDefinition<?>>> getRouterMap() {
-        return routerMap;
+    public void registerService() {
+        if (routerMap != null) {
+            for (Map.Entry<Class<?>, List<BeanDefinition<?>>> entry : routerMap.entrySet()) {
+                for (BeanDefinition<?> definition : entry.getValue()) {
+                    this.serviceRegister.registerService(entry.getKey(), definition);
+                }
+            }
+        }
     }
 }

@@ -1,14 +1,19 @@
 package cn.olange.vboot.microservice;
 
 import cn.olange.vboot.context.VerticleApplicationContext;
+import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.type.Argument;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import io.vertx.serviceproxy.HelperUtils;
 import io.vertx.serviceproxy.ProxyHandler;
 import io.vertx.serviceproxy.ServiceException;
 import io.vertx.serviceproxy.ServiceExceptionMessageCodec;
+
+import javax.ws.rs.QueryParam;
 
 public class ServiceProxyHandler<T> extends ProxyHandler {
     private BeanDefinition<T> beanDefinition;
@@ -81,7 +86,18 @@ public class ServiceProxyHandler<T> extends ProxyHandler {
             if (executableMethod == null) {
                 throw new IllegalStateException("Invalid action: " + action);
             }
-            executableMethod.invoke(context.getBean(beanDefinition), HelperUtils.createHandler(msg, this.includeDebugInfo));
+            JsonObject body = msg.body();
+            Argument[] arguments = executableMethod.getArguments();
+            Object[] params = new Object[arguments.length];
+            for (int i = 0; i < arguments.length; i++) {
+                Argument argument = arguments[i];
+                if (argument.getType().isAssignableFrom(Handler.class)) {
+                    params[i] = HelperUtils.createHandler(msg, this.includeDebugInfo);
+                } else {
+                    params[i] = body.getMap().get(argument.getName());
+                }
+            }
+            executableMethod.invoke(context.getBean(beanDefinition), params);
         } catch (Throwable t) {
             if (includeDebugInfo) msg.reply(new ServiceException(500, t.getMessage(), HelperUtils.generateDebugInfo(t)));
             else msg.reply(new ServiceException(500, t.getMessage()));
