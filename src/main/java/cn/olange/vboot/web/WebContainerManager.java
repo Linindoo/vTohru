@@ -1,8 +1,7 @@
 package cn.olange.vboot.web;
 
 import cn.olange.vboot.VerticleEvent;
-import cn.olange.vboot.annotation.Verticle;
-import cn.olange.vboot.annotation.WebServer;
+import cn.olange.vboot.annotation.WebAutoConfigure;
 import cn.olange.vboot.context.VerticleApplicationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -28,7 +27,7 @@ public class WebContainerManager extends VerticleEvent {
 
     @Override
     public Future<Void> start(BeanDefinition<?> beanDefinition) {
-        AnnotationValue<WebServer> annotation = beanDefinition.getDeclaredAnnotation(WebServer.class);
+        AnnotationValue<WebAutoConfigure> annotation = beanDefinition.getDeclaredAnnotation(WebAutoConfigure.class);
         if (annotation == null) {
             return Future.succeededFuture();
         }

@@ -18,7 +18,9 @@ public class ServiceContainerManager extends VerticleEvent {
 
     @Override
     public Future<Void> start(BeanDefinition<?> beanDefinition) {
-        serviceAnnotatedBuilder.registerService();
+        if (beanDefinition.hasAnnotation(ServiceAutoConfigure.class)) {
+            serviceAnnotatedBuilder.registerService();
+        }
         return Future.succeededFuture();
     }
 

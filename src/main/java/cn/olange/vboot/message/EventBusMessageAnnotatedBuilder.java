@@ -15,6 +15,7 @@ import java.util.*;
 public class EventBusMessageAnnotatedBuilder implements ExecutableMethodProcessor<MessageListener> {
     private VerticleApplicationContext applicationContext;
     private Map<BeanDefinition<?>,List<ExecutableMethod<?, ?>>> listenerMethodMap = new HashMap<>();
+    private List<EventBusMessageHandler<?>> eventBusMessageHandlers = new ArrayList<>();
 
 
     public EventBusMessageAnnotatedBuilder(ApplicationContext applicationContext) {
@@ -42,12 +43,15 @@ public class EventBusMessageAnnotatedBuilder implements ExecutableMethodProcesso
                     EventBus eventBus = applicationContext.getVertx().eventBus();
                     EventBusMessageHandler<?> eventBusMessageHandler = new EventBusMessageHandler(applicationContext, beanDefinition, executableMethod,msgType);
                     eventBusMessageHandler.register(eventBus, method_address);
+                    eventBusMessageHandlers.add(eventBusMessageHandler);
                 }
             }
         }
     }
 
     public void unregister() {
-
+        for (EventBusMessageHandler<?> eventBusMessageHandler : eventBusMessageHandlers) {
+            eventBusMessageHandler.unregister();
+        }
     }
 }

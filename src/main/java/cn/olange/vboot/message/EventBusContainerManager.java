@@ -15,7 +15,9 @@ public class EventBusContainerManager extends VerticleEvent {
 
     @Override
     public Future<Void> start(BeanDefinition<?> beanDefinition) {
-        eventBusMessageAnnotatedBuilder.register();
+        if (beanDefinition.hasAnnotation(MessageAutoConfigure.class)) {
+            eventBusMessageAnnotatedBuilder.register();
+        }
         return Future.succeededFuture();
     }
 

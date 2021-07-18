@@ -87,4 +87,8 @@ public class EventBusMessageHandler<T> implements Handler<Message<JsonObject>> {
         }
         return (Handler)handler;
     }
+
+    public Future<Void> unregister() {
+        return consumer.unregister();
+    }
 }
