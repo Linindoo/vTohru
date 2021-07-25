@@ -249,7 +249,7 @@ public class VTohru extends DefaultApplicationContextBuilder {
             System.exit(code);
         }
 
-        throw new ApplicationStartupException("Error starting VertBoot server: " + exception.getMessage(), exception);
+        throw new ApplicationStartupException("Error starting VTohru: " + exception.getMessage(), exception);
     }
 
     private void printBanner() {

@@ -1,12 +1,13 @@
 package cn.vtohru.message;
 
 import cn.vtohru.VerticleEvent;
-import cn.vtohru.annotation.Verticle;
 import cn.vtohru.message.annotation.MessageAutoConfigure;
 import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.Future;
 
-@Verticle
+import javax.inject.Singleton;
+
+@Singleton
 public class EventBusContainerManager extends VerticleEvent {
     private EventBusMessageAnnotatedBuilder eventBusMessageAnnotatedBuilder;
 

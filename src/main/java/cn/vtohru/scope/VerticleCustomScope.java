@@ -11,6 +11,7 @@ import io.micronaut.context.scope.CustomScope;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.BeanIdentifier;
 import io.micronaut.inject.DisposableBeanDefinition;
@@ -43,11 +44,15 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
 
     public <T> T get(BeanResolutionContext resolutionContext, BeanDefinition<T> beanDefinition, BeanIdentifier identifier, Provider<T> provider) {
         Context context = beanContext.getVertx().getOrCreateContext();
+        String deploymentID = context.deploymentID();
+        if (StringUtils.isEmpty(deploymentID)) {
+            return null;
+        }
         ConcurrentHashMap scopedBeanMap = this.getRequestScopedBeans(context);
         ConcurrentHashMap scopedBeanDefinitionMap = this.getRequestScopedBeanDefinitions(context);
         T bean = (T) scopedBeanMap.get(identifier);
         if (bean == null) {
-            synchronized(this) {
+            synchronized (this) {
                 bean = (T) scopedBeanMap.get(identifier);
                 if (bean == null) {
                     bean = provider.get();

@@ -1,7 +1,5 @@
 package cn.vtohru.microservice;
 
-import cn.vtohru.VerticleApplication;
-import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.microservice.annotation.Service;
 import io.micronaut.context.ApplicationContext;
@@ -11,9 +9,10 @@ import io.micronaut.inject.ExecutableMethod;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 
+import javax.inject.Singleton;
 import java.util.*;
 
-@Verticle
+@Singleton
 public class ServiceAnnotatedBuilder implements ExecutableMethodProcessor<Service> {
     private static final Logger logger = LoggerFactory.getLogger(ServiceAnnotatedBuilder.class);
     private Map<Class<?>, List<BeanDefinition<?>>> routerMap = new HashMap<>();
@@ -27,9 +26,6 @@ public class ServiceAnnotatedBuilder implements ExecutableMethodProcessor<Servic
 
     @Override
     public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
-        if (!context.isScoped(beanDefinition)) {
-            return;
-        }
         Class<?> declaringType = method.getDeclaringType();
         Collection<? extends BeanDefinition<?>> beanDefinitions = context.getBeanDefinitions(declaringType);
         List<BeanDefinition<?>> routerDefinitions = routerMap.get(declaringType);

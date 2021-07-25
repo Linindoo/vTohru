@@ -1,13 +1,14 @@
 package cn.vtohru.web;
 
-import javax.inject.Singleton;
+import cn.vtohru.annotation.Verticle;
+
 import javax.ws.rs.core.MediaType;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@Singleton
+@Verticle
 public class ResponseHandlerRegister {
     Map<MediaType, ResponseHandler> decodersByType = new LinkedHashMap<>(3);
     public ResponseHandlerRegister(Collection<ResponseHandler> responseHandlers) {

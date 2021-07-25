@@ -1,6 +1,5 @@
 package cn.vtohru.message;
 
-import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.message.annotation.MessageAddress;
 import cn.vtohru.message.annotation.MessageListener;
@@ -12,9 +11,13 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.vertx.core.eventbus.EventBus;
 
-import java.util.*;
+import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-@Verticle
+@Singleton
 public class EventBusMessageAnnotatedBuilder implements ExecutableMethodProcessor<MessageListener> {
     private VerticleApplicationContext applicationContext;
     private Map<BeanDefinition<?>,List<ExecutableMethod<?, ?>>> listenerMethodMap = new HashMap<>();
@@ -27,9 +30,6 @@ public class EventBusMessageAnnotatedBuilder implements ExecutableMethodProcesso
 
     @Override
     public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
-        if (!applicationContext.isScoped(beanDefinition)) {
-            return;
-        }
         if (method.hasAnnotation(MessageAddress.class)) {
             List<ExecutableMethod<?, ?>> executableMethods = listenerMethodMap.computeIfAbsent(beanDefinition, k -> new ArrayList<>());
             if (!executableMethods.contains(method)) {

@@ -3,7 +3,6 @@ package cn.vtohru.aop;
 import cn.vtohru.VerticleEvent;
 import cn.vtohru.annotation.VerticleContaner;
 import cn.vtohru.context.VerticleApplicationContext;
-import cn.vtohru.web.VerticleAnnotatedMethodRouteBuilder;
 import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
@@ -14,6 +13,7 @@ import io.micronaut.inject.ExecutableMethod;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -23,13 +23,12 @@ import java.util.Collection;
 public class VerticleContainerInterceptor implements MethodInterceptor<Object, Object> {
     private static final Logger logger = LoggerFactory.getLogger(VerticleContainerInterceptor.class);
     private VerticleApplicationContext applicationContext;
-    private VerticleAnnotatedMethodRouteBuilder builder;
+    @Inject
     private Collection<VerticleEvent> verticleEvents;
 
-    public VerticleContainerInterceptor(ApplicationContext context, VerticleAnnotatedMethodRouteBuilder builder, Collection<VerticleEvent> verticleEvents) {
+
+    public VerticleContainerInterceptor(ApplicationContext context) {
         this.applicationContext = (VerticleApplicationContext) context;
-        this.builder = builder;
-        this.verticleEvents = verticleEvents;
     }
 
     @Override
@@ -39,10 +38,9 @@ public class VerticleContainerInterceptor implements MethodInterceptor<Object, O
         Object verticle = context.getTarget();
         BeanDefinition<?> beanDefinition = applicationContext.getBeanDefinition(verticle.getClass());
         AnnotationValue<VerticleContaner> annotation = beanDefinition.getAnnotation(VerticleContaner.class);
-        String[] packages = annotation.get("", String[].class).orElse(new String[]{});
-
-        applicationContext.savePackage(packages);
         if ("start".equalsIgnoreCase(targetMethod.getName()) && targetMethod.getParameterCount() == 1) {
+            String[] packages = annotation.get("usePackage", String[].class).orElse(new String[]{});
+            applicationContext.savePackage(packages);
             for (VerticleEvent verticleEvent : this.verticleEvents) {
                 verticleEvent.start(beanDefinition);
             }

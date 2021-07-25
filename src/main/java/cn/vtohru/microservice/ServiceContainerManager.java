@@ -1,13 +1,14 @@
 package cn.vtohru.microservice;
 
 import cn.vtohru.VerticleEvent;
-import cn.vtohru.annotation.Verticle;
 import cn.vtohru.microservice.annotation.ServiceAutoConfigure;
 import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.Future;
 
+import javax.inject.Singleton;
 
-@Verticle
+
+@Singleton
 public class ServiceContainerManager extends VerticleEvent {
     private ServiceAnnotatedBuilder serviceAnnotatedBuilder;
     private MicroServiceRegister serviceRegister;

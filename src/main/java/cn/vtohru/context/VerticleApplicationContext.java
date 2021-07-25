@@ -11,7 +11,7 @@ import io.vertx.core.Vertx;
 import java.util.Arrays;
 
 public class VerticleApplicationContext extends DefaultApplicationContext {
-    private static final String SCOPE_PACKAGE = "VTOHRU_VERTICLE_SCOPE_PACKAGE";
+    public static final String SCOPE_PACKAGE = "VTOHRU_VERTICLE_SCOPE_PACKAGE";
 
     private Vertx vertx;
 
@@ -50,7 +50,7 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
             return true;
         }
         String packageName = beanDefinition.getBeanType().getPackage().getName();
-        return Arrays.stream(packages).anyMatch(x -> x.equalsIgnoreCase(packageName));
+        return Arrays.stream(packages).anyMatch(x -> packageName.startsWith(x));
     }
 
 
