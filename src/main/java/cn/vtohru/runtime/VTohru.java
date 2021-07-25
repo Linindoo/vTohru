@@ -24,9 +24,9 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 
-public class VertBoot extends DefaultApplicationContextBuilder {
+public class VTohru extends DefaultApplicationContextBuilder {
     private static final String BANNER_NAME = "micronaut-banner.txt";
-    private static final Logger logger = LoggerFactory.getLogger(VertBoot.class);
+    private static final Logger logger = LoggerFactory.getLogger(VTohru.class);
     private static final String SHUTDOWN_MONITOR_THREAD = "micronaut-shutdown-monitor-thread";
     private Map<Class<? extends Throwable>, Function<Throwable, Integer>> exitHandlers = new LinkedHashMap();
 
@@ -133,22 +133,22 @@ public class VertBoot extends DefaultApplicationContextBuilder {
     }
 
     @NonNull
-    public VertBoot include(@Nullable String... configurations) {
-        return (VertBoot)super.include(configurations);
+    public VTohru include(@Nullable String... configurations) {
+        return (VTohru)super.include(configurations);
     }
 
     @NonNull
-    public VertBoot exclude(@Nullable String... configurations) {
-        return (VertBoot)super.exclude(configurations);
+    public VTohru exclude(@Nullable String... configurations) {
+        return (VTohru)super.exclude(configurations);
     }
 
     @NonNull
-    public VertBoot banner(boolean isEnabled) {
-        return (VertBoot)super.banner(isEnabled);
+    public VTohru banner(boolean isEnabled) {
+        return (VTohru)super.banner(isEnabled);
     }
 
     @NonNull
-    public VertBoot classes(@Nullable Class... classes) {
+    public VTohru classes(@Nullable Class... classes) {
         if (classes != null) {
             Class[] var2 = classes;
             int var3 = classes.length;
@@ -163,67 +163,67 @@ public class VertBoot extends DefaultApplicationContextBuilder {
     }
 
     @NonNull
-    public VertBoot properties(@Nullable Map<String, Object> properties) {
-        return (VertBoot)super.properties(properties);
+    public VTohru properties(@Nullable Map<String, Object> properties) {
+        return (VTohru)super.properties(properties);
     }
 
     @NonNull
-    public VertBoot singletons(Object... beans) {
-        return (VertBoot)super.singletons(beans);
+    public VTohru singletons(Object... beans) {
+        return (VTohru)super.singletons(beans);
     }
 
     @NonNull
-    public VertBoot propertySources(@Nullable PropertySource... propertySources) {
-        return (VertBoot)super.propertySources(propertySources);
+    public VTohru propertySources(@Nullable PropertySource... propertySources) {
+        return (VTohru)super.propertySources(propertySources);
     }
 
     @NonNull
-    public VertBoot environmentPropertySource(boolean environmentPropertySource) {
-        return (VertBoot)super.environmentPropertySource(environmentPropertySource);
+    public VTohru environmentPropertySource(boolean environmentPropertySource) {
+        return (VTohru)super.environmentPropertySource(environmentPropertySource);
     }
 
     @NonNull
-    public VertBoot environmentVariableIncludes(@Nullable String... environmentVariables) {
-        return (VertBoot)super.environmentVariableIncludes(environmentVariables);
+    public VTohru environmentVariableIncludes(@Nullable String... environmentVariables) {
+        return (VTohru)super.environmentVariableIncludes(environmentVariables);
     }
 
     @NonNull
-    public VertBoot environmentVariableExcludes(@Nullable String... environmentVariables) {
-        return (VertBoot)super.environmentVariableExcludes(environmentVariables);
+    public VTohru environmentVariableExcludes(@Nullable String... environmentVariables) {
+        return (VTohru)super.environmentVariableExcludes(environmentVariables);
     }
 
     @NonNull
-    public VertBoot mainClass(Class mainClass) {
-        return (VertBoot)super.mainClass(mainClass);
+    public VTohru mainClass(Class mainClass) {
+        return (VTohru)super.mainClass(mainClass);
     }
 
     @NonNull
-    public VertBoot classLoader(ClassLoader classLoader) {
-        return (VertBoot)super.classLoader(classLoader);
+    public VTohru classLoader(ClassLoader classLoader) {
+        return (VTohru)super.classLoader(classLoader);
     }
 
     @NonNull
-    public VertBoot args(@Nullable String... args) {
-        return (VertBoot)super.args(args);
+    public VTohru args(@Nullable String... args) {
+        return (VTohru)super.args(args);
     }
 
     @NonNull
-    public VertBoot environments(@Nullable String... environments) {
-        return (VertBoot)super.environments(environments);
+    public VTohru environments(@Nullable String... environments) {
+        return (VTohru)super.environments(environments);
     }
 
     @NonNull
-    public VertBoot defaultEnvironments(@Nullable String... environments) {
-        return (VertBoot)super.defaultEnvironments(environments);
+    public VTohru defaultEnvironments(@Nullable String... environments) {
+        return (VTohru)super.defaultEnvironments(environments);
     }
 
     @NonNull
-    public VertBoot packages(@Nullable String... packages) {
-        return (VertBoot)super.packages(packages);
+    public VTohru packages(@Nullable String... packages) {
+        return (VTohru)super.packages(packages);
     }
 
-    public static VertBoot build(String... args) {
-        return (new VertBoot()).args(args);
+    public static VTohru build(String... args) {
+        return (new VTohru()).args(args);
     }
 
     public static ApplicationContext run(String... args) {
@@ -235,7 +235,7 @@ public class VertBoot extends DefaultApplicationContextBuilder {
     }
 
     public static ApplicationContext run(Class[] classes, String... args) {
-        return (new VertBoot()).classes(classes).args(args).start();
+        return (new VTohru()).classes(classes).args(args).start();
     }
 
     protected void handleStartupException(Environment environment, Throwable exception) {

@@ -27,6 +27,9 @@ public class EventBusMessageAnnotatedBuilder implements ExecutableMethodProcesso
 
     @Override
     public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
+        if (!applicationContext.isScoped(beanDefinition)) {
+            return;
+        }
         if (method.hasAnnotation(MessageAddress.class)) {
             List<ExecutableMethod<?, ?>> executableMethods = listenerMethodMap.computeIfAbsent(beanDefinition, k -> new ArrayList<>());
             if (!executableMethods.contains(method)) {

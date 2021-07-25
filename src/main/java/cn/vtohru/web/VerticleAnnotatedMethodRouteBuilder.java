@@ -202,6 +202,9 @@ public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProc
 
     @Override
     public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
+        if (!context.isScoped(beanDefinition)) {
+            return;
+        }
         Optional<Class<? extends Annotation>> actionAnn = method.getAnnotationTypeByStereotype(Path.class);
         actionAnn.ifPresent(annotationClass -> {
             Consumer<VerticleAnnotatedMethodRouteBuilder.RouteDefinition> handler = httpMethodsHandlers.get(getMethdType(method));
