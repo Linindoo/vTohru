@@ -261,6 +261,9 @@ public class VerticleRouterHandler {
     }
 
     public Future<Void> stopServer() {
-        return httpServer.close();
+        if (httpServer != null) {
+            return httpServer.close();
+        }
+        return Future.succeededFuture();
     }
 }

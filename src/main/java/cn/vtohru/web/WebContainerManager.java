@@ -1,20 +1,17 @@
 package cn.vtohru.web;
 
 import cn.vtohru.VerticleEvent;
-import cn.vtohru.web.annotation.WebAutoConfigure;
+import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
+import cn.vtohru.web.annotation.WebAutoConfigure;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.Future;
-import io.vertx.core.http.HttpServer;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-@Singleton
+@Verticle
 public class WebContainerManager extends VerticleEvent {
     private static final Logger logger = LoggerFactory.getLogger(WebContainerManager.class);
     private VerticleApplicationContext applicationContext;
@@ -37,7 +34,7 @@ public class WebContainerManager extends VerticleEvent {
 
     @Override
     public Future<Void> stop(BeanDefinition<?> beanDefinition) {
-        VerticleRouterHandler routerHandler = applicationContext.getBean(VerticleRouterHandler.class);
-        return routerHandler.stopServer();
+//        VerticleRouterHandler routerHandler = applicationContext.getBean(VerticleRouterHandler.class);
+        return Future.succeededFuture();
     }
 }

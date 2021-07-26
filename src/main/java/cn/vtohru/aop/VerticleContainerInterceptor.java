@@ -13,7 +13,6 @@ import io.micronaut.inject.ExecutableMethod;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -23,10 +22,6 @@ import java.util.Collection;
 public class VerticleContainerInterceptor implements MethodInterceptor<Object, Object> {
     private static final Logger logger = LoggerFactory.getLogger(VerticleContainerInterceptor.class);
     private VerticleApplicationContext applicationContext;
-    @Inject
-    private Collection<VerticleEvent> verticleEvents;
-
-
     public VerticleContainerInterceptor(ApplicationContext context) {
         this.applicationContext = (VerticleApplicationContext) context;
     }
@@ -36,16 +31,20 @@ public class VerticleContainerInterceptor implements MethodInterceptor<Object, O
         ExecutableMethod executableMethod = context.getExecutableMethod();
         Method targetMethod = executableMethod.getTargetMethod();
         Object verticle = context.getTarget();
+        if (verticle == null) {
+            return null;
+        }
         BeanDefinition<?> beanDefinition = applicationContext.getBeanDefinition(verticle.getClass());
         AnnotationValue<VerticleContaner> annotation = beanDefinition.getAnnotation(VerticleContaner.class);
+        Collection<VerticleEvent> verticleEvents = applicationContext.getBeansOfType(VerticleEvent.class);
         if ("start".equalsIgnoreCase(targetMethod.getName()) && targetMethod.getParameterCount() == 1) {
             String[] packages = annotation.get("usePackage", String[].class).orElse(new String[]{});
             applicationContext.savePackage(packages);
-            for (VerticleEvent verticleEvent : this.verticleEvents) {
+            for (VerticleEvent verticleEvent : verticleEvents) {
                 verticleEvent.start(beanDefinition);
             }
         } else if ("stop".equalsIgnoreCase(targetMethod.getName()) && targetMethod.getParameterCount() == 1) {
-            for (VerticleEvent verticleEvent : this.verticleEvents) {
+            for (VerticleEvent verticleEvent : verticleEvents) {
                 verticleEvent.stop(beanDefinition);
             }
         }
