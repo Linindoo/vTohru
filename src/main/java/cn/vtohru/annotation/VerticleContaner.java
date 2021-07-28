@@ -16,5 +16,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Around
 @EntryPoint
 public @interface VerticleContaner {
+    String value() default "";
     String[] usePackage() default "";
 }
