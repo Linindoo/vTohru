@@ -35,15 +35,6 @@ public class MicroServiceRegister {
         this.serviceDiscovery = serviceDiscovery;
     }
 
-    public <T> void registerService(BeanDefinition<T> beanDefinition) {
-        ServiceProxyHandler<T> serviceProxyHandler = new ServiceProxyHandler<>(verticleApplicationContext, beanDefinition, topLevel, timeoutSeconds, includeDebugInfo);
-        serviceProxyHandler.register(verticleApplicationContext.getVertx().eventBus(), beanDefinition.getName());
-        Record record = EventBusService.createRecord(beanDefinition.getName(), beanDefinition.getName(), beanDefinition.getBeanType());
-        this.serviceDiscovery.publishService(record).onSuccess(x->{
-            logger.info("Service <" + x.getName() + "> published");
-        }).onFailure(logger::error);
-    }
-
     public <T> void registerService(Class<?> serviceClass, BeanDefinition<?> definition) {
         ServiceProxyHandler<T> serviceProxyHandler = new ServiceProxyHandler(verticleApplicationContext, definition, topLevel, timeoutSeconds, includeDebugInfo);
         serviceProxyHandler.register(verticleApplicationContext.getVertx().eventBus(), serviceClass.getName());

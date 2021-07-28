@@ -27,6 +27,9 @@ public class ServiceAnnotatedBuilder implements ExecutableMethodProcessor<Servic
     @Override
     public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
         Class<?> declaringType = method.getDeclaringType();
+        if (!beanDefinition.isPrimary()) {
+            return;
+        }
         Collection<? extends BeanDefinition<?>> beanDefinitions = context.getBeanDefinitions(declaringType);
         List<BeanDefinition<?>> routerDefinitions = routerMap.get(declaringType);
         if (routerDefinitions == null) {
