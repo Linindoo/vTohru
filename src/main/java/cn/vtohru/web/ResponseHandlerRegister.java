@@ -10,10 +10,11 @@ import java.util.Optional;
 
 @Verticle
 public class ResponseHandlerRegister {
-    Map<MediaType, ResponseHandler> decodersByType = new LinkedHashMap<>(3);
-    public ResponseHandlerRegister(Collection<ResponseHandler> responseHandlers) {
+    Map<MediaType, AbstractResponseHandler> decodersByType = new LinkedHashMap<>(3);
+
+    public ResponseHandlerRegister(Collection<AbstractResponseHandler> responseHandlers) {
         if (responseHandlers != null) {
-            for (ResponseHandler decoder : responseHandlers) {
+            for (AbstractResponseHandler decoder : responseHandlers) {
                 Collection<MediaType> mediaTypes = decoder.getMediaTypes();
                 for (MediaType mediaType : mediaTypes) {
                     if (mediaType != null) {
@@ -24,7 +25,7 @@ public class ResponseHandlerRegister {
         }
     }
 
-    public Optional<ResponseHandler> findResponseHandler(MediaType mediaType) {
+    public Optional<AbstractResponseHandler> findResponseHandler(MediaType mediaType) {
         if (mediaType == null) {
             return Optional.empty();
         }

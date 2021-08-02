@@ -23,12 +23,11 @@ public class JsonResponseHandler extends AbstractResponseHandler{
     }
 
     @Override
-    public void exceptionHandler(RoutingContext context, Object result) {
+    public void exceptionHandler(RoutingContext context, Throwable e) {
         context.response().putHeader("content-type", "application/json;charset=utf-8");
         JsonObject ret = new JsonObject();
         ret.put("code", 0);
-        ret.put("data", result);
-        ret.put("msg", "操作失败");
+        ret.put("msg", e.getMessage());
         context.response().end(ret.toBuffer());
     }
 
