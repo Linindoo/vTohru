@@ -29,6 +29,7 @@ import io.vertx.ext.web.Session;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -139,24 +140,42 @@ public class VerticleRouterHandler {
 
     private Handler<RoutingContext> invokeInterceptor(BeanDefinition<?> beanDefinition, ExecutableMethod<Object, ?> method, MediaType mediaType) {
         return routingContext -> {
-            Future<Object> future = null;
+            Promise<Object> promise = Promise.promise();
             if (interceptorList == null || interceptorList.size() == 0) {
-                future = invokeHandler(routingContext,beanDefinition, method, mediaType);
+                invokeHandler(routingContext, beanDefinition, method, mediaType).onSuccess(promise::complete).onFailure(promise::fail);
             } else {
+                Future<Void> interceptorFuture = null;
+                List<Interceptor> revertInterceptors = new ArrayList<>();
                 for (Interceptor interceptor : interceptorList) {
-                    if (future == null) {
-                        future = interceptor.preHandler(beanDefinition, method, routingContext);
+                    if (interceptorFuture == null) {
+                        interceptorFuture = interceptor.preHandler(beanDefinition, method, routingContext);
+                        revertInterceptors.add(interceptor);
                     } else {
-                        future = future.compose(x -> interceptor.preHandler(beanDefinition, method, routingContext), Future::failedFuture);
+                        interceptorFuture = interceptorFuture.compose(x -> {
+                            revertInterceptors.add(interceptor);
+                            return interceptor.preHandler(beanDefinition, method, routingContext);
+                        }, Future::failedFuture);
                     }
                 }
-                future = future.compose(x -> invokeHandler(routingContext, beanDefinition, method, mediaType), Future::failedFuture);
-                for (Interceptor interceptor : interceptorList) {
-                    future = future.compose(x -> interceptor.afterHandler(beanDefinition, method, routingContext, x, null), Future::failedFuture);
-                }
+                interceptorFuture.compose(x -> invokeHandler(routingContext, beanDefinition, method, mediaType), Future::failedFuture).onComplete(x -> {
+                    Future<Void> afterFuture = null;
+                    for (int i = revertInterceptors.size() - 1; i >= 0; i--) {
+                        Interceptor interceptor = revertInterceptors.get(i);
+                        if (afterFuture == null) {
+                            afterFuture = interceptor.afterHandler(beanDefinition, method, routingContext, x);
+                        } else {
+                            afterFuture = afterFuture.compose(y-> interceptor.afterHandler(beanDefinition, method, routingContext, x), e-> interceptor.afterHandler(beanDefinition, method, routingContext, x));
+                        }
+                    }
+                    if (afterFuture == null) {
+                        promise.handle(x);
+                    } else {
+                        afterFuture.onComplete(y -> promise.handle(x));
+                    }
+                });
             }
             AbstractResponseHandler responseHandler = responseHandlerRegister.findResponseHandler(mediaType).orElse(this.context.getBean(JsonResponseHandler.class));
-            future.onSuccess(x -> responseHandler.successHandler(routingContext, x)).onFailure(e -> responseHandler.exceptionHandler(routingContext, e));
+            promise.future().onSuccess(x -> responseHandler.successHandler(routingContext, x)).onFailure(e -> responseHandler.exceptionHandler(routingContext, e));
         };
     }
 
