@@ -20,6 +20,7 @@ public class ServiceTestController {
 
     @GET
     @Path("/hello")
+    @Priv(login = true)
     public Future<String> hello() {
         Promise<String> promise = Promise.promise();
         helloService.say("hello", x -> {

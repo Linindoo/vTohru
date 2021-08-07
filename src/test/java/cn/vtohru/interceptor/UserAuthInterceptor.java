@@ -10,18 +10,19 @@ import io.vertx.core.Future;
 import io.vertx.ext.web.RoutingContext;
 
 @Verticle
-@Order(0)
-public class LogInterceptor implements Interceptor {
+@Order(1)
+public class UserAuthInterceptor implements Interceptor {
     @Override
     public Future<Void> preHandler(BeanDefinition<?> beanDefinition, ExecutableMethod<Object, ?> method, RoutingContext routingContext) {
-        System.out.println("url: " + routingContext.request().uri());
+        System.out.println("userAuth");
+        routingContext.put("userName", "sb");
         return Future.succeededFuture();
     }
 
     @Override
     public Future<Void> afterHandler(BeanDefinition<?> beanDefinition, ExecutableMethod<Object, ?> method, RoutingContext routingContext, AsyncResult<Object> asyncResult) {
-        System.out.println("after log");
+        routingContext.remove("userName");
+        System.out.println("after userAuth");
         return Future.succeededFuture();
     }
-
 }
