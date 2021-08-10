@@ -16,8 +16,8 @@ public class WebContainerManager extends VerticleEvent {
     private static final Logger logger = LoggerFactory.getLogger(WebContainerManager.class);
     private VerticleApplicationContext applicationContext;
 
-    public WebContainerManager(ApplicationContext applicationContext) {
-        this.applicationContext = (VerticleApplicationContext) applicationContext;
+    public WebContainerManager(VerticleApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
     }
 
     @Override

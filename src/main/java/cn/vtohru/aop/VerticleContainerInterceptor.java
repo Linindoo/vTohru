@@ -7,7 +7,6 @@ import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.vertx.core.impl.logging.Logger;
@@ -35,11 +34,9 @@ public class VerticleContainerInterceptor implements MethodInterceptor<Object, O
             return null;
         }
         BeanDefinition<?> beanDefinition = applicationContext.getBeanDefinition(verticle.getClass());
-        AnnotationValue<VerticleContaner> annotation = beanDefinition.getAnnotation(VerticleContaner.class);
         Collection<VerticleEvent> verticleEvents = applicationContext.getBeansOfType(VerticleEvent.class);
         if ("start".equalsIgnoreCase(targetMethod.getName()) && targetMethod.getParameterCount() == 1) {
-            String[] packages = annotation.get("usePackage", String[].class).orElse(new String[]{});
-            applicationContext.savePackage(packages);
+            applicationContext.saveVerticleInfo(beanDefinition);
             for (VerticleEvent verticleEvent : verticleEvents) {
                 verticleEvent.start(beanDefinition);
             }

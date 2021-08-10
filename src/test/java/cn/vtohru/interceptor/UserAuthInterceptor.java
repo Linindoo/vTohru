@@ -1,5 +1,6 @@
 package cn.vtohru.interceptor;
 
+import cn.vtohru.annotation.ScopeRequires;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.web.Interceptor;
 import io.micronaut.core.annotation.Order;
@@ -11,6 +12,7 @@ import io.vertx.ext.web.RoutingContext;
 
 @Verticle
 @Order(1)
+@ScopeRequires(requireVerticle = "TestVerticle")
 public class UserAuthInterceptor implements Interceptor {
     @Override
     public Future<Void> preHandler(BeanDefinition<?> beanDefinition, ExecutableMethod<Object, ?> method, RoutingContext routingContext) {
