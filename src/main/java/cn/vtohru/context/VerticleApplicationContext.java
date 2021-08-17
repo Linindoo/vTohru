@@ -12,6 +12,8 @@ import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class VerticleApplicationContext extends DefaultApplicationContext {
     public static final String SCOPE_PACKAGE = "VTOHRU_VERTICLE_SCOPE_PACKAGE";
@@ -80,7 +82,7 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
         String verticleName = getVerticleName(beanDefinition);
         setVerticleName(verticleName);
     }
-    private String getVerticleName(BeanDefinition<?> beanDefinition) {
+    public String getVerticleName(BeanDefinition<?> beanDefinition) {
         AnnotationValue<VerticleContaner> annotation = beanDefinition.getAnnotation(VerticleContaner.class);
         String verticleName = "";
         if (annotation != null) {
@@ -95,5 +97,11 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
 
     private String getRawClassName(String className) {
         return className.replace("Definition$Intercepted", "").replace("$", "");
+    }
+
+    public Map<String, Object> getScopeMap(BeanDefinition<?> beanDefinition) {
+        String verticleName = this.getVerticleName(beanDefinition);
+        String verticleConfigKey = "vtohru." + verticleName.toLowerCase();
+        return getEnvironment().get(verticleConfigKey, HashMap.class).orElse(new HashMap<>());
     }
 }

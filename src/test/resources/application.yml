@@ -1,4 +1,6 @@
 vtohru:
   testverticle:
     name: devVerticle
+    web:
+      port: 8078
 

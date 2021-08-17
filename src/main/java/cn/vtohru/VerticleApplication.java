@@ -1,13 +1,8 @@
 package cn.vtohru;
 
-import cn.vtohru.annotation.VerticleContaner;
 import cn.vtohru.context.VerticleApplicationContext;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.ApplicationContextLifeCycle;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.naming.conventions.StringConvention;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.EmbeddedApplication;
@@ -24,7 +19,7 @@ import java.util.Map;
 
 @Singleton
 @Requires(missingBeans = EmbeddedApplication.class)
-public class VerticleApplication implements EmbeddedApplication {
+public class VerticleApplication implements EmbeddedApplication<VerticleApplication> {
     private static final Logger logger = LoggerFactory.getLogger(VerticleApplication.class);
 
     private final VerticleApplicationContext applicationContext;
@@ -59,15 +54,9 @@ public class VerticleApplication implements EmbeddedApplication {
     public VerticleApplication start() {
         Collection<BeanDefinition<AbstractVerticle>> beanDefinitions = applicationContext.getBeanDefinitions(AbstractVerticle.class);
         for (BeanDefinition<AbstractVerticle> beanDefinition : beanDefinitions) {
-            String verticleName = getVerticleName(beanDefinition);
-            String verticleConfigKey = "vtohru." + verticleName.toLowerCase();
-            Map<String, Object> properties = applicationContext.getProperties(verticleConfigKey,StringConvention.RAW);
+            Map<String, Object> map = applicationContext.getScopeMap(beanDefinition);
             DeploymentOptions deploymentOptions = new DeploymentOptions();
-            JsonObject config = new JsonObject();
-            for (Map.Entry<String, Object> entry : properties.entrySet()) {
-                config.put(entry.getKey(), entry.getValue());
-            }
-            deploymentOptions.setConfig(config);
+            deploymentOptions.setConfig(new JsonObject(map));
             AbstractVerticle bean = applicationContext.getBean(beanDefinition.getBeanType());
             applicationContext.getVertx().deployVerticle(bean, deploymentOptions).onSuccess(x -> {
                 logger.info("deploy Verticle : " + bean.getClass().getName() + " success as " + x);
@@ -78,25 +67,8 @@ public class VerticleApplication implements EmbeddedApplication {
         return this;
     }
 
-    private String getVerticleName(BeanDefinition<?> beanDefinition) {
-        AnnotationValue<VerticleContaner> annotation = beanDefinition.getAnnotation(VerticleContaner.class);
-        String verticleName = "";
-        if (annotation != null) {
-            verticleName = annotation.stringValue().orElse("");
-        }
-        if (StringUtils.isEmpty(verticleName)) {
-            String rawClassName = getRawClassName(beanDefinition.getName());
-            verticleName = rawClassName.substring(rawClassName.lastIndexOf(".") +1);
-        }
-        return verticleName;
-    }
-
-    private String getRawClassName(String className) {
-        return className.replace("Definition$Intercepted", "").replace("$", "");
-    }
-
     @Override
-    public ApplicationContextLifeCycle stop() {
+    public VerticleApplication stop() {
         VerticleApplicationContext applicationContext = getApplicationContext();
         if (applicationContext != null && applicationContext.isRunning()) {
             Collection<BeanDefinition<AbstractVerticle>> beanDefinitions = applicationContext.getBeanDefinitions(AbstractVerticle.class);
