@@ -1,8 +1,8 @@
 package cn.vtohru.message;
 
+import cn.vtohru.message.annotation.MessageAutoConfigure;
 import cn.vtohru.VerticleEvent;
 import cn.vtohru.annotation.Verticle;
-import cn.vtohru.message.annotation.MessageAutoConfigure;
 import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.Future;
 

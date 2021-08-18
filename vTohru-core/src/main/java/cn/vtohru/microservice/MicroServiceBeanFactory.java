@@ -1,7 +1,6 @@
 package cn.vtohru.microservice;
 
 import cn.vtohru.annotation.Verticle;
-import cn.vtohru.microservice.annotation.Service;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;

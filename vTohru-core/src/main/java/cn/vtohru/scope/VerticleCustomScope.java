@@ -1,8 +1,8 @@
 package cn.vtohru.scope;
 
 import cn.vtohru.annotation.Verticle;
-import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.event.VerticleTerminatedEvent;
+import cn.vtohru.context.VerticleApplicationContext;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.BeanResolutionContext;
 import io.micronaut.context.LifeCycle;

@@ -1,8 +1,8 @@
 package cn.vtohru.message;
 
+import cn.vtohru.message.annotation.MessageListener;
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.message.annotation.MessageAddress;
-import cn.vtohru.message.annotation.MessageListener;
 import cn.vtohru.message.annotation.MessageType;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
