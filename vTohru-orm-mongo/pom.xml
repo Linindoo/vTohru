@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>vTohru</artifactId>
+        <groupId>cn.lindoo.vtohru</groupId>
+        <version>0.0.1-dev</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>vTohru-orm-mongo</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>cn.lindoo.vtohru</groupId>
+            <artifactId>vTohru-core</artifactId>
+            <version>0.0.1-dev</version>
+        </dependency>
+        <dependency>
+            <groupId>cn.lindoo.vtohru</groupId>
+            <artifactId>vTohru-orm</artifactId>
+            <version>0.0.1-dev</version>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-mongo-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

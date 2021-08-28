@@ -7,7 +7,8 @@
     <packaging>pom</packaging>
     <modules>
         <module>vTohru-core</module>
-        <module>vTohru-orm</module>
+        <module>vTohru-orm-common</module>
+        <module>vTohru-orm-mongo</module>
     </modules>
     <groupId>cn.lindoo.vtohru</groupId>
     <version>0.0.1-dev</version>
@@ -107,6 +108,11 @@
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-service-proxy</artifactId>
                 <version>${vertx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>21.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
