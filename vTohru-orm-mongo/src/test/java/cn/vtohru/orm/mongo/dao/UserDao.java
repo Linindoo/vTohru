@@ -3,7 +3,7 @@ package cn.vtohru.orm.mongo.dao;
 import cn.vtohru.orm.annotation.Entity;
 import cn.vtohru.orm.annotation.field.Id;
 
-@Entity
+@Entity(name = "demo")
 public class UserDao {
     @Id
     public String id;

@@ -82,8 +82,10 @@ public class JacksonPropertyMapper implements IPropertyMapper {
         if (javaValue instanceof Character) {
           converted = String.valueOf(javaValue);
           storeObject.put(field, converted);
+        }else if(javaValue instanceof String){
+          storeObject.put(field, (String)javaValue);
         } else {
-          converted = Json.encode(javaValue);
+          converted = Json.encodePrettily(javaValue);
           storeObject.put(field, converted);
         }
       }

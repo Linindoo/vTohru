@@ -12,6 +12,7 @@
  */
 package cn.vtohru.orm.mongo.dataaccess;
 
+import cn.vtohru.orm.util.JsonConverter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -173,11 +174,11 @@ public class MongoQueryExpression extends AbstractQueryExpression<JsonObject> {
 
     String parsedOperator = translateOperator(operator);
     JsonObject logicCondition = new JsonObject();
-//    try {
-//      logicCondition.put(parsedOperator, JsonConverter.convertJsonNodeToVertx(parsedValue));
-//    } catch (IOException e) {
-//      throw new InvalidQueryValueException(e);
-//    }
+    try {
+      logicCondition.put(parsedOperator, JsonConverter.convertJsonNodeToVertx(parsedValue));
+    } catch (IOException e) {
+      throw new InvalidQueryValueException(e);
+    }
     // make RegEx comparisons case insensitive
     if (operator == QueryOperator.EQUALS_IGNORE_CASE || operator == QueryOperator.CONTAINS
         || operator == QueryOperator.STARTS || operator == QueryOperator.ENDS

@@ -12,8 +12,6 @@
  */
 package cn.vtohru.orm.mongo.dataaccess;
 
-import com.mongodb.MongoBulkWriteException;
-import com.mongodb.bulk.BulkWriteError;
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import cn.vtohru.orm.dataaccess.query.ISearchCondition;
 import cn.vtohru.orm.dataaccess.query.impl.IQueryExpression;
@@ -31,6 +29,8 @@ import cn.vtohru.orm.mongo.MongoDataStore;
 import cn.vtohru.orm.mongo.MongoStoreObjectFactory;
 import cn.vtohru.orm.mongo.mapper.datastore.MongoColumnInfo;
 import cn.vtohru.orm.observer.IObserverContext;
+import com.mongodb.MongoBulkWriteException;
+import com.mongodb.bulk.BulkWriteError;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.BulkOperation;
@@ -122,9 +122,10 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
     });
   }
 
-  private Future<MongoClientBulkWriteResult> write(final List<BulkOperation> bulkOperations, final int tryCount) {
+  private Future<MongoClientBulkWriteResult> write(List<BulkOperation> bulkOperations, final int tryCount) {
     Promise<MongoClientBulkWriteResult> promise = Promise.promise();
-    getMongoClient().bulkWrite(getCollection(), bulkOperations, promise);
+    String collection = getCollection();
+    getMongoClient().bulkWrite(collection, bulkOperations).onComplete(promise);
     return promise.future().recover(retryMethod(tryCount, count -> write(bulkOperations, count)));
   }
 
@@ -159,7 +160,7 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
         return Future.failedFuture(new IllegalStateException("Can not update with a query and objects without id"));
       } else
         return Future.succeededFuture(
-            new StoreObjectHolder(storeObject, BulkOperation.createInsert(storeObject.getContainer())));
+            new StoreObjectHolder(storeObject, BulkOperation.createInsert(new JsonObject(storeObject.getContainer().toBuffer()))));
     } else {
       IMapper<T> mapper = getMapper();
       Object currentId = storeObject.get(mapper.getIdInfo().getField());
@@ -169,22 +170,27 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
             getQuery().getSearchCondition()));
         Promise<IQueryExpression> promise = Promise.promise();
         q.buildQueryExpression(null, promise);
+        JsonObject document = new JsonObject(storeObject.getContainer().toBuffer());
+        document.remove(MongoColumnInfo.ID_FIELD_NAME);
         return promise.future().compose(queryExpression -> {
           JsonObject filter = ((MongoQueryExpression) queryExpression).getQueryDefinition();
           BulkOperation bulkOperation;
           if (partialUpdate)
-            bulkOperation = createPartialUpdate(filter, storeObject.getContainer(), false);
+            bulkOperation = createPartialUpdate(filter, document, false);
           else
-            bulkOperation = BulkOperation.createReplace(filter, storeObject.getContainer(), false);
+            bulkOperation = BulkOperation.createReplace(filter, document, false);
           return Future.succeededFuture(new StoreObjectHolder(storeObject, bulkOperation));
         });
       } else {
         JsonObject filter = new JsonObject().put(MongoColumnInfo.ID_FIELD_NAME, currentId);
         BulkOperation bulkOperation;
+        JsonObject container = storeObject.getContainer();
+        JsonObject document = new JsonObject(container.toBuffer());
+        document.remove(MongoColumnInfo.ID_FIELD_NAME);
         if (partialUpdate)
-          bulkOperation = createPartialUpdate(filter, storeObject.getContainer(), true);
+          bulkOperation = createPartialUpdate(filter, document, true);
         else
-          bulkOperation = BulkOperation.createReplace(filter, storeObject.getContainer(), true);
+          bulkOperation = BulkOperation.createReplace(filter, document, true);
         return Future.succeededFuture(new StoreObjectHolder(storeObject, bulkOperation));
       }
     }
