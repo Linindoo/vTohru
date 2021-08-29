@@ -14,9 +14,9 @@ package cn.vtohru.orm.observer.impl;
 
 import java.util.UUID;
 
+import cn.vtohru.orm.exception.ParameterRequiredException;
 import cn.vtohru.orm.observer.IObserverContext;
 import cn.vtohru.orm.observer.IObserverEvent;
-import de.braintags.io.vertx.util.exception.ParameterRequiredException;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -25,9 +25,9 @@ import io.vertx.core.json.Json;
 /**
  * This observer serializes records as json file into a defined directory. It does not return a Future, so that
  * the caller must not wait for the result. Occuring errors are logged. Per record one file is created.
- * 
+ *
  * @author Michael Remme
- * 
+ *
  */
 public class JsonSerializationObserver extends AbstractObserver {
   private static final io.vertx.core.logging.Logger LOGGER = io.vertx.core.logging.LoggerFactory
@@ -42,7 +42,7 @@ public class JsonSerializationObserver extends AbstractObserver {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see
    * cn.vtohru.orm.observer.IObserver#handleEvent(cn.vtohru.orm.observer.IObserverEvent,
    * cn.vtohru.orm.observer.IObserverContext)
@@ -105,7 +105,7 @@ public class JsonSerializationObserver extends AbstractObserver {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.observer.impl.AbstractObserver#init(io.vertx.core.Vertx)
    */
   @Override

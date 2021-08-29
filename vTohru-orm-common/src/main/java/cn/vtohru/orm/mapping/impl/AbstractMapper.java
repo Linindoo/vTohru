@@ -16,14 +16,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.google.common.collect.ImmutableSet;
+import java.util.*;
 
 import cn.vtohru.orm.annotation.Entity;
 import cn.vtohru.orm.annotation.Index;
@@ -52,8 +45,8 @@ import cn.vtohru.orm.mapping.datastore.ITableGenerator;
 import cn.vtohru.orm.mapping.datastore.ITableInfo;
 import cn.vtohru.orm.observer.IObserverHandler;
 import cn.vtohru.orm.observer.ObserverEventType;
+import cn.vtohru.orm.util.ClassUtil;
 import cn.vtohru.orm.versioning.IMapperVersion;
-import de.braintags.io.vertx.util.ClassUtil;
 import io.vertx.core.*;
 
 /**
@@ -89,7 +82,7 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
   private IIdInfo idInfo;
   private Entity entity;
   private VersionInfo versionInfo;
-  private ImmutableSet<IIndexDefinition> indexes;
+  private Set<IIndexDefinition> indexes;
   private ITableInfo tableInfo;
   private boolean syncNeeded = true;
   private boolean hasReferencedFields = false;
@@ -208,7 +201,7 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
       }
     }
     computeIndexes(definitions);
-    this.indexes = ImmutableSet.copyOf(definitions.values());
+    this.indexes = new HashSet<>(definitions.values());
   }
 
   /**
@@ -380,7 +373,7 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
   /**
    * Execute the trigger method. IMPORTANT: if a TriggerContext is created, the handler is informed by the
    * TriggerContext, if not, then the handler is informed by this method
-   * 
+   *
    * @param mp
    * @param entity
    * @param handler
@@ -476,7 +469,7 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
 
   /**
    * Returns true if at least one field of the mapper is annotated with {@link Referenced}
-   * 
+   *
    * @return
    */
   @Override
@@ -520,7 +513,7 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
   }
 
   @Override
-  public ImmutableSet<IIndexDefinition> getIndexDefinitions() {
+  public Set<IIndexDefinition> getIndexDefinitions() {
     return indexes;
   }
 

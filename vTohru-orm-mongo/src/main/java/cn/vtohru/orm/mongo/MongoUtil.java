@@ -12,7 +12,6 @@
  */
 package cn.vtohru.orm.mongo;
 
-import com.google.common.collect.ImmutableSet;
 import cn.vtohru.orm.annotation.Index;
 import cn.vtohru.orm.dataaccess.query.ISearchCondition;
 import cn.vtohru.orm.mapping.IIndexDefinition;
@@ -28,13 +27,14 @@ import io.vertx.ext.mongo.MongoClient;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * Utility class for MongoDb
- * 
+ *
  * @author Michael Remme
- * 
+ *
  */
 public final class MongoUtil {
 
@@ -44,7 +44,7 @@ public final class MongoUtil {
 
   /**
    * Request for existing collections
-   * 
+   *
    * @param ds
    *          the datastore to be used
    * @param result
@@ -57,7 +57,7 @@ public final class MongoUtil {
 
   /**
    * Request for existing collections as names
-   * 
+   *
    * @param ds
    *          the datastore to be used
    * @param result
@@ -79,7 +79,7 @@ public final class MongoUtil {
 
   /**
    * Call to explicitly create a collection inside the database
-   * 
+   *
    * @param ds
    * @param collection
    * @param handler
@@ -98,7 +98,7 @@ public final class MongoUtil {
 
   /**
    * List all existing indexes for the given collection
-   * 
+   *
    * @param ds
    * @param collection
    * @param handler
@@ -117,7 +117,7 @@ public final class MongoUtil {
 
   /**
    * Request for existing indexes as names
-   * 
+   *
    * @param ds
    * @param collection
    * @param handler
@@ -138,7 +138,7 @@ public final class MongoUtil {
 
   /**
    * Create indexes which are defined by the given {@link Index}
-   * 
+   *
    * @param dataStore
    *          the datastore
    *          the index definition
@@ -148,7 +148,7 @@ public final class MongoUtil {
   public static final void createIndexes(final MongoDataStore dataStore, final IMapper<?> mapper,
       final Handler<AsyncResult<JsonObject>> handler) {
     String collection = mapper.getTableInfo().getName();
-    ImmutableSet<IIndexDefinition> indexDefinitions = mapper.getIndexDefinitions();
+    Set<IIndexDefinition> indexDefinitions = mapper.getIndexDefinitions();
     JsonObject indexCommand = new JsonObject().put("createIndexes", collection);
 
     CompositeFuture.all(indexDefinitions.stream().map(def -> createIndexDefinition(def, mapper, dataStore))

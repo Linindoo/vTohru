@@ -14,15 +14,15 @@ package cn.vtohru.orm.mapping.impl;
 
 import java.lang.reflect.Field;
 
+import cn.vtohru.orm.exception.PropertyAccessException;
 import cn.vtohru.orm.mapping.IProperty;
 import cn.vtohru.orm.mapping.IPropertyAccessor;
-import de.braintags.io.vertx.util.exception.PropertyAccessException;
 
 /**
  * An accessor onto a public field of a java object
- * 
+ *
  * @author Michael Remme
- * 
+ *
  */
 
 public class JavaFieldAccessor implements IPropertyAccessor {
@@ -30,7 +30,7 @@ public class JavaFieldAccessor implements IPropertyAccessor {
   private Field field;
 
   /**
-   * 
+   *
    * @param field
    *          the underlaying {@link IProperty}
    */
@@ -59,7 +59,7 @@ public class JavaFieldAccessor implements IPropertyAccessor {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IPropertyAccessor#getName()
    */
   @Override

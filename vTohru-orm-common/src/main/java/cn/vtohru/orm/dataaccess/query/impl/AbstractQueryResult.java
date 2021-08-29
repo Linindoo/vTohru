@@ -16,8 +16,8 @@ package cn.vtohru.orm.dataaccess.query.impl;
 import cn.vtohru.orm.IDataStore;
 import cn.vtohru.orm.dataaccess.query.IQueryResult;
 import cn.vtohru.orm.mapping.IMapper;
-import de.braintags.io.vertx.util.AbstractCollectionAsync;
-import de.braintags.io.vertx.util.IteratorAsync;
+import cn.vtohru.orm.util.AbstractCollectionAsync;
+import cn.vtohru.orm.util.IteratorAsync;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -62,7 +62,7 @@ public abstract class AbstractQueryResult<T> extends AbstractCollectionAsync<T> 
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see de.braintags.vertx.util.util.CollectionAsync#size()
    */
   @Override
@@ -82,7 +82,7 @@ public abstract class AbstractQueryResult<T> extends AbstractCollectionAsync<T> 
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.dataaccess.query.IQueryResult#getDataStore()
    */
   @Override
@@ -92,7 +92,7 @@ public abstract class AbstractQueryResult<T> extends AbstractCollectionAsync<T> 
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.dataaccess.query.IQueryResult#getMapper()
    */
   @Override
@@ -102,7 +102,7 @@ public abstract class AbstractQueryResult<T> extends AbstractCollectionAsync<T> 
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.dataaccess.query.IQueryResult#getOriginalQuery()
    */
   @Override

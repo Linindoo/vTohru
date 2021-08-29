@@ -18,17 +18,18 @@ import cn.vtohru.orm.mapping.ISyncResult;
 import cn.vtohru.orm.mapping.impl.AbstractDataStoreSynchronizer;
 import cn.vtohru.orm.mongo.MongoDataStore;
 import cn.vtohru.orm.mongo.MongoUtil;
-import com.google.common.collect.ImmutableSet;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 
+import java.util.Set;
+
 /**
  * MongoDataStoreSynchronizer checks / creates needed indexes
- * 
+ *
  * @author Michael Remme
- * 
+ *
  */
 public class MongoDataStoreSynchronizer extends AbstractDataStoreSynchronizer<JsonObject> {
   private final MongoSyncResult syncResult = new MongoSyncResult();
@@ -45,7 +46,7 @@ public class MongoDataStoreSynchronizer extends AbstractDataStoreSynchronizer<Js
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.impl.AbstractDataStoreSynchronizer#getSyncResult()
    */
   @Override
@@ -55,12 +56,12 @@ public class MongoDataStoreSynchronizer extends AbstractDataStoreSynchronizer<Js
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.impl.AbstractDataStoreSynchronizer#syncIndexes(de.braintags.vertx.
    * pojomapper.mapping.IMapper, cn.vtohru.orm.annotation.Indexes, io.vertx.core.Handler)
    */
   @Override
-  protected void syncIndexes(final IMapper<?> mapper, final ImmutableSet<IIndexDefinition> indexes,
+  protected void syncIndexes(final IMapper<?> mapper, final Set<IIndexDefinition> indexes,
       final Handler<AsyncResult<Void>> resultHandler) {
     MongoUtil.createIndexes(ds, mapper, result -> {
       if (result.failed()) {

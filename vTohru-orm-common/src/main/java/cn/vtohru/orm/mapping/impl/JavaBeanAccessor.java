@@ -15,14 +15,14 @@ package cn.vtohru.orm.mapping.impl;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 
+import cn.vtohru.orm.exception.PropertyAccessException;
 import cn.vtohru.orm.mapping.IPropertyAccessor;
-import de.braintags.io.vertx.util.exception.PropertyAccessException;
 
 /**
  * An accessor which is used on BeanMethods of an object
- * 
+ *
  * @author Michael Remme
- * 
+ *
  */
 
 public class JavaBeanAccessor implements IPropertyAccessor {
@@ -31,7 +31,7 @@ public class JavaBeanAccessor implements IPropertyAccessor {
   private Method writeMethod = null;
 
   /**
-   * 
+   *
    * @param beanDescriptor
    *          the underlaying {@link PropertyDescriptor}
    */
@@ -90,7 +90,7 @@ public class JavaBeanAccessor implements IPropertyAccessor {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IPropertyAccessor#getName()
    */
   @Override

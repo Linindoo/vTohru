@@ -13,6 +13,7 @@
 package cn.vtohru.orm.mongo.init;
 
 import cn.vtohru.orm.IDataStore;
+import cn.vtohru.orm.exception.InitException;
 import cn.vtohru.orm.init.AbstractDataStoreInit;
 import cn.vtohru.orm.init.DataStoreSettings;
 import cn.vtohru.orm.init.EncoderSettings;
@@ -20,7 +21,6 @@ import cn.vtohru.orm.init.IDataStoreInit;
 import cn.vtohru.orm.mapping.IKeyGenerator;
 import cn.vtohru.orm.mapping.impl.keygen.DefaultKeyGenerator;
 import cn.vtohru.orm.mongo.MongoDataStore;
-import de.braintags.io.vertx.util.exception.InitException;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 

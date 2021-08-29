@@ -20,6 +20,7 @@ import java.util.concurrent.CountDownLatch;
 
 import cn.vtohru.orm.IDataStore;
 import cn.vtohru.orm.annotation.Entity;
+import cn.vtohru.orm.exception.InitException;
 import cn.vtohru.orm.exception.MappingException;
 import cn.vtohru.orm.init.ObserverDefinition;
 import cn.vtohru.orm.mapping.IMapper;
@@ -29,13 +30,12 @@ import cn.vtohru.orm.observer.IObserverContext;
 import cn.vtohru.orm.observer.IObserverHandler;
 import cn.vtohru.orm.observer.ObserverEventType;
 import cn.vtohru.orm.observer.impl.handler.BeforeMappingHandler;
-import de.braintags.io.vertx.util.ResultObject;
-import de.braintags.io.vertx.util.exception.InitException;
+import cn.vtohru.orm.util.ResultObject;
 import io.vertx.core.Future;
 
 /**
  * An abstract implementation of IMapperFactory
- * 
+ *
  * @author Michael Remme
  */
 public abstract class AbstractMapperFactory implements IMapperFactory {
@@ -63,7 +63,7 @@ public abstract class AbstractMapperFactory implements IMapperFactory {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IMapperFactory#getDataStore()
    */
   @Override
@@ -147,7 +147,7 @@ public abstract class AbstractMapperFactory implements IMapperFactory {
    * Performs the event {@link ObserverEventType#BEFORE_MAPPING} for the given mapper class.
    * This method is contained inside the current instance and not inside the {@link IObserverHandler}, cause the
    * IObserverhandler is part of the IMapper, which will be created later
-   * 
+   *
    * @param mapperClass
    * @param context
    * @return
@@ -165,7 +165,7 @@ public abstract class AbstractMapperFactory implements IMapperFactory {
 
   /**
    * Get the observer, which are responsible for the event BEFORE_MAPPING for the given class
-   * 
+   *
    * @param mapperClass
    * @return
    */
@@ -227,7 +227,7 @@ public abstract class AbstractMapperFactory implements IMapperFactory {
 
   /**
    * Creates a new instance of IMapper for the given class
-   * 
+   *
    * @param mapperClass
    *          the class to be mapped
    * @return the mapper

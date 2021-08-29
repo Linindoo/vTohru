@@ -13,7 +13,7 @@
 package cn.vtohru.orm.init;
 
 import cn.vtohru.orm.impl.IEncoder;
-import de.braintags.io.vertx.util.ExceptionUtil;
+import cn.vtohru.orm.util.ExceptionUtil;
 
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -22,9 +22,9 @@ import java.util.Properties;
  * EncoderSettings defines the properties of an {@link IEncoder}, which shall be used by the current application. The
  * definition is used in startup to initialize the encoders, so that they can be requested by the method
  * {@link IDataStore#getEncoder(String)}
- * 
+ *
  * @author Michael Remme
- * 
+ *
  */
 public class EncoderSettings {
   private String name;
@@ -33,7 +33,7 @@ public class EncoderSettings {
 
   /**
    * The name is used to add the instance into the lookup in the {@link IDataStore}
-   * 
+   *
    * @return the name
    */
   public String getName() {
@@ -42,7 +42,7 @@ public class EncoderSettings {
 
   /**
    * The name is used to add the instance into the lookup in the {@link IDataStore}
-   * 
+   *
    * @param name
    *          the name to set
    */
@@ -52,7 +52,7 @@ public class EncoderSettings {
 
   /**
    * The class of the encoder
-   * 
+   *
    * @return the endoderClass
    */
   public Class<? extends IEncoder> getEncoderClass() {
@@ -61,7 +61,7 @@ public class EncoderSettings {
 
   /**
    * The class of the encoder
-   * 
+   *
    * @param endoderClass
    *          the endoderClass to set
    */
@@ -71,7 +71,7 @@ public class EncoderSettings {
 
   /**
    * The properties, which are used to init the encoder
-   * 
+   *
    * @return the properties
    */
   public Properties getProperties() {
@@ -80,7 +80,7 @@ public class EncoderSettings {
 
   /**
    * The properties, which are used to init the encoder
-   * 
+   *
    * @param properties
    *          the properties to set
    */
@@ -90,7 +90,7 @@ public class EncoderSettings {
 
   /**
    * Create an instance of {@link IEncoder} of the given information
-   * 
+   *
    * @return the created {@link IEncoder}
    */
   public IEncoder toEncoder() {

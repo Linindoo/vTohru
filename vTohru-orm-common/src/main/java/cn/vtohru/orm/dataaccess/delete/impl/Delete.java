@@ -22,10 +22,10 @@ import cn.vtohru.orm.dataaccess.impl.AbstractDataAccessObject;
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import cn.vtohru.orm.dataaccess.query.ISearchCondition;
 import cn.vtohru.orm.dataaccess.query.IdField;
+import cn.vtohru.orm.exception.ParameterRequiredException;
 import cn.vtohru.orm.mapping.IIdInfo;
 import cn.vtohru.orm.mapping.IProperty;
 import cn.vtohru.orm.observer.IObserverContext;
-import de.braintags.io.vertx.util.exception.ParameterRequiredException;
 import io.vertx.core.*;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ import java.util.List;
 
 /**
  * Abstract implementation of {@link IDelete}
- * 
+ *
  * @author Michael Remme
  * @param <T>
  *          the underlaying mapper to be used
@@ -57,7 +57,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
 
   /**
    * Get the objects, which were defined to be deleted
-   * 
+   *
    * @return
    */
   Iterator<T> getSelection() {
@@ -66,7 +66,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.dataaccess.delete.IDelete#delete(io.vertx.core.Handler)
    */
   @Override
@@ -86,7 +86,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
 
   /**
    * This method deletes all records, which are fitting the query arguments
-   * 
+   *
    * @param query
    *          the query to be handled
    * @param resultHandler
@@ -96,7 +96,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
 
   /**
    * This method deletes records, which were added into the current instance
-   * 
+   *
    * @param resultHandler
    *          the handler to be informed
    */
@@ -138,7 +138,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
 
   /**
    * Execution done before instances are deleted from the datastore
-   * 
+   *
    * @return
    */
   protected Future<Void> preDelete(final IObserverContext context) {
@@ -147,7 +147,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
 
   /**
    * Execution done after entities were deleted from the datastore
-   * 
+   *
    */
   protected Future<IDeleteResult> postDelete(final IDeleteResult dr, final IObserverContext context) {
     Future<Void> f = getMapper().getObserverHandler().handleAfterDelete(this, dr, context);
@@ -181,7 +181,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see
    * cn.vtohru.orm.dataaccess.delete.IDelete#setQuery(cn.vtohru.orm.dataaccess
    * .query.IQuery)
@@ -195,7 +195,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.dataaccess.delete.IDelete#add(java.lang.Object)
    */
   @Override
@@ -207,7 +207,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.dataaccess.delete.IDelete#add(java.lang.Object[])
    */
   @SuppressWarnings("unchecked")
@@ -235,7 +235,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
 
   /**
    * Generates a list of record ids from the records
-   * 
+   *
    * @param idField
    * @param resultHandler
    */
@@ -252,7 +252,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
 
   /**
    * Performs a deletion of instances by their ID
-   * 
+   *
    * @param idField
    *          the idfield
    * @param objectIds

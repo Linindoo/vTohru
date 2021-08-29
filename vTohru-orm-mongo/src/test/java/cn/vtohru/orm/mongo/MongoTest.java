@@ -6,15 +6,10 @@ import cn.vtohru.orm.dataaccess.write.IWriteEntry;
 import cn.vtohru.orm.dataaccess.write.IWriteResult;
 import cn.vtohru.orm.init.DataStoreSettings;
 import cn.vtohru.orm.mongo.dao.ClassDao;
-import cn.vtohru.orm.mongo.dao.UserDao;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.mongo.BulkOperation;
 import io.vertx.ext.mongo.MongoClient;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MongoTest {
 

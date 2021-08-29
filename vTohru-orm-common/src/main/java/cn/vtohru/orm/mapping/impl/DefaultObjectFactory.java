@@ -25,13 +25,13 @@ import cn.vtohru.orm.exception.MappingException;
 import cn.vtohru.orm.mapping.IProperty;
 import cn.vtohru.orm.mapping.IMapper;
 import cn.vtohru.orm.mapping.IObjectFactory;
-import de.braintags.io.vertx.util.ClassUtil;
+import cn.vtohru.orm.util.ClassUtil;
 
 /**
  * Default implementation of {@link IObjectFactory}
- * 
+ *
  * @author Michael Remme
- * 
+ *
  */
 
 public class DefaultObjectFactory implements IObjectFactory {
@@ -42,7 +42,7 @@ public class DefaultObjectFactory implements IObjectFactory {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IObjectFactory#createInstance(java.lang.Class)
    */
   @Override
@@ -59,7 +59,7 @@ public class DefaultObjectFactory implements IObjectFactory {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see
    * cn.vtohru.orm.mapping.IObjectFactory#setMapper(cn.vtohru.orm.mapping.IMapper)
    */
@@ -70,7 +70,7 @@ public class DefaultObjectFactory implements IObjectFactory {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IObjectFactory#getMapper()
    */
   @Override

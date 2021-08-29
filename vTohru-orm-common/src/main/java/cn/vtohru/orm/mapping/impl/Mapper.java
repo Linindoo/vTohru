@@ -24,10 +24,10 @@ import java.lang.reflect.Modifier;
 import cn.vtohru.orm.IDataStore;
 import cn.vtohru.orm.annotation.ObjectFactory;
 import cn.vtohru.orm.annotation.field.Id;
+import cn.vtohru.orm.exception.ClassAccessException;
 import cn.vtohru.orm.exception.MappingException;
 import cn.vtohru.orm.mapping.*;
-import de.braintags.io.vertx.util.ClassUtil;
-import de.braintags.io.vertx.util.exception.ClassAccessException;
+import cn.vtohru.orm.util.ClassUtil;
 
 /**
  * This implementation of {@link IMapper} is using the bean convention to define fields, which shall be mapped. It is
@@ -151,7 +151,7 @@ public class Mapper<T> extends AbstractMapper<T> {
 
   /**
    * Adds a mapped field into the list of properties
-   * 
+   *
    * @param name
    * @param mf
    */
@@ -168,7 +168,7 @@ public class Mapper<T> extends AbstractMapper<T> {
 
   /**
    * Create the id info for this mapper
-   * 
+   *
    * @param mappedField
    *          the field with the {@link Id} annotation
    * @return the id info
@@ -179,7 +179,7 @@ public class Mapper<T> extends AbstractMapper<T> {
 
   /**
    * Create a new instance of {@link MappedField}
-   * 
+   *
    * @param field
    * @param accessor
    * @return
@@ -207,7 +207,7 @@ public class Mapper<T> extends AbstractMapper<T> {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IMapper#getKeyGeneratorReference()
    */
   @Override

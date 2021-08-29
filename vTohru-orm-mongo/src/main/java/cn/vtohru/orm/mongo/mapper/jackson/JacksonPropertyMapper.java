@@ -13,11 +13,11 @@
 package cn.vtohru.orm.mongo.mapper.jackson;
 
 import cn.vtohru.orm.dataaccess.query.impl.GeoSearchArgument;
+import cn.vtohru.orm.exception.PropertyAccessException;
 import cn.vtohru.orm.exception.QueryParameterException;
 import cn.vtohru.orm.mapping.*;
 import cn.vtohru.orm.mongo.MongoDataStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.braintags.io.vertx.util.exception.PropertyAccessException;
 import io.micronaut.core.reflect.ClassUtils;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -27,9 +27,9 @@ import io.vertx.core.json.JsonObject;
 
 /**
  * An implementation of {@link IPropertyMapper} for use with jackson
- * 
+ *
  * @author Michael Remme
- * 
+ *
  */
 public class JacksonPropertyMapper implements IPropertyMapper {
   private ObjectMapper objectMapper;
@@ -40,7 +40,7 @@ public class JacksonPropertyMapper implements IPropertyMapper {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see de.braintags.vertx.jomnigate.mapping.IPropertyMapper#convertForStore(java.lang.Object,
    * de.braintags.vertx.jomnigate.mapping.IProperty, io.vertx.core.Handler)
    */
@@ -97,7 +97,7 @@ public class JacksonPropertyMapper implements IPropertyMapper {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see de.braintags.vertx.jomnigate.mapping.IPropertyMapper#readForStore(java.lang.Object,
    * de.braintags.vertx.jomnigate.mapping.IProperty, io.vertx.core.Handler)
    */
@@ -115,7 +115,7 @@ public class JacksonPropertyMapper implements IPropertyMapper {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see de.braintags.vertx.jomnigate.mapping.IPropertyMapper#fromStoreObject(java.lang.Object,
    * de.braintags.vertx.jomnigate.mapping.IStoreObject, de.braintags.vertx.jomnigate.mapping.IProperty,
    * io.vertx.core.Handler)
@@ -150,7 +150,7 @@ public class JacksonPropertyMapper implements IPropertyMapper {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see de.braintags.vertx.jomnigate.mapping.IPropertyMapper#fromObjectReference(java.lang.Object,
    * de.braintags.vertx.jomnigate.mapping.IObjectReference, io.vertx.core.Handler)
    */

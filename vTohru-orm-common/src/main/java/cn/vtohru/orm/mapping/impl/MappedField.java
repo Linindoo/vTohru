@@ -42,15 +42,15 @@ import cn.vtohru.orm.mapping.IProperty;
 import cn.vtohru.orm.mapping.IPropertyAccessor;
 import cn.vtohru.orm.mapping.IPropertyMapper;
 import cn.vtohru.orm.typehandler.ITypeHandler;
-import de.braintags.io.vertx.util.ClassUtil;
+import cn.vtohru.orm.util.ClassUtil;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
 /**
  * Represents a field, which shall be mapped into an {@link IDataStore}
- * 
+ *
  * @author Michael Remme
- * 
+ *
  */
 
 public class MappedField extends AbstractProperty {
@@ -82,7 +82,7 @@ public class MappedField extends AbstractProperty {
 
   /**
    * Constructor which creates a new instance by reading informations from the given {@link Field}
-   * 
+   *
    * @param field
    *          the field to be used
    * @param accessor
@@ -102,7 +102,7 @@ public class MappedField extends AbstractProperty {
 
   /**
    * Constructor which build a new instance from the given class
-   * 
+   *
    * @param type
    *          the underlaying class for the new instance
    * @param mapper
@@ -272,7 +272,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#getPropertyDescriptor()
    */
   @Override
@@ -282,7 +282,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#getTypeHandler()
    */
   @Override
@@ -295,7 +295,7 @@ public class MappedField extends AbstractProperty {
   /**
    * Add an Annotation, for which the Mapper shall be checked. Existing annotations of that type can be requested by
    * method {@link #getAnnotation(Class)}
-   * 
+   *
    * @param annotation
    *          the Annotation class, which we are interested in
    */
@@ -305,7 +305,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#isSet()
    */
   @Override
@@ -315,7 +315,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#setIsSet(boolean)
    */
   public void setIsSet(final boolean isSet) {
@@ -324,7 +324,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#getMapKeyClass()
    */
   @Override
@@ -338,7 +338,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#isMap()
    */
   @Override
@@ -348,7 +348,7 @@ public class MappedField extends AbstractProperty {
 
   /**
    * Defines wether the field is an instance of {@link Map}
-   * 
+   *
    * @param isMap
    *          the isMap to set
    */
@@ -358,7 +358,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#getType()
    */
   @Override
@@ -368,7 +368,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#getSubClass()
    */
   @Override
@@ -378,7 +378,7 @@ public class MappedField extends AbstractProperty {
 
   /**
    * Define the syb type of the instance
-   * 
+   *
    * @param subType
    *          the sub type
    */
@@ -388,7 +388,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#getSubType()
    */
   @Override
@@ -398,7 +398,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#isSingleValue()
    */
   @Override
@@ -411,7 +411,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#getField()
    */
   @Override
@@ -421,7 +421,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#getTypeParameters()
    */
   @Override
@@ -431,7 +431,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#isArray()
    */
   @Override
@@ -441,7 +441,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#isCollection()
    */
   @Override
@@ -451,7 +451,7 @@ public class MappedField extends AbstractProperty {
 
   /**
    * returns true if annotation {@link Ignore} is set
-   * 
+   *
    * @return
    */
   @Override
@@ -461,7 +461,7 @@ public class MappedField extends AbstractProperty {
 
   /**
    * returns the full name of the class plus java field name
-   * 
+   *
    * @return the name
    */
   @Override
@@ -481,7 +481,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#getConstructor(java.lang.Class[])
    */
   @Override
@@ -515,7 +515,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#getAnnotation(java.lang.Class)
    */
   @Override
@@ -530,7 +530,7 @@ public class MappedField extends AbstractProperty {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IField#getSubTypeHandler()
    */
   @Override

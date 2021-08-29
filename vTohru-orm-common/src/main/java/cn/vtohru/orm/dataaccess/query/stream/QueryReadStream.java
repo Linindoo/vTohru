@@ -17,8 +17,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import cn.vtohru.orm.dataaccess.query.IQueryResult;
+import cn.vtohru.orm.util.ExceptionUtil;
 import cn.vtohru.orm.util.QueryHelper;
-import de.braintags.io.vertx.util.ExceptionUtil;
 import io.micronaut.core.annotation.Nullable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -28,7 +28,7 @@ import io.vertx.core.streams.ReadStream;
 
 /**
  * an implementation of {@link ReadStream} which streams a query result into the required format
- * 
+ *
  * @author Michael Remme
  * @param <T>
  *          the mapper class to be handled
@@ -53,7 +53,7 @@ public abstract class QueryReadStream<T, U> implements ReadStream<U> {
 
   /**
    * Constructor which is usind the default block size of 2000
-   * 
+   *
    * @param query
    */
   public QueryReadStream(final IQuery<T> query) {
@@ -62,7 +62,7 @@ public abstract class QueryReadStream<T, U> implements ReadStream<U> {
 
   /**
    * execute queries with the given block size
-   * 
+   *
    * @param query
    * @param blockSize
    *          the maximum number of records per query
@@ -165,7 +165,7 @@ public abstract class QueryReadStream<T, U> implements ReadStream<U> {
 
   /**
    * Get the instance of IStreamResult, which contains the log of the execution
-   * 
+   *
    * @return
    */
   public IStreamResult<T> getStreamResult() {
@@ -175,7 +175,7 @@ public abstract class QueryReadStream<T, U> implements ReadStream<U> {
   /**
    * The default implementation of IStreamResult used here is {@link DefaultStreamResult}. If you want to add a specific
    * solution, you have to add it here before start of execution
-   * 
+   *
    * @param streamResult
    */
   public void setStreamResult(final IStreamResult<T> streamResult) {
@@ -195,7 +195,7 @@ public abstract class QueryReadStream<T, U> implements ReadStream<U> {
 
   /**
    * Append the given instance to the result
-   * 
+   *
    * @param handler
    * @param entity
    */
@@ -214,7 +214,7 @@ public abstract class QueryReadStream<T, U> implements ReadStream<U> {
 
   /**
    * Close the stream and inform the handler
-   * 
+   *
    * @param handler
    */
   public void close(final Handler<AsyncResult<Void>> handler) {

@@ -22,17 +22,17 @@ import cn.vtohru.orm.annotation.field.Referenced;
 import cn.vtohru.orm.exception.MappingException;
 import cn.vtohru.orm.mapping.IProperty;
 import cn.vtohru.orm.typehandler.impl.DefaultTypeHandlerResult;
-import de.braintags.io.vertx.util.ClassUtil;
-import de.braintags.io.vertx.util.ExceptionUtil;
+import cn.vtohru.orm.util.ClassUtil;
+import cn.vtohru.orm.util.ExceptionUtil;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 
 /**
  * Abstract implementation of {@link ITypeHandler} which handles
- * 
+ *
  * @author Michael Remme
- * 
+ *
  */
 
 public abstract class AbstractTypeHandler implements ITypeHandler {
@@ -41,7 +41,7 @@ public abstract class AbstractTypeHandler implements ITypeHandler {
 
   /**
    * Constructor for an implementation
-   * 
+   *
    * @param typeHandlerFactory
    *          the parent factory
    * @param classesToDeal
@@ -54,7 +54,7 @@ public abstract class AbstractTypeHandler implements ITypeHandler {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see
    * cn.vtohru.orm.typehandler.ITypeHandler#matches(cn.vtohru.orm.mapping.IField)
    */
@@ -73,7 +73,7 @@ public abstract class AbstractTypeHandler implements ITypeHandler {
 
   /**
    * Checks wether the given Class is handled by the current implementation
-   * 
+   *
    * @param cls
    *          the class to be checked
    * @return MATCH_NONE if the field is not handled by the current instance, MATCH_MINOR if it is fitting partially (
@@ -93,7 +93,7 @@ public abstract class AbstractTypeHandler implements ITypeHandler {
 
   /**
    * Checks wether the given implementation handles the Annotation of type Referenced or Embedded or null
-   * 
+   *
    * @param annotation
    *          an Annotation of type {@link Referenced}, {@link Embedded} or null
    * @return true, if the current implementation handles this. The default implementation returns true
@@ -106,7 +106,7 @@ public abstract class AbstractTypeHandler implements ITypeHandler {
 
   /**
    * Get a fitting constructor
-   * 
+   *
    * @param field
    *          the field to be used
    * @param cls
@@ -131,7 +131,7 @@ public abstract class AbstractTypeHandler implements ITypeHandler {
 
   /**
    * Creates an instance of {@link ITypeHandlerResult} and calls the handler
-   * 
+   *
    * @param result
    *          the result to be sent to the caller
    * @param resultHandler
@@ -145,7 +145,7 @@ public abstract class AbstractTypeHandler implements ITypeHandler {
 
   /**
    * Calls the caller to inform about an error
-   * 
+   *
    * @param thr
    *          the Throwable, which occured
    * @param resultHandler
@@ -172,7 +172,7 @@ public abstract class AbstractTypeHandler implements ITypeHandler {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.typehandler.ITypeHandler#getSubTypeHandler(java.lang.Class)
    */
   @Override

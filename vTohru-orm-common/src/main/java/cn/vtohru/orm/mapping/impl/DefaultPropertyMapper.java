@@ -13,6 +13,7 @@
 package cn.vtohru.orm.mapping.impl;
 
 import cn.vtohru.orm.IDataStore;
+import cn.vtohru.orm.exception.PropertyAccessException;
 import cn.vtohru.orm.exception.TypeHandlerException;
 import cn.vtohru.orm.mapping.IObjectReference;
 import cn.vtohru.orm.mapping.IProperty;
@@ -21,16 +22,15 @@ import cn.vtohru.orm.mapping.IPropertyMapper;
 import cn.vtohru.orm.mapping.IStoreObject;
 import cn.vtohru.orm.typehandler.ITypeHandler;
 import cn.vtohru.orm.typehandler.ITypeHandlerReferenced;
-import de.braintags.io.vertx.util.exception.PropertyAccessException;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 
 /**
- * 
- * 
+ *
+ *
  * @author Michael Remme
- * 
+ *
  */
 
 public class DefaultPropertyMapper implements IPropertyMapper {
@@ -52,7 +52,7 @@ public class DefaultPropertyMapper implements IPropertyMapper {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.mapping.IPropertyMapper#convertForStore(java.lang.Object,
    * cn.vtohru.orm.mapping.IProperty, io.vertx.core.Handler)
    */
@@ -63,7 +63,7 @@ public class DefaultPropertyMapper implements IPropertyMapper {
 
   /**
    * Store a java value into the StoreObject by using the defined typehandler
-   * 
+   *
    * @param storeObject
    *          the storeObject to place the converted value into
    * @param field
