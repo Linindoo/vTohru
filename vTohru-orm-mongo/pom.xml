@@ -19,7 +19,7 @@
         </dependency>
         <dependency>
             <groupId>cn.lindoo.vtohru</groupId>
-            <artifactId>vTohru-orm</artifactId>
+            <artifactId>vTohru-orm-common</artifactId>
             <version>0.0.1-dev</version>
         </dependency>
         <dependency>
