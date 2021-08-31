@@ -16,6 +16,7 @@ package cn.vtohru.orm.impl;
 import java.util.HashMap;
 import java.util.Map;
 
+import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.orm.IDataStore;
 import cn.vtohru.orm.annotation.KeyGenerator;
 import cn.vtohru.orm.exception.UnsupportedKeyGenerator;
@@ -36,7 +37,7 @@ import io.vertx.core.json.JsonObject;
  * An abstract implementation of {@link IDataStore}
  *
  * @author Michael Remme
- * 
+ *
  * @param <S>
  *          the type of the {@link IStoreObjectFactory} like Json, String etc.
  * @param <U>
@@ -45,7 +46,7 @@ import io.vertx.core.json.JsonObject;
  */
 
 public abstract class AbstractDataStore<S, U> implements IDataStore<S, U> {
-  private Vertx vertx;
+  private VerticleApplicationContext context;
   private JsonObject properties;
   private IMapperFactory mapperFactory;
   private IStoreObjectFactory<S> storeObjectFactory;
@@ -60,13 +61,12 @@ public abstract class AbstractDataStore<S, U> implements IDataStore<S, U> {
   /**
    * Create a new instance. The possible properties are defined by its concete implementation
    *
-   * @param vertx
    *          the instance if {@link Vertx} used
    * @param properties
    *          the properties by which the new instance is created
    */
-  public AbstractDataStore(Vertx vertx, JsonObject properties, DataStoreSettings settings) {
-    this.vertx = vertx;
+  public AbstractDataStore(VerticleApplicationContext context, JsonObject properties, DataStoreSettings settings) {
+    this.context = context;
     this.properties = properties;
     initSupportedKeyGenerators();
     defaultQueryLimit = properties.getInteger(DEFAULT_QUERY_LIMIT, 500);
@@ -85,13 +85,13 @@ public abstract class AbstractDataStore<S, U> implements IDataStore<S, U> {
    * @param storeObjectFactory
    *          the storeObjectFactory to set
    */
-  public void setStoreObjectFactory(IStoreObjectFactory<S> storeObjectFactory) {
+  public final void setStoreObjectFactory(IStoreObjectFactory<S> storeObjectFactory) {
     this.storeObjectFactory = storeObjectFactory;
   }
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.IDataStore#getMapperFactory()
    */
   @Override
@@ -141,7 +141,7 @@ public abstract class AbstractDataStore<S, U> implements IDataStore<S, U> {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.IDataStore#getProperties()
    */
   @Override
@@ -154,7 +154,7 @@ public abstract class AbstractDataStore<S, U> implements IDataStore<S, U> {
    *
    * @param generator
    */
-  protected void addSupportedKeyGenerator(IKeyGenerator generator) {
+  private void addSupportedKeyGenerator(IKeyGenerator generator) {
     keyGeneratorMap.put(generator.getName(), generator);
   }
 
@@ -162,14 +162,17 @@ public abstract class AbstractDataStore<S, U> implements IDataStore<S, U> {
    * Define all {@link IKeyGenerator}, which are supported by the current instance by using the method
    * {@link #addSupportedKeyGenerator(IKeyGenerator)}
    */
-  protected void initSupportedKeyGenerators() {
-    addSupportedKeyGenerator(new DebugGenerator(this));
-    addSupportedKeyGenerator(new DefaultKeyGenerator(this));
+  private void initSupportedKeyGenerators() {
+    Vertx vertx = this.context.getVertx();
+    DebugGenerator generator = new DebugGenerator(this);
+    addSupportedKeyGenerator(generator);
+    DefaultKeyGenerator defaultGenerator = new DefaultKeyGenerator(this, vertx);
+    addSupportedKeyGenerator(defaultGenerator);
   }
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.IDataStore#getKeyGenerator(java.lang.String)
    */
   @Override
@@ -183,9 +186,8 @@ public abstract class AbstractDataStore<S, U> implements IDataStore<S, U> {
     throw new UnsupportedKeyGenerator("This generator is not supported by the current datastore: " + generatorName);
   }
 
-  @Override
   public Vertx getVertx() {
-    return vertx;
+    return context.getVertx();
   }
 
   /**
@@ -216,7 +218,7 @@ public abstract class AbstractDataStore<S, U> implements IDataStore<S, U> {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.IDataStore#getEncoder(java.lang.String)
    */
   @Override
@@ -226,7 +228,7 @@ public abstract class AbstractDataStore<S, U> implements IDataStore<S, U> {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see cn.vtohru.orm.IDataStore#getDefaultQueryLimit()
    */
   @Override

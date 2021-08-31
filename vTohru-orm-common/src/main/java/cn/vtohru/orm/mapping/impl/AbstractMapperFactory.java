@@ -139,6 +139,7 @@ public abstract class AbstractMapperFactory implements IMapperFactory {
       throw new InitException("Init of mapping not possible", e);
     }
     if (ro.isError()) {
+      ro.getThrowable().printStackTrace();
       throw new InitException(ro.getThrowable());
     }
   }

@@ -29,10 +29,11 @@ public class DefaultKeyGenerator extends AbstractKeyGenerator {
   /**
    * @param name
    * @param datastore
+   * @param vertx
    */
-  public DefaultKeyGenerator(IDataStore datastore) {
+  public DefaultKeyGenerator(IDataStore datastore, Vertx vertx) {
     super(NAME, datastore);
-    vertx = datastore.getVertx();
+    this.vertx = vertx;
   }
 
   /*

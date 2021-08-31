@@ -227,7 +227,7 @@ public class VTohru extends DefaultApplicationContextBuilder {
         return (new VTohru()).args(args);
     }
 
-    public static ApplicationContext run(String... args) {
+    public static VerticleApplicationContext run(String... args) {
         return run(new Class[0], args);
     }
 
@@ -235,7 +235,7 @@ public class VTohru extends DefaultApplicationContextBuilder {
         return run(new Class[]{cls}, args);
     }
 
-    public static ApplicationContext run(Class[] classes, String... args) {
+    public static VerticleApplicationContext run(Class[] classes, String... args) {
         return (new VTohru()).classes(classes).args(args).start();
     }
 

@@ -11,9 +11,9 @@ import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
 
 public class VerticleApplicationContext extends DefaultApplicationContext {
     public static final String SCOPE_PACKAGE = "VTOHRU_VERTICLE_SCOPE_PACKAGE";
@@ -99,9 +99,9 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
         return className.replace("Definition$Intercepted", "").replace("$", "");
     }
 
-    public Map<String, Object> getScopeMap(BeanDefinition<?> beanDefinition) {
+    public AbstractMap getScopeMap(BeanDefinition<?> beanDefinition) {
         String verticleName = this.getVerticleName(beanDefinition);
         String verticleConfigKey = "vtohru." + verticleName.toLowerCase();
-        return getEnvironment().get(verticleConfigKey, HashMap.class).orElse(new HashMap<>());
+        return getEnvironment().get(verticleConfigKey, AbstractMap.class).orElse(new HashMap<>());
     }
 }

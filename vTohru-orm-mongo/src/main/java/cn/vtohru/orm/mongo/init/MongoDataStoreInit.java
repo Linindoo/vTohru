@@ -170,7 +170,7 @@ public class MongoDataStoreInit extends AbstractDataStoreInit implements IDataSt
           LOGGER.error("could not start mongo client", initResult.cause());
           handler.handle(Future.failedFuture(new InitException(initResult.cause())));
         } else {
-          mongoDataStore = new MongoDataStore(vertx, mongoClient, getConfig(), settings);
+//          mongoDataStore = new MongoDataStore(vertx, mongoClient, getConfig(), settings);
           handler.handle(Future.succeededFuture(mongoDataStore));
         }
       });
