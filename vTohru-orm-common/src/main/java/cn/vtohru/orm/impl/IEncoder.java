@@ -7,7 +7,7 @@ public class IEncoder {
 
     }
 
-    public Object encode(CharSequence javaValue) {
+    public String encode(CharSequence javaValue) {
         return null;
     }
 }

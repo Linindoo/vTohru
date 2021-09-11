@@ -1,33 +1,14 @@
-/*
- * #%L
- * vertx-pojo-mapper-common
- * %%
- * Copyright (C) 2017 Braintags GmbH
- * %%
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * #L%
- */
 package cn.vtohru.orm.mapping;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import cn.vtohru.orm.annotation.field.Embedded;
-import cn.vtohru.orm.annotation.field.Encoder;
-import cn.vtohru.orm.annotation.field.Id;
-import cn.vtohru.orm.annotation.field.Referenced;
-import cn.vtohru.orm.impl.IEncoder;
 import cn.vtohru.orm.mapping.datastore.IColumnInfo;
-import cn.vtohru.orm.typehandler.ITypeHandler;
+import cn.vtohru.orm.mapping.impl.AbstractStoreObject;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
+import io.vertx.core.Promise;
+
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Describes a property of an {@link IMapper}
@@ -35,199 +16,61 @@ import cn.vtohru.orm.typehandler.ITypeHandler;
  * @author Michael Remme
  * 
  */
-public interface IProperty {
+public interface IProperty<T> {
 
-  /**
-   * Get the simple name of the field, like defined in the mapper class
-   * 
-   * @return the name
-   */
-  public String getName();
+  String getName();
 
-  /**
-   * Get the full name of the field
-   * 
-   * @return the classname.fieldname
-   */
-  public String getFullName();
+  String getFullName();
 
-  /**
-   * Get the fitting {@link IPropertyAccessor} for the current field
-   * 
-   * @return
-   */
-  public IPropertyAccessor getPropertyAccessor();
+  Annotation getAnnotation(Class<? extends Annotation> annotationClass);
 
-  /**
-   * Get the fitting {@link ITypeHandler} which is responsible to change data into and from the propriate format
-   * 
-   * @return
-   */
-  public ITypeHandler getTypeHandler();
+  boolean hasAnnotation(Class<? extends Annotation> annotationClass);
 
-  /**
-   * Get the fitting {@link IPropertyMapper} for the current field.
-   * 
-   * @return an instance of {@link IPropertyMapper}, {@link IEmbeddedMapper} or {@link IReferencedMapper}
-   */
-  public IPropertyMapper getPropertyMapper();
+  Annotation getEmbedRef();
 
-  /**
-   * Get a defined {@link Annotation} of the given class
-   * 
-   * @param annotationClass
-   *          a defined annotation or null
-   * @return
-   */
-  public Annotation getAnnotation(Class<? extends Annotation> annotationClass);
-
-  /**
-   * Is the annotation defined?
-   * 
-   * @param annotationClass
-   *          the annotation to be examined
-   * @return true, if annotatin is defined
-   */
-  public boolean hasAnnotation(Class<? extends Annotation> annotationClass);
-
-  /**
-   * If for the current field an annotation {@link Embedded} or {@link Referenced} is defined, then it is returned here
-   * 
-   * @return an annotation of type {@link Embedded} or {@link Referenced} or null
-   */
-  public Annotation getEmbedRef();
-
-  /**
-   * Get the parent instance of {@link IMapper}
-   * 
-   * @return the mapper
-   */
-  public IMapper getMapper();
-
-  /**
-   * Get the constructor with the given parameters
-   * 
-   * @param parameters
-   *          the parameters of the required Constructor
-   * @return a constructor with the arguments or null
-   */
-  @SuppressWarnings("rawtypes")
-  public Constructor getConstructor(Class<?>... parameters);
-
-  /**
-   * Get the underlaying {@link Field}
-   * 
-   * @return the field
-   */
-  public Field getField();
-
-  /**
-   * Is this field a {@link Set}?
-   * 
-   * @return true, if field is an instance of {@link Set}
-   * @deprecated should no longer be used, isCollection() instead
-   */
-  @Deprecated
-  public boolean isSet();
+  IMapper getMapper();
 
   /**
    * Is this field a {@link Map}?
    * 
    * @return true, if field is an instance of {@link Map}
    */
-  public boolean isMap();
-
-  /**
-   * If the underlying java type is a map then it returns T from Map<T,V>
-   * 
-   * @return the CLass of the key, if this is a {@link Map}
-   */
-  public Class<?> getMapKeyClass();
+  boolean isMap();
 
   /**
    * returns the type of the underlying java field
    * 
    * @return the type class
    */
-  public Class<?> getType();
-
-  /**
-   * If the java field is a list/array/map then the sub-type T is returned (ex. List<T>, T[], Map<?,T>
-   * 
-   * @return the sub class
-   */
-  public Class<?> getSubClass();
-
-  /**
-   * If the java field is a list/array/map and the type of the members can be examined, then here the propriate
-   * ITypeHandler is returned
-   * 
-   * @return the {@link ITypeHandler} to deal with the subtype, or NULL if subtype can't be read
-   */
-  public ITypeHandler getSubTypeHandler();
-
-  /**
-   * If the java field is a list / array / map the the sub type is returned
-   * 
-   * @return the subtype
-   */
-  public Type getSubType();
-
-  /**
-   * Is the field defining a single value?
-   * 
-   * @return true, if single value
-   */
-  public boolean isSingleValue();
-
-  /**
-   * Get the list of defined type parameters of the current field
-   * 
-   * @return the list of type parameters
-   */
-  public List<IProperty> getTypeParameters();
+  Class<?> getType();
 
   /**
    * Get the information whether the field defines an array
    * 
    * @return the isArray
    */
-  public boolean isArray();
+  boolean isArray();
 
   /**
    * Get the information whether the field defines a {@link Collection}
    * 
    * @return the isCollection
    */
-  public boolean isCollection();
+  boolean isCollection();
 
   /**
    * Get the {@link IColumnInfo} which is connected to the current field
    * 
    * @return
    */
-  public IColumnInfo getColumnInfo();
+  IColumnInfo getColumnInfo();
 
   /**
-   * Returns true, if the current field is a field annotated with {@link Id}
+   * Returns true, if the current field is a field annotated with {@link javax.persistence.Id}
    * 
    * @return
    */
-  public boolean isIdField();
-
-  /**
-   * If an {@link IEncoder} was defined by the annotation {@link Encoder}, it is returned here
-   * 
-   * @return valid instance of {@link IEncoder} or null, if not defined
-   */
-  IEncoder getEncoder();
-
-  /**
-   * Get the {@link Type} of the field. If this field uses generics to define its type. This is included as well.
-   * 
-   * @return the generic {@link Type} of the field
-   */
-  public Type getGenericType();
+  boolean isIdField();
 
   /**
    * returns true if this property shall be ignored
@@ -235,5 +78,17 @@ public interface IProperty {
    * @return
    */
   boolean isIgnore();
+
+  void fromStoreObject(T tmpObject, AbstractStoreObject abstractStoreObject, Promise<Void> f);
+
+  Object readData(T record);
+
+  void intoStoreObject(T entity, AbstractStoreObject tfAbstractStoreObject, Handler<AsyncResult<Void>> handler);
+
+  void writeData(T record, Object data) ;
+
+  void readForStore(T mapper,   Handler<AsyncResult<Object>> handler);
+
+  void fromObjectReference(Object entity, IObjectReference reference, Handler<AsyncResult<Void>> handler);
 
 }

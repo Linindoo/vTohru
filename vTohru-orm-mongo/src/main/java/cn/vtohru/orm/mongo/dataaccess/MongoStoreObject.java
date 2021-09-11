@@ -12,33 +12,32 @@
  */
 package cn.vtohru.orm.mongo.dataaccess;
 
+import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.orm.exception.MappingException;
-import cn.vtohru.orm.mapping.IKeyGenerator;
-import cn.vtohru.orm.mapping.IProperty;
-import cn.vtohru.orm.mapping.IStoreObject;
+import cn.vtohru.orm.mapping.*;
 import cn.vtohru.orm.mapping.datastore.IColumnInfo;
 import cn.vtohru.orm.mapping.impl.AbstractStoreObject;
-import cn.vtohru.orm.mapping.IMapper;
+import cn.vtohru.orm.mongo.MongoDataStore;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 
 /**
- *
  * @author Michael Remme
  */
 
-public class MongoStoreObject<T> extends AbstractStoreObject<T,JsonObject> {
+public class MongoStoreObject<T> extends AbstractStoreObject<T, JsonObject> {
+  public static final String REFERENCED_LIST = "referencedList";
   private Object generatedId = null;
+  private VerticleApplicationContext context;
 
   /**
    * Creates a new instance, where the internal container is filled from the contents of the given entity
    *
-   * @param mapper
-   *          the mapper to be used
-   * @param entity
-   *          the entity
+   * @param mapper the mapper to be used
+   * @param entity the entity
    */
   public MongoStoreObject(final IMapper<T> mapper, final T entity, final JsonObject view) {
     super(mapper, entity, view);
@@ -47,10 +46,8 @@ public class MongoStoreObject<T> extends AbstractStoreObject<T,JsonObject> {
   /**
    * Creates a new instance, where the internal container is filled from the contents of the given entity
    *
-   * @param mapper
-   *          the mapper to be used
-   * @param entity
-   *          the entity
+   * @param mapper the mapper to be used
+   * @param entity the entity
    */
   public MongoStoreObject(final IMapper<T> mapper, final T entity) {
     super(mapper, entity, new JsonObject());
@@ -59,10 +56,8 @@ public class MongoStoreObject<T> extends AbstractStoreObject<T,JsonObject> {
   /**
    * Creates a new instance, where the internal container is filled from the contents of the given entity
    *
-   * @param json
-   *          the json object coming from the datastore
-   * @param mapper
-   *          the mapper to be used
+   * @param json   the json object coming from the datastore
+   * @param mapper the mapper to be used
    */
   public MongoStoreObject(final JsonObject json, final IMapper<T> mapper) {
     super(json, mapper);
@@ -96,6 +91,7 @@ public class MongoStoreObject<T> extends AbstractStoreObject<T,JsonObject> {
     }
     return this;
   }
+
   public void getNextId(final Handler<AsyncResult<Void>> handler) {
     IKeyGenerator gen = getMapper().getKeyGenerator();
     gen.generateKey(getMapper(), keyResult -> {

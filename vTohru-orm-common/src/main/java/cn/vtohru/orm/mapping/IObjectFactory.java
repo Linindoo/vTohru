@@ -12,8 +12,6 @@
  */
 package cn.vtohru.orm.mapping;
 
-import java.util.Collection;
-import java.util.Map;
 
 /**
  * IObjectFactory is used to create new instances for a mapper.
@@ -32,32 +30,6 @@ public interface IObjectFactory {
    */
   <T> T createInstance(Class<T> clazz);
 
-  /**
-   * Create a new instance of {@link Collection}
-   * 
-   * @param field
-   *          the {@link IProperty} definition
-   * @return a new {@link Collection}
-   */
-  @SuppressWarnings("rawtypes")
-  Collection createCollection(IProperty field);
-
-  /**
-   * Create a new instance of {@link Map}
-   * 
-   * @param field
-   *          the field to create a map for
-   * @return the new instance
-   */
-  @SuppressWarnings("rawtypes")
-  Map createMap(IProperty field);
-
-  /**
-   * Set the Mapper, where the IObjectFactory is contained
-   * 
-   * @param mapper
-   *          the {@link IMapper}
-   */
   void setMapper(IMapper mapper);
 
   /**

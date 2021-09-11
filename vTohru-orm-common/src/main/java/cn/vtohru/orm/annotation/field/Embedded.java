@@ -20,7 +20,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import cn.vtohru.orm.IDataStore;
-import cn.vtohru.orm.annotation.Entity;
 import cn.vtohru.orm.mapping.IKeyGenerator;
 
 /**

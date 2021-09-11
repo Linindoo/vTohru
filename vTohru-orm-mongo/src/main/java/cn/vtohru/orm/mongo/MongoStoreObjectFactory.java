@@ -12,7 +12,6 @@
  */
 package cn.vtohru.orm.mongo;
 
-import cn.vtohru.annotation.Verticle;
 import cn.vtohru.orm.annotation.lifecycle.BeforeSave;
 import cn.vtohru.orm.mapping.IMapper;
 import cn.vtohru.orm.mapping.IStoreObject;

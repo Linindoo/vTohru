@@ -186,8 +186,9 @@ public abstract class AbstractDataStore<S, U> implements IDataStore<S, U> {
     throw new UnsupportedKeyGenerator("This generator is not supported by the current datastore: " + generatorName);
   }
 
-  public Vertx getVertx() {
-    return context.getVertx();
+  @Override
+  public VerticleApplicationContext getContext() {
+    return this.context;
   }
 
   /**

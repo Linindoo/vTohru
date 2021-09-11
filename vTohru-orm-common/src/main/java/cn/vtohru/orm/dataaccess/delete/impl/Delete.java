@@ -244,7 +244,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
     List<Future> fList = new ArrayList<>();
     for (T record : getRecordList()) {
       Promise<Object> promise = Promise.promise();
-      idField.getPropertyMapper().readForStore(record, idField, promise);
+      idField.readForStore(record, promise);
       fList.add(promise.future());
     }
     return fList;

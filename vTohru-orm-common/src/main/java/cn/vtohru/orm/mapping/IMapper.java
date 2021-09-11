@@ -16,12 +16,13 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Set;
 
-import cn.vtohru.orm.annotation.Entity;
 import cn.vtohru.orm.annotation.VersionInfo;
 import cn.vtohru.orm.mapping.datastore.ITableInfo;
 import cn.vtohru.orm.observer.IObserverHandler;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
+
+import javax.persistence.Entity;
 
 /**
  * IMapper is responsible to collect information about the mapped class
@@ -47,12 +48,6 @@ public interface IMapper<T> {
    */
   Class<T> getMapperClass();
 
-  /**
-   * Returns true if at least one field of the mapper is annotated with {@link Referenced}
-   *
-   * @return
-   */
-  boolean hasReferencedFields();
 
   /**
    * Get the {@link IObjectFactory} which is defined for the current mapper. To define the {@link IObjectFactory} for

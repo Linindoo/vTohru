@@ -13,6 +13,7 @@
 
 package cn.vtohru.orm.mongo;
 
+import cn.vtohru.annotation.Verticle;
 import cn.vtohru.orm.IDataStoreMetaData;
 import cn.vtohru.orm.mapping.IMapper;
 import io.vertx.core.AsyncResult;
@@ -28,6 +29,7 @@ import io.vertx.ext.mongo.MongoClient;
  * @author Michael Remme
  * 
  */
+@Verticle
 public class MongoMetaData implements IDataStoreMetaData {
   private static final io.vertx.core.logging.Logger LOGGER = io.vertx.core.logging.LoggerFactory
       .getLogger(MongoMetaData.class);
@@ -37,11 +39,10 @@ public class MongoMetaData implements IDataStoreMetaData {
 
   /**
    * Constructor
-   * 
-   * @param client
-   *          the {@link MongoClient} to be used
+   *
+   * @param client the {@link MongoClient} to be used
    */
-  public MongoMetaData(final MongoDataStore ds) {
+  public MongoMetaData(MongoDataStore ds) {
     this.ds = ds;
   }
 

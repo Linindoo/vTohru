@@ -12,17 +12,17 @@
  */
 package cn.vtohru.orm.mapping.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
 import cn.vtohru.orm.annotation.lifecycle.AfterLoad;
 import cn.vtohru.orm.mapping.IMapper;
 import cn.vtohru.orm.mapping.IObjectReference;
 import cn.vtohru.orm.mapping.IProperty;
 import cn.vtohru.orm.mapping.IStoreObject;
 import io.vertx.core.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * An abstract implementation of IStoreObject
@@ -136,19 +136,13 @@ public abstract class AbstractStoreObject<T, F> implements IStoreObject<T, F> {
 
   @SuppressWarnings("rawtypes")
   protected final void iterateFields(final T tmpObject, final Handler<AsyncResult<Void>> handler) {
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("start iterateFields");
-    }
     Set<String> fieldNames = getMapper().getFieldNames();
     List<Future> fl = new ArrayList<>(fieldNames.size());
     for (String fieldName : fieldNames) {
       Promise<Void> f = Promise.promise();
       fl.add(f.future());
       IProperty field = getMapper().getField(fieldName);
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("handling field " + field.getFullName());
-      }
-      field.getPropertyMapper().fromStoreObject(tmpObject, this, field, f);
+      field.fromStoreObject(tmpObject, this, f);
     }
     CompositeFuture cf = CompositeFuture.all(fl);
     cf.onComplete(cfr -> {
@@ -175,7 +169,7 @@ public abstract class AbstractStoreObject<T, F> implements IStoreObject<T, F> {
       }
       Promise<Void> f = Promise.promise();
       fl.add(f.future());
-      ref.getField().getPropertyMapper().fromObjectReference(tmpObject, ref, f);
+      ref.getField().fromObjectReference(tmpObject, ref, f);
     }
     CompositeFuture cf = CompositeFuture.all(fl);
     cf.onComplete(cfr -> {
@@ -212,7 +206,7 @@ public abstract class AbstractStoreObject<T, F> implements IStoreObject<T, F> {
   protected Future initFieldFromEntity(final String fieldName) {
     Promise f = Promise.promise();
     IProperty field = mapper.getField(fieldName);
-    field.getPropertyMapper().intoStoreObject(entity, this, field, f);
+    field.intoStoreObject(entity, this, f);
     return f.future();
   }
 

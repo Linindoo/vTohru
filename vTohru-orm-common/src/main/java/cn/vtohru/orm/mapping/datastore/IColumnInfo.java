@@ -13,7 +13,6 @@
 
 package cn.vtohru.orm.mapping.datastore;
 
-import cn.vtohru.orm.annotation.field.Id;
 import cn.vtohru.orm.annotation.field.Property;
 import cn.vtohru.orm.mapping.IProperty;
 

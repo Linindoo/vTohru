@@ -5,9 +5,8 @@ import cn.vtohru.orm.dataaccess.query.impl.AbstractQueryResult;
 import cn.vtohru.orm.mapping.IStoreObjectFactory;
 import cn.vtohru.orm.mongo.MongoDataStore;
 import cn.vtohru.orm.mongo.mapper.MongoMapper;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
@@ -38,18 +37,19 @@ public class MongoQueryResult<T> extends AbstractQueryResult<T> {
   }
 
   @Override
-  protected void generatePojo(int i, Handler<AsyncResult<T>> handler) {
+  protected Future<T> generatePojo(int i) {
     JsonObject sourceObject = jsonResult.get(i);
     IStoreObjectFactory<JsonObject> sf = getDataStore().getStoreObjectFactory();
+    Promise<T> promise = Promise.promise();
     sf.createStoreObject(sourceObject, getMapper(), result -> {
       if (result.failed()) {
-        handler.handle(Future.failedFuture(result.cause()));
+        promise.fail(result.cause());
       } else {
-        @SuppressWarnings("unchecked")
         T pojo = result.result().getEntity();
-        handler.handle(Future.succeededFuture(pojo));
+        promise.complete(pojo);
       }
     });
+    return promise.future();
   }
 
   public List<JsonObject> getOriginalResult() {

@@ -242,7 +242,7 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
    * @return
    */
   private boolean isNewInstance(final T entity) {
-    Object javaValue = getMapper().getIdInfo().getField().getPropertyAccessor().readData(entity);
+    Object javaValue = getMapper().getIdInfo().getField().readData(entity);
     return javaValue == null;
   }
 

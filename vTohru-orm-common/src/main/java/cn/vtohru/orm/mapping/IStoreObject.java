@@ -90,4 +90,5 @@ public interface IStoreObject<T, F> {
    * @return true, if it exists already, false if not
    */
   boolean isNewInstance();
+
 }

@@ -13,10 +13,11 @@
 
 package cn.vtohru.orm.mongo.mapper.datastore;
 
-import cn.vtohru.orm.annotation.field.Id;
 import cn.vtohru.orm.mapping.IProperty;
 import cn.vtohru.orm.mapping.datastore.IColumnHandler;
 import cn.vtohru.orm.mapping.datastore.impl.DefaultColumnInfo;
+
+import javax.persistence.Id;
 
 /**
  * 

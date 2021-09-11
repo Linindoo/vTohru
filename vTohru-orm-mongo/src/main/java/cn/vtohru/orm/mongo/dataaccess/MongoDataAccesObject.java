@@ -30,7 +30,7 @@ interface MongoDataAccesObject<T> extends IDataAccessObject<T> {
       if (e instanceof MongoCommandException && ((MongoCommandException) e).getCode() == RATE_LIMIT_ERROR_CODE
           && tryCount < MAX_RETRIES) {
         Promise<Void> f = Promise.promise();
-        getDataStore().getVertx().setTimer(RETRY_TIMEOUT, res -> f.complete());
+        getDataStore().getContext().getVertx().setTimer(RETRY_TIMEOUT, res -> f.complete());
         return f.future().compose(v -> action.apply(tryCount + 1));
       } else {
         return Future.failedFuture(e);

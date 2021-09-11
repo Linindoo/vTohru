@@ -105,7 +105,7 @@ public class DefaultObserverHandler implements IObserverHandler {
         try {
           IObserver observer = os.getObserverClass().newInstance();
           observer.getObserverProperties().putAll(os.getObserverProperties());
-          observer.init(mapper.getMapperFactory().getDataStore().getVertx());
+          observer.init(mapper.getMapperFactory().getDataStore().getContext().getVertx());
           ol.add(observer);
         } catch (Exception e) {
           throw new MappingException(e);

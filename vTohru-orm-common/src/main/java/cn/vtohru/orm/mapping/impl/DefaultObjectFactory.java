@@ -12,20 +12,14 @@
  */
 package cn.vtohru.orm.mapping.impl;
 
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import cn.vtohru.orm.exception.MappingException;
-import cn.vtohru.orm.mapping.IProperty;
 import cn.vtohru.orm.mapping.IMapper;
 import cn.vtohru.orm.mapping.IObjectFactory;
-import cn.vtohru.orm.util.ClassUtil;
+import cn.vtohru.orm.mapping.IProperty;
+import io.micronaut.core.beans.BeanIntrospection;
+
+import java.lang.reflect.Constructor;
+import java.util.*;
 
 /**
  * Default implementation of {@link IObjectFactory}
@@ -36,86 +30,21 @@ import cn.vtohru.orm.util.ClassUtil;
 
 public class DefaultObjectFactory implements IObjectFactory {
   private IMapper mapper;
-  private static final Class<?> DEFAULT_LIST_CLASS = ArrayList.class;
-  private static final Class<?> DEFAULT_SET_CLASS = HashSet.class;
-  private static final Class<?> DEFAULT_MAP_CLASS = HashMap.class;
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see cn.vtohru.orm.mapping.IObjectFactory#createInstance(java.lang.Class)
-   */
   @Override
   public <T> T createInstance(Class<T> clazz) {
-    try {
-      if (ClassUtil.getConstructor(clazz) != null) {
-        throw new MappingException("No default constructor existing in class " + clazz.getName());
-      }
-      return clazz.newInstance();
-    } catch (InstantiationException | IllegalAccessException e) {
-      throw new MappingException(e);
-    }
+    BeanIntrospection introspection = BeanIntrospection.getIntrospection(clazz);
+    return (T) introspection.instantiate();
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see
-   * cn.vtohru.orm.mapping.IObjectFactory#setMapper(cn.vtohru.orm.mapping.IMapper)
-   */
   @Override
   public void setMapper(IMapper mapper) {
     this.mapper = mapper;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see cn.vtohru.orm.mapping.IObjectFactory#getMapper()
-   */
   @Override
   public IMapper getMapper() {
     return mapper;
-  }
-
-  @Override
-  public Collection<?> createCollection(IProperty field) {
-    if (field.isSet()) {
-      return createSet(field);
-    } else if (field.isCollection())
-      return createList(field);
-    else
-      throw new UnsupportedOperationException("this should not land here");
-  }
-
-  @SuppressWarnings("rawtypes")
-  private Set createSet(IProperty field) {
-    return (Set) newInstance(field.getConstructor(), DEFAULT_SET_CLASS);
-  }
-
-  @SuppressWarnings("rawtypes")
-  private List createList(IProperty field) {
-    return (List) newInstance(field.getConstructor(), DEFAULT_LIST_CLASS);
-  }
-
-  /**
-   * creates an instance of testType (if it isn't Object.class or null) or fallbackType
-   */
-  private Object newInstance(final Constructor<?> constructor, final Class<?> fallbackType) {
-    if (constructor != null) {
-      constructor.setAccessible(true);
-      try {
-        return constructor.newInstance();
-      } catch (Exception e) {
-        throw new MappingException(e);
-      }
-    }
-    return createInstance(fallbackType);
-  }
-
-  @Override
-  public Map<?, ?> createMap(IProperty field) {
-    return (Map<?, ?>) newInstance(field.getConstructor(), DEFAULT_MAP_CLASS);
   }
 
 }

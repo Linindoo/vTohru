@@ -19,8 +19,12 @@ import cn.vtohru.orm.mapping.IMapper;
 import cn.vtohru.orm.util.AbstractCollectionAsync;
 import cn.vtohru.orm.util.IteratorAsync;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An abstract implementation of IQueryResult. Extensions must implement one method to generate single pojos
@@ -73,12 +77,11 @@ public abstract class AbstractQueryResult<T> extends AbstractCollectionAsync<T> 
   /**
    * Create a Pojo from the information read from the datastore at position i and return it to the handler. The handler
    * will place the object into the internal array at the same position
-   *
-   * @param i
+   *  @param i
    *          the position inside the result from the datastore
-   * @param handler
+   * @return
    */
-  protected abstract void generatePojo(int i, Handler<AsyncResult<T>> handler);
+  protected abstract Future<T> generatePojo(int i);
 
   /*
    * (non-Javadoc)
@@ -127,24 +130,21 @@ public abstract class AbstractQueryResult<T> extends AbstractCollectionAsync<T> 
     public void next(final Handler<AsyncResult<T>> handler) {
       int thisIndex = currentIndex++;
       if (pojoResult[thisIndex] == null) {
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug(
-              "generating pojo on index " + thisIndex + " for mapper " + mapper.getMapperClass().getSimpleName());
-        }
-        generatePojo(thisIndex, result -> {
-          if (result.failed()) {
-            handler.handle(Future.failedFuture(result.cause()));
-          } else {
-            pojoResult[thisIndex] = result.result();
-            handler.handle(Future.succeededFuture(pojoResult[thisIndex]));
-          }
-        });
+        generatePojo(thisIndex).onComplete(handler);
       } else {
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("reusing pojo on index " + thisIndex + " for mapper " + mapper.getMapperClass().getSimpleName());
-        }
         handler.handle(Future.succeededFuture(pojoResult[thisIndex]));
       }
+    }
+
+    @Override
+    public void result(Handler<AsyncResult<List<T>>> handler) {
+      List<Future> futures = new ArrayList<>();
+      for (int i = 0; i < pojoResult.length; i++) {
+        futures.add(generatePojo(i));
+      }
+      CompositeFuture.all(futures).onSuccess(x -> {
+        handler.handle(Future.succeededFuture(x.result().list()));
+      }).onFailure(e -> handler.handle(Future.failedFuture(e)));
     }
 
   }

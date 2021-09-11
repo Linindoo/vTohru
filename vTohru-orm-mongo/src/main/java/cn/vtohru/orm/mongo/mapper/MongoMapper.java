@@ -12,36 +12,22 @@
  */
 package cn.vtohru.orm.mongo.mapper;
 
-import cn.vtohru.orm.annotation.field.Id;
+import cn.vtohru.orm.IDataStore;
 import cn.vtohru.orm.exception.MappingException;
 import cn.vtohru.orm.mapping.IIdInfo;
 import cn.vtohru.orm.mapping.IObjectFactory;
 import cn.vtohru.orm.mapping.IProperty;
 import cn.vtohru.orm.mapping.impl.AbstractMapper;
+import cn.vtohru.orm.mapping.impl.DefaultObjectFactory;
 import cn.vtohru.orm.mapping.impl.IdInfo;
-import cn.vtohru.orm.mapping.impl.Mapper;
-import cn.vtohru.orm.mongo.MongoDataStore;
-import cn.vtohru.orm.mongo.mapper.jackson.JacksonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 
-import java.lang.annotation.Annotation;
-import java.util.List;
-
-/**
- * An extension of {@link Mapper} for use with Mongo
- *
- * @author Michael Remme
- * 
- */
+import javax.persistence.Id;
 
 public class MongoMapper<T> extends AbstractMapper<T> {
-  private BeanDescription beanDescription;
   private final String keyGeneratorReference;
   private final Class<?> creatorClass;
+  private IObjectFactory objectFactory;
 
   /**
    * @param mapperClass
@@ -49,8 +35,10 @@ public class MongoMapper<T> extends AbstractMapper<T> {
    */
   public MongoMapper(final Class<T> mapperClass, final MongoMapperFactory mapperFactory) {
     super(mapperClass, mapperFactory);
-    creatorClass = getEntity().polyClass() == Object.class ? getMapperClass() : getEntity().polyClass();
+    creatorClass = getMapperClass();
     this.keyGeneratorReference = creatorClass.getSimpleName();
+    this.objectFactory = new DefaultObjectFactory();
+    this.objectFactory.setMapper(this);
     checkIdField();
   }
 
@@ -68,37 +56,11 @@ public class MongoMapper<T> extends AbstractMapper<T> {
   @Override
   protected void validate() {
     JsonTypeInfo ti = getAnnotation(JsonTypeInfo.class);
-    boolean polySet = getEntity().polyClass() != Object.class;
-    if (ti != null && !polySet) {
+    if (ti != null) {
       throw new MappingException(
               "If you are setting JsonTypeInfo, you must define Entity.polyClass as well in mapper : "
                       + getMapperClass().getName());
     }
-    if (polySet && ti == null) {
-      throw new MappingException(
-              "If you are setting Entity.polyClass, you must define JsonTypeInfo as well in mapper : "
-                      + getMapperClass().getName());
-    }
-  }
-  @Override
-  public <U extends Annotation> U getAnnotation(final Class<U> annotationClass) {
-    U ann = super.getAnnotation(annotationClass);
-    if (ann == null) {
-      ann = beanDescription.getClassAnnotations().get(annotationClass);
-    }
-    return ann;
-  }
-  public Class<?> getCreatorClass() {
-    return creatorClass;
-  }
-
-  @Override
-  protected void computePersistentFields() {
-    ObjectMapper mapper = ((MongoDataStore) getMapperFactory().getDataStore()).getJacksonMapper();
-    JavaType type = mapper.constructType(getMapperClass());
-    this.beanDescription = mapper.getSerializationConfig().introspect(type);
-    List<BeanPropertyDefinition> propertyList = beanDescription.findProperties();
-    propertyList.forEach(def -> addMappedField(def.getFullName().getSimpleName(), new JacksonProperty(this, def)));
   }
 
   protected void addMappedField(final String name, final IProperty mf) {
@@ -118,12 +80,13 @@ public class MongoMapper<T> extends AbstractMapper<T> {
 
   @Override
   public IObjectFactory getObjectFactory() {
-    throw new UnsupportedOperationException("There is no need to call this method for this implementation");
+    return objectFactory;
   }
 
   @Override
   public boolean handleReferencedRecursive() {
-    throw new UnsupportedOperationException("There is no need to call this method for this implementation");
+    return this.getMapperFactory().getDataStore().getProperties().getBoolean(IDataStore.HANDLE_REFERENCED_RECURSIVE,
+            false);
   }
 
   @Override

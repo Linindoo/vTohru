@@ -15,7 +15,6 @@ package cn.vtohru.orm.mongo;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.orm.IDataStore;
-import cn.vtohru.orm.IDataStoreMetaData;
 import cn.vtohru.orm.dataaccess.delete.IDelete;
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import cn.vtohru.orm.dataaccess.write.IWrite;
@@ -29,7 +28,9 @@ import cn.vtohru.orm.mongo.dataaccess.MongoWrite;
 import cn.vtohru.orm.mongo.init.MongoDataStoreSynchronizer;
 import cn.vtohru.orm.mongo.mapper.MongoMapperFactory;
 import cn.vtohru.orm.mongo.mapper.datastore.MongoTableGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -54,15 +55,13 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
    * The name of the property, which describes the database to be used
    */
   public static final String DATABASE_NAME = "db_name";
+  private static final String MONGO_CONFIG_KEY = "mongo";
   private MongoClient client;
-  private MongoMetaData metaData;
-
   public MongoDataStore(VerticleApplicationContext context) {
     super(context, new JsonObject(), new DataStoreSettings());
     JsonObject config = context.getVertx().getOrCreateContext().config();
-    JsonObject mongo = config.getJsonObject("mongo", new JsonObject());
+    JsonObject mongo = config.getJsonObject(MONGO_CONFIG_KEY, new JsonObject());
     this.client = MongoClient.create(context.getVertx(), mongo);
-    metaData = new MongoMetaData(this);
     MongoMapperFactory mf = new MongoMapperFactory(this);
     setMapperFactory(mf);
     MongoStoreObjectFactory storeObjectFactory = new MongoStoreObjectFactory();
@@ -72,31 +71,16 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
     setTableGenerator(new MongoTableGenerator());
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see cn.vtohru.orm.IDataStore#createQuery(java.lang.Class)
-   */
   @Override
   public <T> IQuery<T> createQuery(Class<T> mapper) {
     return new MongoQuery<>(mapper, this);
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see cn.vtohru.orm.IDataStore#createWrite(java.lang.Class)
-   */
   @Override
   public <T> IWrite<T> createWrite(Class<T> mapper) {
     return new MongoWrite<>(mapper, this);
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see cn.vtohru.orm.IDataStore#createDelete(java.lang.Class)
-   */
   @Override
   public <T> IDelete<T> createDelete(Class<T> mapper) {
     return new MongoDelete<>(mapper, this);
@@ -112,16 +96,6 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
     return client;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see cn.vtohru.orm.IDataStore#getMetaData()
-   */
-  @Override
-  public IDataStoreMetaData getMetaData() {
-    return metaData;
-  }
-
   /**
    * @return the database
    */
@@ -130,11 +104,6 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
     return getProperties().getString(DATABASE_NAME).toLowerCase();
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see cn.vtohru.orm.IDataStore#shutdown(io.vertx.core.Handler)
-   */
   @Override
   public void shutdown(Handler<AsyncResult<Void>> resultHandler) {
     try {
@@ -145,11 +114,6 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
     }
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see cn.vtohru.orm.IDataStore#getDefaultKeyGenerator()
-   */
   @Override
   public IKeyGenerator getDefaultKeyGenerator() {
     String genName = getProperties().getString(IKeyGenerator.DEFAULT_KEY_GENERATOR);

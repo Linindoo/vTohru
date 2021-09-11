@@ -13,7 +13,6 @@
 package cn.vtohru.orm.mapping;
 
 import cn.vtohru.orm.annotation.field.Referenced;
-import cn.vtohru.orm.typehandler.ITypeHandler;
 
 /**
  * An IObjectReference can be used as carrier for those fields, which are annotated as {@link Referenced}

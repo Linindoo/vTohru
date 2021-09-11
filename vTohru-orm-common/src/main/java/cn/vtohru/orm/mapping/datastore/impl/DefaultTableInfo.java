@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import cn.vtohru.orm.annotation.Entity;
 import cn.vtohru.orm.mapping.IProperty;
 import cn.vtohru.orm.mapping.IMapper;
 import cn.vtohru.orm.mapping.datastore.IColumnHandler;
@@ -43,10 +42,11 @@ public abstract class DefaultTableInfo implements ITableInfo {
    *          the mapper to be used to create the instance
    */
   public DefaultTableInfo(IMapper mapper) {
-    if (mapper.getEntity() == null || mapper.getEntity().name().equals(Entity.UNDEFINED_NAME))
+    if (mapper.getEntity() == null || mapper.getEntity().name().equals("")) {
       this.name = mapper.getMapperClass().getSimpleName();
-    else
+    } else {
       this.name = mapper.getEntity().name();
+    }
   }
 
   /*

@@ -13,7 +13,6 @@
 package cn.vtohru.orm.mapping;
 
 import cn.vtohru.orm.IDataStore;
-import cn.vtohru.orm.typehandler.ITypeHandler;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 

@@ -12,8 +12,6 @@
  */
 package cn.vtohru.orm.exception;
 
-import cn.vtohru.orm.typehandler.ITypeHandler;
-
 /**
  * Exception is thrown when an error in the use of {@link ITypeHandler} was detected
  * 

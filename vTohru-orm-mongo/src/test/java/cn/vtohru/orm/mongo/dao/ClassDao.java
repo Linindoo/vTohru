@@ -1,10 +1,14 @@
 package cn.vtohru.orm.mongo.dao;
 
-import cn.vtohru.orm.annotation.Entity;
-import cn.vtohru.orm.annotation.field.Id;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
 @Entity(name = "demo")
 public class ClassDao {
+
+    public ClassDao() {
+    }
+
     @Id
     private String id;
     private String name;

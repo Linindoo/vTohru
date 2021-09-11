@@ -18,6 +18,7 @@ public class DefaultIntervalError extends ErrorHandler{
     @Override
     public void handle(RoutingContext context) {
         context.response().putHeader("content-type", "application/json;charset=utf-8");
+        context.failure().printStackTrace();
         logger.error(context.failure());
         JsonObject data = new JsonObject();
         data.put("code", -1);

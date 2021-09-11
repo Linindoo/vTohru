@@ -12,6 +12,7 @@
  */
 package cn.vtohru.orm;
 
+import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.orm.dataaccess.delete.IDelete;
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import cn.vtohru.orm.dataaccess.write.IWrite;
@@ -54,7 +55,8 @@ public interface IDataStore<S, U> {
    *
    * @return the instance of Vertx where inside the current instance was created
    */
-  Vertx getVertx();
+
+  VerticleApplicationContext getContext();
 
   /**
    * Returns a new {@link IQuery} bound to the given mapper
@@ -117,13 +119,6 @@ public interface IDataStore<S, U> {
    * @return the name of the schema or database
    */
   String getDatabase();
-
-  /**
-   * Get the instance of {@link IDataStoreMetaData}.
-   *
-   * @return
-   */
-  IDataStoreMetaData getMetaData();
 
   /**
    * The properties by which the current instance was initialized

@@ -21,7 +21,6 @@ import java.util.Map;
 import cn.vtohru.orm.mapping.IProperty;
 import cn.vtohru.orm.mapping.datastore.IColumnHandler;
 import cn.vtohru.orm.mapping.datastore.ITableGenerator;
-import cn.vtohru.orm.typehandler.ITypeHandler;
 
 /**
  * Default implementation of ITableGenerator
@@ -69,10 +68,10 @@ public abstract class DefaultTableGenerator implements ITableGenerator {
     for (IColumnHandler ch : ths) {
       short matchResult = ch.matches(field);
       switch (matchResult) {
-      case ITypeHandler.MATCH_MAJOR:
+      case 2:
         return ch;
 
-      case ITypeHandler.MATCH_MINOR:
+      case 1:
         returnHandler = ch;
         break;
 

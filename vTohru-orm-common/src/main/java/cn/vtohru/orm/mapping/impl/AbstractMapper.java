@@ -12,34 +12,15 @@
 */
 package cn.vtohru.orm.mapping.impl;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.*;
-
-import cn.vtohru.orm.annotation.Entity;
 import cn.vtohru.orm.annotation.Index;
 import cn.vtohru.orm.annotation.Indexes;
 import cn.vtohru.orm.annotation.KeyGenerator;
 import cn.vtohru.orm.annotation.VersionInfo;
-import cn.vtohru.orm.annotation.field.Referenced;
-import cn.vtohru.orm.annotation.lifecycle.AfterDelete;
-import cn.vtohru.orm.annotation.lifecycle.AfterLoad;
-import cn.vtohru.orm.annotation.lifecycle.AfterSave;
-import cn.vtohru.orm.annotation.lifecycle.BeforeDelete;
-import cn.vtohru.orm.annotation.lifecycle.BeforeLoad;
-import cn.vtohru.orm.annotation.lifecycle.BeforeSave;
+import cn.vtohru.orm.annotation.lifecycle.*;
 import cn.vtohru.orm.dataaccess.query.IIndexedField;
 import cn.vtohru.orm.dataaccess.query.IdField;
 import cn.vtohru.orm.exception.MappingException;
-import cn.vtohru.orm.mapping.IIdInfo;
-import cn.vtohru.orm.mapping.IIndexDefinition;
-import cn.vtohru.orm.mapping.IKeyGenerator;
-import cn.vtohru.orm.mapping.IMapper;
-import cn.vtohru.orm.mapping.IMapperFactory;
-import cn.vtohru.orm.mapping.IMethodProxy;
-import cn.vtohru.orm.mapping.IProperty;
+import cn.vtohru.orm.mapping.*;
 import cn.vtohru.orm.mapping.datastore.IColumnHandler;
 import cn.vtohru.orm.mapping.datastore.ITableGenerator;
 import cn.vtohru.orm.mapping.datastore.ITableInfo;
@@ -47,7 +28,19 @@ import cn.vtohru.orm.observer.IObserverHandler;
 import cn.vtohru.orm.observer.ObserverEventType;
 import cn.vtohru.orm.util.ClassUtil;
 import cn.vtohru.orm.versioning.IMapperVersion;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.BeanProperty;
 import io.vertx.core.*;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.*;
 
 /**
  * This implementation of {@link IMapper} is using the bean convention to define fields, which shall be mapped. It is
@@ -60,8 +53,7 @@ import io.vertx.core.*;
  */
 
 public abstract class AbstractMapper<T> implements IMapper<T> {
-  private static final io.vertx.core.logging.Logger LOGGER = io.vertx.core.logging.LoggerFactory
-      .getLogger(AbstractMapper.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractMapper.class);
 
   /**
    * all annotations which shall be examined for the mapper class itself
@@ -85,8 +77,8 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
   private Set<IIndexDefinition> indexes;
   private ITableInfo tableInfo;
   private boolean syncNeeded = true;
-  private boolean hasReferencedFields = false;
   private IObserverHandler observerHandler;
+  private BeanIntrospection<T> beanIntrospection;
 
   /**
    * Class annotations which were found inside the current definition
@@ -118,7 +110,6 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
     computeKeyGenerator();
     generateTableInfo();
     computeIndexes();
-    checkReferencedFields();
     observerHandler = IObserverHandler.createInstance(this);
     internalValidate();
   }
@@ -149,18 +140,42 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
   /**
    * Compute all fields, which shall be persisted
    */
-  protected abstract void computePersistentFields();
+  protected void computePersistentFields(){
+    computeFieldProperties();
+  }
 
-  /**
-   * Checks wether fields of the mapper or of children of the mapper are annotated with {@link Referenced}
-   */
-  protected void checkReferencedFields() {
-    hasReferencedFields = false;
-    for (IProperty field : getMappedProperties().values()) {
-      if (field.hasAnnotation(Referenced.class)) {
-        hasReferencedFields = true;
-        return;
-      }
+    /**
+     * Computes the properties from the public fields of the class, which are not transient
+     */
+  public void computeFieldProperties() {
+    this.beanIntrospection = BeanIntrospection.getIntrospection(getMapperClass());
+    for (BeanProperty<T, ?> beanProperty : beanIntrospection.getBeanProperties()) {
+      String name = beanProperty.getName();
+      DefaultMappedField<T> mf = new DefaultMappedField(beanProperty, this);
+      this.saveMappedField(name, mf);
+    }
+  }
+
+  protected void saveMappedField(final String name, IProperty mf) {
+    if (mf.hasAnnotation(Id.class)) {
+      if (getIdInfo() != null)
+        throw new MappingException("duplicate Id field definition found for mapper " + getMapperClass());
+      setIdInfo(new IdInfo(mf));
+    }
+    if (!mf.isIgnore()) {
+      this.getMappedProperties().put(name, mf);
+    }
+  }
+
+
+  protected void addMappedField(final String name, IProperty mf) {
+    if (mf.hasAnnotation(Id.class)) {
+      if (getIdInfo() != null)
+        throw new MappingException("duplicate Id field definition found for mapper " + getMapperClass());
+      setIdInfo(new IdInfo(mf));
+    }
+    if (!mf.isIgnore()) {
+      this.getMappedProperties().put(name, mf);
     }
   }
 
@@ -440,7 +455,7 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
    */
   @Override
   public <U extends Annotation> U getAnnotation(final Class<U> annotationClass) {
-    return (U) existingClassAnnotations.get(annotationClass);
+    return beanIntrospection.getBeanType().getAnnotation(annotationClass);
   }
 
   @Override
@@ -465,16 +480,6 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
   @Override
   public IKeyGenerator getKeyGenerator() {
     return keyGenerator;
-  }
-
-  /**
-   * Returns true if at least one field of the mapper is annotated with {@link Referenced}
-   *
-   * @return
-   */
-  @Override
-  public boolean hasReferencedFields() {
-    return hasReferencedFields;
   }
 
   /*

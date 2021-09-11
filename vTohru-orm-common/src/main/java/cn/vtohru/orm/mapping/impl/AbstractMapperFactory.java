@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import cn.vtohru.orm.IDataStore;
-import cn.vtohru.orm.annotation.Entity;
 import cn.vtohru.orm.exception.InitException;
 import cn.vtohru.orm.exception.MappingException;
 import cn.vtohru.orm.init.ObserverDefinition;
@@ -32,6 +31,8 @@ import cn.vtohru.orm.observer.ObserverEventType;
 import cn.vtohru.orm.observer.impl.handler.BeforeMappingHandler;
 import cn.vtohru.orm.util.ResultObject;
 import io.vertx.core.Future;
+
+import javax.persistence.Entity;
 
 /**
  * An abstract implementation of IMapperFactory
