@@ -9,6 +9,7 @@ import cn.vtohru.orm.dataaccess.write.IWriteEntry;
 import cn.vtohru.orm.dataaccess.write.IWriteResult;
 import cn.vtohru.orm.mongo.MongoDataStore;
 import cn.vtohru.orm.mongo.dao.ClassDao;
+import cn.vtohru.orm.mongo.dao.Status;
 import cn.vtohru.web.annotation.Controller;
 import io.micronaut.core.util.StringUtils;
 import io.vertx.core.Future;
@@ -18,6 +19,8 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 @Controller
@@ -30,10 +33,18 @@ public class MongoController {
     @GET
     public Future<Object> add() {
         Promise<Object> promise = Promise.promise();
-        ClassDao userDao = new ClassDao();
-        userDao.setName("班级1_hello");
+        ClassDao classDao = new ClassDao();
+        classDao.setName("班级1_hello");
+        classDao.setMax(100L);
+        classDao.setEnable(true);
+        classDao.setNumber(10.8);
+        classDao.setCreateTime(new Date());
+        classDao.setStudentNum(77);
+        classDao.setMin(8.90F);
+        classDao.setTags(Arrays.asList("one", "two"));
+        classDao.setStatus(Status.ACTIVE);
         IWrite<ClassDao> write = mongoDataStore.createWrite(ClassDao.class);
-        write.add(userDao);
+        write.add(classDao);
         write.save(x->{
             if (x.succeeded()) {
                 IWriteResult result = x.result();
@@ -140,6 +151,7 @@ public class MongoController {
                                 ClassDao classDaos = y.result();
                                 promise.complete(classDaos);
                             } else {
+                                y.cause().printStackTrace();
                                 promise.fail(y.cause());
                             }
                         });

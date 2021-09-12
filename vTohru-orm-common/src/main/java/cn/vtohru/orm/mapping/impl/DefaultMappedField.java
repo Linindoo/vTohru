@@ -5,6 +5,7 @@ import cn.vtohru.orm.annotation.field.Referenced;
 import cn.vtohru.orm.mapping.IObjectReference;
 import cn.vtohru.orm.mapping.IProperty;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.convert.ConversionService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -87,10 +88,12 @@ public class DefaultMappedField<T> extends AbstractProperty<T> {
     public void fromStoreObject(T entity, AbstractStoreObject storeObject, Promise<Void> handler) {
         try {
             Object fieldValue = storeObject.get(this);
-            if (fieldValue instanceof IObjectReference) {
-                storeObject.getObjectReferences().add((IObjectReference) fieldValue);
-            } else {
-                this.beanProperty.set(entity, fieldValue);
+            if (fieldValue != null) {
+                if (fieldValue instanceof IObjectReference) {
+                    storeObject.getObjectReferences().add((IObjectReference) fieldValue);
+                } else {
+                    this.beanProperty.convertAndSet(entity, fieldValue);
+                }
             }
             handler.handle(Future.succeededFuture());
         } catch (Exception e) {

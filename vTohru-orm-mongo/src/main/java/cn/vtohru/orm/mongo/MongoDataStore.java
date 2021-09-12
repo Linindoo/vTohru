@@ -31,11 +31,17 @@ import cn.vtohru.orm.mongo.mapper.datastore.MongoTableGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.TypeConverter;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
+
+import java.util.Date;
+import java.util.Optional;
 
 /**
  * An {@link IDataStore} which is dealing with {@link MongoClient}
@@ -69,6 +75,7 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
     MongoDataStoreSynchronizer dataStoreSynchronizer = new MongoDataStoreSynchronizer(this);
     setDataStoreSynchronizer(dataStoreSynchronizer);
     setTableGenerator(new MongoTableGenerator());
+    ConversionService.SHARED.addConverter(Long.class, Date.class, (object, targetType, context1) -> Optional.of(new Date(object)));
   }
 
   @Override
