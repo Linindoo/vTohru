@@ -237,15 +237,12 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
    * Generates a list of record ids from the records
    *
    * @param idField
-   * @param resultHandler
    */
   @SuppressWarnings({ "rawtypes", "unchecked" })
   private List<Future> getRecordIds(final IProperty idField) {
     List<Future> fList = new ArrayList<>();
     for (T record : getRecordList()) {
-      Promise<Object> promise = Promise.promise();
-      idField.readForStore(record, promise);
-      fList.add(promise.future());
+      fList.add(idField.readData(record));
     }
     return fList;
   }

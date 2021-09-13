@@ -14,13 +14,16 @@ package cn.vtohru.orm.mapping.impl;
 
 import cn.vtohru.orm.annotation.lifecycle.AfterLoad;
 import cn.vtohru.orm.mapping.IMapper;
-import cn.vtohru.orm.mapping.IObjectReference;
 import cn.vtohru.orm.mapping.IProperty;
 import cn.vtohru.orm.mapping.IStoreObject;
-import io.vertx.core.*;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -34,12 +37,11 @@ import java.util.Set;
  *          the type, which is used internally as format, like Json for instance
  */
 public abstract class AbstractStoreObject<T, F> implements IStoreObject<T, F> {
-  private static final io.vertx.core.logging.Logger LOGGER = io.vertx.core.logging.LoggerFactory
+  private static final Logger LOGGER = LoggerFactory
       .getLogger(AbstractStoreObject.class);
 
   private final IMapper<T> mapper;
   private T entity = null;
-  private final Collection<IObjectReference> objectReferences = new ArrayList<>();
   private boolean newInstance = true;
   protected F container;
 
@@ -96,11 +98,6 @@ public abstract class AbstractStoreObject<T, F> implements IStoreObject<T, F> {
   }
 
   @Override
-  public final Collection<IObjectReference> getObjectReferences() {
-    return objectReferences;
-  }
-
-  @Override
   public final F getContainer() {
     return container;
   }
@@ -118,14 +115,7 @@ public abstract class AbstractStoreObject<T, F> implements IStoreObject<T, F> {
         handler.handle(fieldResult);
         return;
       }
-      iterateObjectReferences(tmpObject, orResult -> {
-        if (orResult.failed()) {
-          handler.handle(orResult);
-          return;
-        }
-        finishToEntity(tmpObject, handler);
-        LOGGER.debug("finished initToEntity");
-      });
+      finishToEntity(tmpObject, handler);
     });
   }
 
@@ -139,10 +129,8 @@ public abstract class AbstractStoreObject<T, F> implements IStoreObject<T, F> {
     Set<String> fieldNames = getMapper().getFieldNames();
     List<Future> fl = new ArrayList<>(fieldNames.size());
     for (String fieldName : fieldNames) {
-      Promise<Void> f = Promise.promise();
-      fl.add(f.future());
       IProperty field = getMapper().getField(fieldName);
-      field.fromStoreObject(tmpObject, this, f);
+      fl.add(field.fromStoreObject(tmpObject, this));
     }
     CompositeFuture cf = CompositeFuture.all(fl);
     cf.onComplete(cfr -> {
@@ -153,34 +141,6 @@ public abstract class AbstractStoreObject<T, F> implements IStoreObject<T, F> {
       }
     });
   }
-
-  protected void iterateObjectReferences(final Object tmpObject, final Handler<AsyncResult<Void>> handler) {
-    LOGGER.debug("start iterateObjectReferences");
-    if (getObjectReferences().isEmpty()) {
-      LOGGER.debug("nothing to do");
-      handler.handle(Future.succeededFuture());
-      return;
-    }
-    Collection<IObjectReference> refs = getObjectReferences();
-    List<Future> fl = new ArrayList<>(refs.size());
-    for (IObjectReference ref : refs) {
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("handling object reference " + ref.getField().getFullName());
-      }
-      Promise<Void> f = Promise.promise();
-      fl.add(f.future());
-      ref.getField().fromObjectReference(tmpObject, ref, f);
-    }
-    CompositeFuture cf = CompositeFuture.all(fl);
-    cf.onComplete(cfr -> {
-      if (cfr.failed()) {
-        handler.handle(Future.failedFuture(cfr.cause()));
-      } else {
-        handler.handle(Future.succeededFuture());
-      }
-    });
-  }
-
   /**
    * Initialize the internal entity into the StoreObject
    * 
@@ -204,10 +164,8 @@ public abstract class AbstractStoreObject<T, F> implements IStoreObject<T, F> {
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
   protected Future initFieldFromEntity(final String fieldName) {
-    Promise f = Promise.promise();
     IProperty field = mapper.getField(fieldName);
-    field.intoStoreObject(entity, this, f);
-    return f.future();
+    return field.intoStoreObject(entity, this);
   }
 
   /*

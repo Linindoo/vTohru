@@ -4,5 +4,4 @@ vtohru:
     web:
       port: 8078
     mongo:
-      connection_string: mongodb://localhost:27017
-      db_name: test
+      connection_string: mongodb://localhost/test

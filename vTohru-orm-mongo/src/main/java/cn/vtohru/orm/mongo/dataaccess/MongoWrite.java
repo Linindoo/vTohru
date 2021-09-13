@@ -24,7 +24,6 @@ import cn.vtohru.orm.dataaccess.write.impl.WriteEntry;
 import cn.vtohru.orm.exception.DuplicateKeyException;
 import cn.vtohru.orm.exception.WriteException;
 import cn.vtohru.orm.mapping.IMapper;
-import cn.vtohru.orm.mapping.IStoreObject;
 import cn.vtohru.orm.mongo.MongoDataStore;
 import cn.vtohru.orm.mongo.MongoStoreObjectFactory;
 import cn.vtohru.orm.mongo.mapper.datastore.MongoColumnInfo;
@@ -228,22 +227,13 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
    * @return
    */
   protected Future<Void> preSave(final T entity, final IObserverContext context) {
-    if (isNewInstance(entity)) {
-      return getMapper().getObserverHandler().handleBeforeInsert(this, entity, context);
-    } else {
-      return getMapper().getObserverHandler().handleBeforeUpdate(this, entity, context);
-    }
-  }
-
-  /**
-   * We need the info before the {@link IStoreObject} is created for the event beforeSave
-   *
-   * @param entity
-   * @return
-   */
-  private boolean isNewInstance(final T entity) {
-    Object javaValue = getMapper().getIdInfo().getField().readData(entity);
-    return javaValue == null;
+    return getMapper().getIdInfo().getField().readData(entity).compose(x -> {
+      if (x == null) {
+        return getMapper().getObserverHandler().handleBeforeInsert(this, entity, context);
+      } else {
+        return getMapper().getObserverHandler().handleBeforeUpdate(this, entity, context);
+      }
+    });
   }
 
   private void finishQueryUpdate(final Object id, final T entity, final MongoStoreObject<T> storeObject,
@@ -272,7 +262,6 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
           resultHandler.handle(Future.succeededFuture(new WriteEntry(storeObject, id, WriteAction.INSERT)));
         }
       });
-
     });
   }
 

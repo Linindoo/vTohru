@@ -131,7 +131,6 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
     }
     validate();
   }
-
   /**
    * Validation for required properties etc
    */

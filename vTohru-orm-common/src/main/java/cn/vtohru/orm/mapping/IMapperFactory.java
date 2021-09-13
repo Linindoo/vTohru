@@ -43,13 +43,4 @@ public interface IMapperFactory {
    */
   void reset();
 
-  /**
-   * Get the instance of {@link IPropertyMapperFactory} which is used by the current implementation
-   * 
-   * @return the {@link IPropertyMapperFactory} to retrieve new instances of {@link IPropertyMapper}
-   * @deprecated will be removed after complete switch to jackson
-   */
-  @Deprecated
-  IPropertyMapperFactory getPropertyMapperFactory();
-
 }

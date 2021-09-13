@@ -1,15 +1,9 @@
 package cn.vtohru.orm.mapping.impl;
 
-import cn.vtohru.orm.annotation.field.Embedded;
-import cn.vtohru.orm.annotation.field.Referenced;
-import cn.vtohru.orm.mapping.IObjectReference;
-import cn.vtohru.orm.mapping.IProperty;
+import cn.vtohru.orm.annotation.field.Ignore;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.convert.ConversionService;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 
@@ -20,6 +14,7 @@ import java.util.Map;
 public class DefaultMappedField<T> extends AbstractProperty<T> {
     private static final Logger logger = LoggerFactory.getLogger(DefaultMappedField.class);
     private BeanProperty<T, Object> beanProperty;
+    private boolean ignore = false;
 
     public DefaultMappedField(BeanProperty<T, Object> beanProperty, AbstractMapper mapper) {
         super(mapper);
@@ -31,10 +26,8 @@ public class DefaultMappedField<T> extends AbstractProperty<T> {
         computeAnnotations();
     }
     protected void computeAnnotations() {
-        if (hasAnnotation(Referenced.class)) {
-            embedRef = getAnnotation(Referenced.class);
-        } else if (hasAnnotation(Embedded.class)) {
-            embedRef = getAnnotation(Embedded.class);
+        if (beanProperty.hasAnnotation(Ignore.class)) {
+            this.ignore = true;
         }
     }
 
@@ -49,13 +42,13 @@ public class DefaultMappedField<T> extends AbstractProperty<T> {
     }
 
     @Override
-    public Annotation getAnnotation(Class<? extends Annotation> annotationClass) {
-        return beanProperty.getDeclaringType().getAnnotation(annotationClass);
+    public AnnotationValue getAnnotation(Class<? extends Annotation> annotationClass) {
+        return beanProperty.getAnnotation(annotationClass);
     }
 
     @Override
     public boolean hasAnnotation(Class<? extends Annotation> annotationClass) {
-        return beanProperty.isAnnotationPresent(annotationClass);
+        return beanProperty.hasAnnotation(annotationClass);
     }
 
     @Override
@@ -80,54 +73,49 @@ public class DefaultMappedField<T> extends AbstractProperty<T> {
 
     @Override
     public boolean isIgnore() {
-        return false;
+        return this.ignore;
     }
 
 
     @Override
-    public void fromStoreObject(T entity, AbstractStoreObject storeObject, Promise<Void> handler) {
+    public Future<Void> fromStoreObject(T entity, AbstractStoreObject storeObject) {
         try {
             Object fieldValue = storeObject.get(this);
             if (fieldValue != null) {
-                if (fieldValue instanceof IObjectReference) {
-                    storeObject.getObjectReferences().add((IObjectReference) fieldValue);
-                } else {
-                    this.beanProperty.convertAndSet(entity, fieldValue);
-                }
+                this.beanProperty.convertAndSet(entity, fieldValue);
             }
-            handler.handle(Future.succeededFuture());
+            return Future.succeededFuture();
         } catch (Exception e) {
-            handler.fail(e);
+            return Future.failedFuture(e);
         }
     }
 
     @Override
-    public Object readData(T record) {
-        return beanProperty.get(record);
-    }
-
-    @Override
-    public void intoStoreObject(T entity, AbstractStoreObject storeObject, Handler<AsyncResult<Void>> handler) {
-        Object value = this.readData(entity);
+    public Future<Void> intoStoreObject(T entity, AbstractStoreObject storeObject) {
+        Object value = beanProperty.get(entity);
         if (value != null) {
             storeObject.put(this, value);
         }
-        handler.handle(Future.succeededFuture());
+        return Future.succeededFuture();
     }
 
     @Override
-    public void writeData(T record, Object data) {
-        this.beanProperty.set(record, data);
+    public Future<Object> writeData(T record, Object data) {
+        try {
+            this.beanProperty.set(record, data);
+            return Future.succeededFuture();
+        } catch (Exception e) {
+            return Future.failedFuture(e);
+        }
     }
 
     @Override
-    public void readForStore(T record, Handler<AsyncResult<Object>> handler) {
-        Object data = readData(record);
-        handler.handle(Future.succeededFuture(data));
-    }
-
-    @Override
-    public void fromObjectReference(Object entity, IObjectReference reference, Handler<AsyncResult<Void>> handler) {
-
+    public Future<Object> readData(T entity) {
+        try {
+            Object data = beanProperty.get(entity);
+            return Future.succeededFuture(data);
+        } catch (Exception e) {
+            return Future.failedFuture(e);
+        }
     }
 }

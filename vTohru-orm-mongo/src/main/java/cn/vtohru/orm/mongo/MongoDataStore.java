@@ -67,6 +67,7 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
     super(context, new JsonObject(), new DataStoreSettings());
     JsonObject config = context.getVertx().getOrCreateContext().config();
     JsonObject mongo = config.getJsonObject(MONGO_CONFIG_KEY, new JsonObject());
+    mongo.put("connection_string", mongo.getString("connection-string"));
     this.client = MongoClient.create(context.getVertx(), mongo);
     MongoMapperFactory mf = new MongoMapperFactory(this);
     setMapperFactory(mf);
@@ -76,6 +77,7 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
     setDataStoreSynchronizer(dataStoreSynchronizer);
     setTableGenerator(new MongoTableGenerator());
     ConversionService.SHARED.addConverter(Long.class, Date.class, (object, targetType, context1) -> Optional.of(new Date(object)));
+    ConversionService.SHARED.addConverter(JsonObject.class, Object.class, (jsonObject, targetType, context2) -> Optional.of(jsonObject.mapTo(targetType)));
   }
 
   @Override

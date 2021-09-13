@@ -12,8 +12,6 @@
  */
 package cn.vtohru.orm.mapping;
 
-import java.util.Collection;
-
 import cn.vtohru.orm.IDataStore;
 /**
  * The IStoreObject is building the bridge between the propriate format coming from out of the used {@link IDataStore}
@@ -74,14 +72,6 @@ public interface IStoreObject<T, F> {
 
   @Override
   String toString();
-
-  /**
-   * Retrive all instances of {@link IObjectReference} which were generated when rereading an instance from the
-   * datastore.
-   * 
-   * @return all instances of {@link IObjectReference}
-   */
-  Collection<IObjectReference> getObjectReferences();
 
   /**
    * Get the information, wether the current instance is existing in the datastore or not. By this information it is

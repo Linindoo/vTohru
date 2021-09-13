@@ -32,14 +32,8 @@ public abstract class AbstractProperty<T> implements IProperty<T> {
   /**
    * Annotations which shall be checked for a field definition
    */
-  protected static final List<Class<? extends Annotation>> FIELD_ANNOTATIONS = Arrays.asList(Id.class, Property.class,
-      Referenced.class, Embedded.class, ConcreteClass.class, Ignore.class);
+  protected static final List<Class<? extends Annotation>> FIELD_ANNOTATIONS = Arrays.asList(Id.class, Property.class, Ignore.class);
   private IMapper<?> mapper;
-  /**
-   * If for the current field an Annotation {@link Embedded} or {@link Referenced} is defined, then it is stored in here
-   */
-  protected Annotation embedRef;
-
   /**
    * 
    */
@@ -77,11 +71,6 @@ public abstract class AbstractProperty<T> implements IProperty<T> {
     return hasAnnotation(Id.class);
   }
 
-
-  @Override
-  public Annotation getEmbedRef() {
-    return embedRef;
-  }
 
   @Override
   public String toString() {

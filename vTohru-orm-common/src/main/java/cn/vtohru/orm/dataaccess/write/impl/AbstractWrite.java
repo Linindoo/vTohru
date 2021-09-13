@@ -158,13 +158,8 @@ public abstract class AbstractWrite<T> extends AbstractDataAccessObject<T> imple
    */
   protected void setIdValue(final Object id, final IStoreObject<T, ?> storeObject,
       final Handler<AsyncResult<Void>> resultHandler) {
-    try {
       IProperty idField = getMapper().getIdInfo().getField();
-      idField.writeData(storeObject.getEntity(), id.toString());
-      resultHandler.handle(Future.succeededFuture());
-    } catch (Exception e) {
-      resultHandler.handle(Future.failedFuture(e));
-    }
+      idField.writeData(storeObject.getEntity(), id.toString()).onComplete(resultHandler);
   }
 
   /*

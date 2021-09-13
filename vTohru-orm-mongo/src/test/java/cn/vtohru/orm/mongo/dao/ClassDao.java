@@ -1,11 +1,18 @@
 package cn.vtohru.orm.mongo.dao;
 
+import cn.vtohru.orm.annotation.Index;
+import cn.vtohru.orm.annotation.IndexField;
+import cn.vtohru.orm.annotation.Indexes;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.util.Date;
 import java.util.List;
 
-@Entity(name = "demo")
+@Entity(name = "demo2")
+@Indexes(@Index(name = "testIndex", fields = {
+        @IndexField(fieldName = "name"),@IndexField(fieldName = "status") }))
+
 public class ClassDao {
     @Id
     private String id;
@@ -18,6 +25,8 @@ public class ClassDao {
     private double number;
     private float min;
     private Status status;
+
+    private SchoolDao schoolDao;
 
     public String getId() {
         return id;
@@ -97,5 +106,13 @@ public class ClassDao {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public SchoolDao getSchoolDao() {
+        return schoolDao;
+    }
+
+    public void setSchoolDao(SchoolDao schoolDao) {
+        this.schoolDao = schoolDao;
     }
 }

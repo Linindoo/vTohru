@@ -17,6 +17,7 @@ import cn.vtohru.orm.annotation.field.Property;
 import cn.vtohru.orm.mapping.IProperty;
 import cn.vtohru.orm.mapping.datastore.IColumnHandler;
 import cn.vtohru.orm.mapping.datastore.IColumnInfo;
+import io.micronaut.core.annotation.AnnotationValue;
 
 /**
  * Default implementation of IColumnInfo which contains the needed properties and above the interface getter methods for
@@ -64,9 +65,9 @@ public abstract class DefaultColumnInfo implements IColumnInfo {
   }
 
   protected String computePropertyName(final IProperty field) {
-    Property prop = (Property) field.getAnnotation(Property.class);
-    if (prop != null) {
-      String propName = prop.value();
+    AnnotationValue<Property> annotation = field.getAnnotation(Property.class);
+    if (annotation != null) {
+      String propName =  annotation.stringValue("value").orElse("");
       if (!propName.equals(Property.UNDEFINED_COLUMN_NAME))
         return propName;
     }
@@ -74,13 +75,13 @@ public abstract class DefaultColumnInfo implements IColumnInfo {
   }
 
   protected void init(final IProperty field, final IColumnHandler columnHandler) {
-    Property prop = (Property) field.getAnnotation(Property.class);
-    if (prop != null) {
-      type = prop.columnType();
-      length = prop.length();
-      scale = prop.scale();
-      precision = prop.precision();
-      nullable = prop.nullable();
+    AnnotationValue<Property> annotation = field.getAnnotation(Property.class);
+    if (annotation != null) {
+      type = annotation.get("columnType", String.class).orElse("");
+      length = annotation.get("length", Integer.class).orElse(0);
+      scale = annotation.get("scale", Integer.class).orElse(0);
+      precision = annotation.get("precision", Integer.class).orElse(0);
+      nullable = annotation.get("nullable", Boolean.class).orElse(false);
     }
     if (field.getMapper().getIdInfo().getIndexedField() == field)
       id = true;

@@ -2,9 +2,8 @@ package cn.vtohru.orm.mapping;
 
 import cn.vtohru.orm.mapping.datastore.IColumnInfo;
 import cn.vtohru.orm.mapping.impl.AbstractStoreObject;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
+import io.micronaut.core.annotation.AnnotationValue;
+import io.vertx.core.Future;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -22,11 +21,9 @@ public interface IProperty<T> {
 
   String getFullName();
 
-  Annotation getAnnotation(Class<? extends Annotation> annotationClass);
+  AnnotationValue getAnnotation(Class<? extends Annotation> annotationClass);
 
   boolean hasAnnotation(Class<? extends Annotation> annotationClass);
-
-  Annotation getEmbedRef();
 
   IMapper getMapper();
 
@@ -79,16 +76,35 @@ public interface IProperty<T> {
    */
   boolean isIgnore();
 
-  void fromStoreObject(T tmpObject, AbstractStoreObject abstractStoreObject, Promise<Void> f);
+  /**
+   * 将storeObject中的值转存到实体中
+   * @param tmpObject
+   * @param storeObject
+   * @return
+   */
+  Future<Void> fromStoreObject(T tmpObject, AbstractStoreObject storeObject);
 
-  Object readData(T record);
+  /**
+   * 将实体中的值转存到storeObject中
+   * @param entity
+   * @param storeObject
+   * @return
+   */
+  Future<Void> intoStoreObject(T entity, AbstractStoreObject storeObject);
 
-  void intoStoreObject(T entity, AbstractStoreObject tfAbstractStoreObject, Handler<AsyncResult<Void>> handler);
+  /**
+   * 将值写入到实体对象中
+   * @param entity
+   * @param data
+   * @return
+   */
+  Future<Object> writeData(T entity, Object data) ;
 
-  void writeData(T record, Object data) ;
-
-  void readForStore(T mapper,   Handler<AsyncResult<Object>> handler);
-
-  void fromObjectReference(Object entity, IObjectReference reference, Handler<AsyncResult<Void>> handler);
+  /**
+   * 从实体中获取值
+   * @param entity
+   * @return
+   */
+  Future<Object> readData(T entity);
 
 }
