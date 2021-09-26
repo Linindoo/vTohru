@@ -1,9 +1,11 @@
 package cn.vtohru.orm.mongo.controller;
 
 import cn.vtohru.orm.dataaccess.delete.IDelete;
+import cn.vtohru.orm.dataaccess.query.IFieldValueResolver;
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import cn.vtohru.orm.dataaccess.query.IQueryResult;
 import cn.vtohru.orm.dataaccess.query.ISearchCondition;
+import cn.vtohru.orm.dataaccess.query.exception.VariableSyntaxException;
 import cn.vtohru.orm.dataaccess.write.IWrite;
 import cn.vtohru.orm.dataaccess.write.IWriteEntry;
 import cn.vtohru.orm.dataaccess.write.IWriteResult;
@@ -72,7 +74,12 @@ public class MongoController {
     public Future<Object> list() {
         Promise<Object> promise = Promise.promise();
         IQuery<ClassDao> query = mongoDataStore.createQuery(ClassDao.class);
-        query.execute(x->{
+        query.execute(new IFieldValueResolver() {
+            @Override
+            public Object resolve(String variableName) throws VariableSyntaxException {
+                return variableName;
+            }
+        },10,0,x->{
             if (x.succeeded()) {
                 IQueryResult<ClassDao> qres = x.result();
                 if (qres.size() > 0) {

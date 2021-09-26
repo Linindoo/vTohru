@@ -37,9 +37,7 @@ import io.vertx.core.impl.logging.LoggerFactory;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.*;
 
 /**
@@ -167,17 +165,6 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
   }
 
 
-  protected void addMappedField(final String name, IProperty mf) {
-    if (mf.hasAnnotation(Id.class)) {
-      if (getIdInfo() != null)
-        throw new MappingException("duplicate Id field definition found for mapper " + getMapperClass());
-      setIdInfo(new IdInfo(mf));
-    }
-    if (!mf.isIgnore()) {
-      this.getMappedProperties().put(name, mf);
-    }
-  }
-
   protected void generateTableInfo() {
     if (getMapperFactory().getDataStore() != null) {
       ITableGenerator tg = getMapperFactory().getDataStore().getTableGenerator();
@@ -222,9 +209,9 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
    * @param definitions
    */
   private void computeIndexes(final Map<String, IIndexDefinition> definitions) {
-    Field[] fields = getMapperClass().getFields();
-    for (Field field : fields) {
-      computeIndexByField(definitions, field);
+    Collection<BeanProperty<T, Object>> beanProperties = beanIntrospection.getBeanProperties();
+    for (BeanProperty<T, Object> beanProperty : beanProperties) {
+      computeIndexByField(definitions, beanProperty);
     }
   }
 
@@ -232,23 +219,18 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
    * @param definitions
    * @param field
    */
-  private void computeIndexByField(final Map<String, IIndexDefinition> definitions, final Field field) {
-    int modifiers = field.getModifiers();
-    Class<?> type = field.getType();
-    if (Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers) && IIndexedField.class.isAssignableFrom(type)
-        && !IdField.class.isAssignableFrom(type)) {
-      try {
-        IIndexedField indexedField = (IIndexedField) field.get(null);
-        IndexDefinition indexDefinition = new IndexDefinition(indexedField, this);
-        if (definitions.containsKey(indexDefinition.getIdentifier())) {
-          assert indexDefinition.getIndexOptions()
-              .isEmpty() : "if indexed fields define index options, incompatibility must be checked here";
-          LOGGER
-              .info("Didn't add index definition because there already is one for its identifier: " + indexDefinition);
-        } else
-          definitions.put(indexDefinition.getIdentifier(), indexDefinition);
-      } catch (IllegalArgumentException | IllegalAccessException e) {
-        throw new RuntimeException(e);
+  private void computeIndexByField(final Map<String, IIndexDefinition> definitions, final BeanProperty<T, Object> field) {
+    if (IIndexedField.class.isAssignableFrom(field.getType())
+        && !IdField.class.isAssignableFrom(field.getType())) {
+      IIndexedField indexedField = (IIndexedField) field.get(null);
+      IndexDefinition indexDefinition = new IndexDefinition(indexedField, this);
+      if (definitions.containsKey(indexDefinition.getIdentifier())) {
+        assert indexDefinition.getIndexOptions()
+            .isEmpty() : "if indexed fields define index options, incompatibility must be checked here";
+        LOGGER
+            .info("Didn't add index definition because there already is one for its identifier: " + indexDefinition);
+      } else{
+        definitions.put(indexDefinition.getIdentifier(), indexDefinition);
       }
     }
   }
