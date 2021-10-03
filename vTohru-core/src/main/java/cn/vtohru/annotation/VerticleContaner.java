@@ -1,6 +1,7 @@
 package cn.vtohru.annotation;
 
 import io.micronaut.aop.Around;
+import io.micronaut.context.annotation.DefaultScope;
 import io.micronaut.core.annotation.EntryPoint;
 
 import java.lang.annotation.Documented;
@@ -15,6 +16,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target(TYPE)
 @Around
 @EntryPoint
+@DefaultScope(Verticle.class)
 public @interface VerticleContaner {
     String value() default "";
     String[] usePackage() default "";

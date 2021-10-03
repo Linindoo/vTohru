@@ -2,6 +2,7 @@ package cn.vtohru.web;
 
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
+import cn.vtohru.web.config.WebServerConfig;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
@@ -55,12 +56,15 @@ public class VerticleRouterHandler {
         this.router = Router.router(this.context.getVertx());
     }
 
-    public Future<Void> registerRouter(String host, int port) {
+    public Future<WebServerConfig> registerRouter(String host, int port) {
         buildRouter();
-        return context.getVertx().createHttpServer().requestHandler(this.router).listen(port, host).compose(x -> {
+        return context.getVertx().createHttpServer().requestHandler(this.router).listen(port).compose(x -> {
             this.httpServer = x;
-            logger.info("start http server success");
-            return Future.succeededFuture();
+            WebServerConfig webServerConfig = new WebServerConfig();
+            webServerConfig.setHost(host);
+            webServerConfig.setPort(x.actualPort());
+            logger.info("start http server success at port:" + x.actualPort());
+            return Future.succeededFuture(webServerConfig);
         }, e -> {
             logger.error(e);
             return Future.failedFuture(e);

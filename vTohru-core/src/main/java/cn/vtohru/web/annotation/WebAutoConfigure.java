@@ -14,6 +14,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target(TYPE)
 @EntryPoint
 public @interface WebAutoConfigure {
-    int port() default -1;
+    int port() default 0;
     String host() default "0.0.0.0";
+    WebService service() default @WebService();
 }
