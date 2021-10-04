@@ -30,10 +30,7 @@ import io.vertx.ext.web.Session;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Verticle
 public class VerticleRouterHandler {
@@ -72,6 +69,15 @@ public class VerticleRouterHandler {
     }
 
     private void buildRouter() {
+        Collection<BeanDefinition<ResourceHandler>> beanDefinitions = context.getBeanDefinitions(ResourceHandler.class);
+        for (BeanDefinition<ResourceHandler> beanDefinition : beanDefinitions) {
+            if (context.isScoped(beanDefinition)) {
+                ResourceHandler resourceHandler = context.getBean(beanDefinition);
+                router.route(resourceHandler.path()).consumes(String.join(";", resourceHandler.consumes()))
+                        .produces(String.join(";", resourceHandler.produces())).handler(resourceHandler);
+            }
+        }
+
         for (VerticleAnnotatedMethodRouteBuilder.RouteDefinition routeDefinition : routeBuilder.getRouteDefinitions()) {
             if (context.isScoped(routeDefinition.getBeanDefinition())) {
                 HttpMethod methodType = getMethodType(routeDefinition.getExecutableMethod());

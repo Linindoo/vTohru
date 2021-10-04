@@ -8,7 +8,7 @@ import cn.vtohru.web.annotation.WebService;
 import io.vertx.core.AbstractVerticle;
 
 @VerticleContaner(usePackage = "cn.vtohru")
-@WebAutoConfigure(service = @WebService(name = "test"))
+@WebAutoConfigure(service = @WebService(name = "test"),port = 7777)
 @ServiceAutoConfigure
 @MessageAutoConfigure
 public class TestVerticle extends AbstractVerticle {
