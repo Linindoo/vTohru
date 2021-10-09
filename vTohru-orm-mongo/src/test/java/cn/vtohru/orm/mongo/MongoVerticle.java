@@ -6,6 +6,6 @@ import io.vertx.core.AbstractVerticle;
 
 @VerticleContaner
 @WebAutoConfigure(port = 7777)
-public class MongoVerticlee extends AbstractVerticle {
+public class MongoVerticle extends AbstractVerticle {
 
 }

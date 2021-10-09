@@ -1,7 +1,7 @@
 vtohru:
-  mongoverticlee:
+  mongo:
+    connection_string: mongodb://localhost/test233
+  mongoverticle:
     name: devVerticle
     web:
       port: 8078
-    mongo:
-      connection_string: mongodb://localhost/test
