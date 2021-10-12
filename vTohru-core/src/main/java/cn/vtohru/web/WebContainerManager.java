@@ -58,7 +58,7 @@ public class WebContainerManager extends VerticleEvent {
 
     @Override
     public Future<Void> stop(BeanDefinition<?> beanDefinition) {
-//        VerticleRouterHandler routerHandler = applicationContext.getBean(VerticleRouterHandler.class);
-        return Future.succeededFuture();
+        VerticleRouterHandler routerHandler = applicationContext.getBean(VerticleRouterHandler.class);
+        return routerHandler.stopServer();
     }
 }

@@ -73,8 +73,14 @@ public class VerticleRouterHandler {
         for (BeanDefinition<ResourceHandler> beanDefinition : beanDefinitions) {
             if (context.isScoped(beanDefinition)) {
                 ResourceHandler resourceHandler = context.getBean(beanDefinition);
-                router.route(resourceHandler.path()).consumes(String.join(";", resourceHandler.consumes()))
-                        .produces(String.join(";", resourceHandler.produces())).handler(resourceHandler);
+                Route route = StringUtils.isEmpty(resourceHandler.path()) ? router.route() : router.route(resourceHandler.path());
+                if (resourceHandler.consumes() != null && resourceHandler.consumes().length > 0) {
+                    route.consumes(String.join(";", resourceHandler.consumes()));
+                }
+                if (resourceHandler.produces() != null && resourceHandler.produces().length > 0) {
+                    route.produces(String.join(";", resourceHandler.produces()));
+                }
+                route.handler(resourceHandler);
             }
         }
 
@@ -92,7 +98,12 @@ public class VerticleRouterHandler {
                 String[] consumes = resolveConsumes(method);
                 MediaType mediaType = Arrays.stream(produces).findFirst().map(MediaType::valueOf).orElse(MediaType.APPLICATION_JSON_TYPE);
                 Route route = router.route(methodType, beanPath + uri);
-                route.produces(String.join(";", produces)).consumes(String.join(";", consumes));
+                if (produces.length > 0) {
+                    route.produces(String.join(";", produces));
+                }
+                if (consumes.length > 0) {
+                    route.consumes(String.join(";", consumes));
+                }
                 route.handler(invokeInterceptor(bean, method, mediaType));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: " + uri);

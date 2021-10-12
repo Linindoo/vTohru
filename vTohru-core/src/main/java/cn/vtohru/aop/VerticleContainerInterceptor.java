@@ -45,6 +45,9 @@ public class VerticleContainerInterceptor implements MethodInterceptor<Object, O
                 verticleEvent.stop(beanDefinition);
             }
         }
+        if (context.getTarget() == null) {
+            return null;
+        }
         return context.proceed();
     }
 

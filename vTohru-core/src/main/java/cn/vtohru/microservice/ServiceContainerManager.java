@@ -27,6 +27,6 @@ public class ServiceContainerManager extends VerticleEvent {
 
     @Override
     public Future<Void> stop(BeanDefinition<?> beanDefinition) {
-        return null;
+        return Future.succeededFuture();
     }
 }
