@@ -6,6 +6,8 @@ import io.micronaut.context.ApplicationContextConfiguration;
 import io.micronaut.context.DefaultApplicationContext;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.Context;
@@ -14,11 +16,12 @@ import io.vertx.core.Vertx;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Optional;
 
 public class VerticleApplicationContext extends DefaultApplicationContext {
     public static final String SCOPE_PACKAGE = "VTOHRU_VERTICLE_SCOPE_PACKAGE";
     public static final String SCOPE_VERTICLE_NAME = "VTOHRU_SCOPE_VERTICLE_NAME";
-
+    public static final String VTOHRU = "vtohru";
     private Vertx vertx;
 
 
@@ -51,7 +54,7 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
 
     public boolean isScoped(BeanDefinition<?> beanDefinition) {
         Context context = vertx.getOrCreateContext();
-        String[] packages = context.getLocal(SCOPE_PACKAGE);
+        String[] packages = context.get(SCOPE_PACKAGE);
         if (packages == null || packages.length == 0) {
             return true;
         }
@@ -62,17 +65,17 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
 
     private void savePackage(String[] packages) {
         Context context = vertx.getOrCreateContext();
-        context.putLocal(SCOPE_PACKAGE, packages);
+        context.put(SCOPE_PACKAGE, packages);
     }
 
     public String getScopeName() {
         Context context = vertx.getOrCreateContext();
-        return context.getLocal(SCOPE_VERTICLE_NAME);
+        return context.get(SCOPE_VERTICLE_NAME);
     }
 
     private void setVerticleName(String verticleName) {
         Context context = vertx.getOrCreateContext();
-        context.putLocal(SCOPE_VERTICLE_NAME, verticleName);
+        context.put(SCOPE_VERTICLE_NAME, verticleName);
     }
 
     public void saveVerticleInfo(BeanDefinition<?> beanDefinition) {
@@ -103,5 +106,14 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
         String verticleName = this.getVerticleName(beanDefinition);
         String verticleConfigKey = "vtohru." + verticleName.toLowerCase();
         return getEnvironment().get(verticleConfigKey, AbstractMap.class).orElse(new HashMap<>());
+    }
+
+    public <T> Optional<T> getVerticleEnv(String name, Class<T> requiredType) {
+        String scopeKey = VTOHRU + "." + name;
+        if (getEnvironment().containsProperties(scopeKey)) {
+            return getEnvironment().get(scopeKey, ConversionContext.of(Argument.of(requiredType)));
+        }
+        scopeKey = VTOHRU + "." + getScopeName().toLowerCase() + "." + name;
+        return get(scopeKey, ConversionContext.of(Argument.of(requiredType)));
     }
 }

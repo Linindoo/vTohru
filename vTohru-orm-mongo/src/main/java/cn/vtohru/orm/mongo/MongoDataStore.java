@@ -40,7 +40,9 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
 
+import java.util.AbstractMap;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Optional;
 
 /**
@@ -65,9 +67,10 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
   private MongoClient client;
   public MongoDataStore(VerticleApplicationContext context) {
     super(context, new JsonObject(), new DataStoreSettings());
-    JsonObject config = context.getVertx().getOrCreateContext().config();
-    JsonObject mongo = config.getJsonObject(MONGO_CONFIG_KEY, new JsonObject());
+    AbstractMap abstractMap = context.getVerticleEnv(MONGO_CONFIG_KEY, AbstractMap.class).orElse(new HashMap());
+    JsonObject mongo = new JsonObject(abstractMap);
     mongo.put("connection_string", mongo.getString("connection-string"));
+    mongo.remove("connection-string");
     this.client = MongoClient.create(context.getVertx(), mongo);
     MongoMapperFactory mf = new MongoMapperFactory(this);
     setMapperFactory(mf);
