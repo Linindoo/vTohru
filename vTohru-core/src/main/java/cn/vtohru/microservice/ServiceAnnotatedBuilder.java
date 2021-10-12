@@ -15,7 +15,7 @@ import java.util.*;
 @Singleton
 public class ServiceAnnotatedBuilder implements ExecutableMethodProcessor<Service> {
     private static final Logger logger = LoggerFactory.getLogger(ServiceAnnotatedBuilder.class);
-    private Map<Class<?>, List<BeanDefinition<?>>> routerMap = new HashMap<>();
+    private Map<Class<?>, List<BeanDefinition<?>>> serviceMap = new HashMap<>();
     private VerticleApplicationContext context;
     private MicroServiceRegister serviceRegister;
 
@@ -31,21 +31,17 @@ public class ServiceAnnotatedBuilder implements ExecutableMethodProcessor<Servic
             return;
         }
         Collection<? extends BeanDefinition<?>> beanDefinitions = context.getBeanDefinitions(declaringType);
-        List<BeanDefinition<?>> routerDefinitions = routerMap.get(declaringType);
-        if (routerDefinitions == null) {
-            routerDefinitions = new ArrayList<>();
-            routerMap.put(declaringType, routerDefinitions);
-        }
+        List<BeanDefinition<?>> routerDefinitions = serviceMap.computeIfAbsent(declaringType, k -> new ArrayList<>());
         for (BeanDefinition<?> definition : beanDefinitions) {
-            if (!definition.isPrimary()) {
+            if (!definition.isPrimary() && !routerDefinitions.contains(definition)) {
                 routerDefinitions.add(definition);
             }
         }
     }
 
     public void registerService() {
-        if (routerMap != null) {
-            for (Map.Entry<Class<?>, List<BeanDefinition<?>>> entry : routerMap.entrySet()) {
+        if (serviceMap != null) {
+            for (Map.Entry<Class<?>, List<BeanDefinition<?>>> entry : serviceMap.entrySet()) {
                 for (BeanDefinition<?> definition : entry.getValue()) {
                     this.serviceRegister.registerService(entry.getKey(), definition);
                 }

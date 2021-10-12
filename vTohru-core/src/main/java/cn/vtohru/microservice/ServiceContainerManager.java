@@ -10,11 +10,9 @@ import io.vertx.core.Future;
 @Verticle
 public class ServiceContainerManager extends VerticleEvent {
     private ServiceAnnotatedBuilder serviceAnnotatedBuilder;
-    private MicroServiceRegister serviceRegister;
 
-    public ServiceContainerManager(ServiceAnnotatedBuilder serviceAnnotatedBuilder, MicroServiceRegister serviceRegister) {
+    public ServiceContainerManager(ServiceAnnotatedBuilder serviceAnnotatedBuilder) {
         this.serviceAnnotatedBuilder = serviceAnnotatedBuilder;
-        this.serviceRegister = serviceRegister;
     }
 
     @Override
