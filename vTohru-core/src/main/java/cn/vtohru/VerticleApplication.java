@@ -7,15 +7,17 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.EmbeddedApplication;
 import io.micronaut.runtime.event.ApplicationShutdownEvent;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.DeploymentOptions;
+import io.vertx.core.*;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Singleton
 @Requires(missingBeans = EmbeddedApplication.class)
@@ -53,16 +55,27 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
     @Override
     public VerticleApplication start() {
         Collection<BeanDefinition<AbstractVerticle>> beanDefinitions = applicationContext.getBeanDefinitions(AbstractVerticle.class);
+        List<Future> startFutures = new ArrayList<>();
         for (BeanDefinition<AbstractVerticle> beanDefinition : beanDefinitions) {
             Map<String, Object> map = applicationContext.getScopeMap(beanDefinition);
             DeploymentOptions deploymentOptions = new DeploymentOptions();
             deploymentOptions.setConfig(new JsonObject(map));
             AbstractVerticle bean = applicationContext.getBean(beanDefinition.getBeanType());
+            Promise<Void> promise = Promise.promise();
             applicationContext.getVertx().deployVerticle(bean, deploymentOptions).onSuccess(x -> {
                 logger.info("deploy Verticle : " + bean.getClass().getName() + " success as " + x);
+                promise.complete();
             }).onFailure(e -> {
                 logger.error("deploy Verticle : " + bean.getClass().getName() + " fail", e);
+                promise.fail(e);
             });
+            startFutures.add(promise.future());
+        }
+        try {
+            CompositeFuture.all(startFutures).toCompletionStage().toCompletableFuture().get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            logger.error(e);
         }
         return this;
     }
@@ -71,14 +84,25 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
     public VerticleApplication stop() {
         VerticleApplicationContext applicationContext = getApplicationContext();
         if (applicationContext != null && applicationContext.isRunning()) {
+            List<Future> endFutures = new ArrayList<>();
             Collection<BeanDefinition<AbstractVerticle>> beanDefinitions = applicationContext.getBeanDefinitions(AbstractVerticle.class);
             for (BeanDefinition<AbstractVerticle> beanDefinition : beanDefinitions) {
                 AbstractVerticle bean = applicationContext.getBean(beanDefinition.getBeanType());
+                Promise<Void> promise = Promise.promise();
                 applicationContext.getVertx().undeploy(bean.deploymentID()).onSuccess(x -> {
                     logger.info("undeploy Verticle : " + bean.getClass().getName() + " success");
+                    promise.complete();
                 }).onFailure(e -> {
                     logger.error("undeploy Verticle : " + bean.getClass().getName() + " fail", e);
+                    promise.fail(e);
                 });
+                endFutures.add(promise.future());
+            }
+            try {
+                CompositeFuture.all(endFutures).toCompletionStage().toCompletableFuture().get();
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+                logger.error(e);
             }
             applicationContext.stop();
             applicationContext.publishEvent(new ApplicationShutdownEvent(this));
