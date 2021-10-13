@@ -71,7 +71,8 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
     JsonObject mongo = new JsonObject(abstractMap);
     mongo.put("connection_string", mongo.getString("connection-string"));
     mongo.remove("connection-string");
-    this.client = MongoClient.create(context.getVertx(), mongo);
+    Boolean shared = mongo.getBoolean("shared", false);
+    this.client = shared ? MongoClient.createShared(context.getVertx(), mongo) : MongoClient.create(context.getVertx(), mongo);
     MongoMapperFactory mf = new MongoMapperFactory(this);
     setMapperFactory(mf);
     MongoStoreObjectFactory storeObjectFactory = new MongoStoreObjectFactory();
