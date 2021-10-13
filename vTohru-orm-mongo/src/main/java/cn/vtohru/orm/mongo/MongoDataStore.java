@@ -12,6 +12,7 @@
  */
 package cn.vtohru.orm.mongo;
 
+import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.orm.IDataStore;
@@ -53,6 +54,7 @@ import java.util.Optional;
  */
 
 @Verticle
+@GlobalScope
 public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
   /**
    * The minimal version of MongoDb, which is expected by the current implementation

@@ -13,6 +13,7 @@
 
 package cn.vtohru.orm.mongo;
 
+import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.orm.IDataStoreMetaData;
 import cn.vtohru.orm.mapping.IMapper;
@@ -30,6 +31,7 @@ import io.vertx.ext.mongo.MongoClient;
  * 
  */
 @Verticle
+@GlobalScope
 public class MongoMetaData implements IDataStoreMetaData {
   private static final io.vertx.core.logging.Logger LOGGER = io.vertx.core.logging.LoggerFactory
       .getLogger(MongoMetaData.class);
