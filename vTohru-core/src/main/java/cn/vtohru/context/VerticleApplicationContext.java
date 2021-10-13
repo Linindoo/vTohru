@@ -1,5 +1,6 @@
 package cn.vtohru.context;
 
+import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.VerticleContaner;
 import cn.vtohru.runtime.VTohru;
 import io.micronaut.context.ApplicationContextConfiguration;
@@ -53,6 +54,9 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
 
 
     public boolean isScoped(BeanDefinition<?> beanDefinition) {
+        if (beanDefinition.hasAnnotation(GlobalScope.class)) {
+            return true;
+        }
         Context context = vertx.getOrCreateContext();
         String[] packages = context.get(SCOPE_PACKAGE);
         if (packages == null || packages.length == 0) {

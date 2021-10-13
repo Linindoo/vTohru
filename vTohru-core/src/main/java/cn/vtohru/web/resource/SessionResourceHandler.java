@@ -1,5 +1,6 @@
 package cn.vtohru.web.resource;
 
+import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.web.ResourceHandler;
@@ -9,7 +10,8 @@ import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 
 @Verticle
-@Order
+@Order()
+@GlobalScope
 public class SessionResourceHandler extends ResourceHandler {
     private SessionHandler sessionHandler;
     public SessionResourceHandler(VerticleApplicationContext context) {

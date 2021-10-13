@@ -1,5 +1,6 @@
 package cn.vtohru.web;
 
+import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 
 import javax.ws.rs.core.MediaType;
@@ -9,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Verticle
+@GlobalScope
 public class ResponseHandlerRegister {
     Map<MediaType, AbstractResponseHandler> decodersByType = new LinkedHashMap<>(3);
 

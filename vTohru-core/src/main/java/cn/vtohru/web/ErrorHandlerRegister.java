@@ -1,5 +1,6 @@
 package cn.vtohru.web;
 
+import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 
 import java.util.HashMap;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 @Verticle
+@GlobalScope
 public class ErrorHandlerRegister {
     Map<Integer, ErrorHandler> errorHandlerMap = new HashMap<>();
 

@@ -1,5 +1,6 @@
 package cn.vtohru.microservice;
 
+import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import io.micronaut.context.ApplicationContext;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.function.Function;
 
 @Verticle
+@GlobalScope
 public class MicroServiceRegister {
     private static final Logger logger = LoggerFactory.getLogger(MicroServiceRegister.class);
     private boolean topLevel = true;

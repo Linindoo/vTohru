@@ -1,5 +1,6 @@
 package cn.vtohru.web;
 
+import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.web.config.WebServerConfig;
@@ -33,6 +34,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.*;
 
 @Verticle
+@GlobalScope
 public class VerticleRouterHandler {
     private static final Logger logger = LoggerFactory.getLogger(VerticleRouterHandler.class);
     private static final String[] DEFAULT_MEDIA_TYPES = new String[]{"application/json"};

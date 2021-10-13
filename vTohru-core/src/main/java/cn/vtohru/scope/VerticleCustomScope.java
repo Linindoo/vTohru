@@ -1,9 +1,8 @@
 package cn.vtohru.scope;
 
 import cn.vtohru.annotation.Verticle;
-import cn.vtohru.event.VerticleTerminatedEvent;
 import cn.vtohru.context.VerticleApplicationContext;
-import io.micronaut.context.BeanContext;
+import cn.vtohru.event.VerticleTerminatedEvent;
 import io.micronaut.context.BeanResolutionContext;
 import io.micronaut.context.LifeCycle;
 import io.micronaut.context.event.ApplicationEventListener;
@@ -11,7 +10,6 @@ import io.micronaut.context.scope.CustomScope;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.BeanIdentifier;
 import io.micronaut.inject.DisposableBeanDefinition;
@@ -33,8 +31,8 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
     private static final String SCOPED_BEAN_DEFINITIONS = "CN.VTOHRU.SCOPED_BEAN_DEFINITIONS";
     private VerticleApplicationContext beanContext;
 
-    public VerticleCustomScope(BeanContext beanContext) {
-        this.beanContext = (VerticleApplicationContext) beanContext;
+    public VerticleCustomScope(VerticleApplicationContext beanContext) {
+        this.beanContext = beanContext;
     }
 
     @Override
@@ -43,11 +41,10 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
     }
 
     public <T> T get(BeanResolutionContext resolutionContext, BeanDefinition<T> beanDefinition, BeanIdentifier identifier, Provider<T> provider) {
-        Context context = beanContext.getVertx().getOrCreateContext();
-        String deploymentID = context.deploymentID();
-        if (StringUtils.isEmpty(deploymentID)) {
+        if (!beanContext.isScoped(beanDefinition)) {
             return null;
         }
+        Context context = beanContext.getVertx().getOrCreateContext();
         ConcurrentHashMap scopedBeanMap = this.getRequestScopedBeans(context);
         ConcurrentHashMap scopedBeanDefinitionMap = this.getRequestScopedBeanDefinitions(context);
         T bean = (T) scopedBeanMap.get(identifier);

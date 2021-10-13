@@ -1,6 +1,7 @@
 package cn.vtohru.web;
 
 import cn.vtohru.VerticleEvent;
+import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.microservice.MicroServiceDiscovery;
@@ -19,12 +20,15 @@ import io.vertx.servicediscovery.types.HttpEndpoint;
 import java.util.Optional;
 
 @Verticle
+@GlobalScope
 public class WebContainerManager extends VerticleEvent {
     private static final Logger logger = LoggerFactory.getLogger(WebContainerManager.class);
     private VerticleApplicationContext applicationContext;
+    private VerticleRouterHandler verticleRouterHandler;
 
-    public WebContainerManager(VerticleApplicationContext applicationContext) {
+    public WebContainerManager(VerticleApplicationContext applicationContext,VerticleRouterHandler verticleRouterHandler) {
         this.applicationContext = applicationContext;
+        this.verticleRouterHandler = verticleRouterHandler;
     }
 
     @Override
@@ -35,9 +39,8 @@ public class WebContainerManager extends VerticleEvent {
         }
         int port = annotation.intValue("port").orElse(0);
         String host = annotation.stringValue("host").orElse("0.0.0.0");
-        VerticleRouterHandler routerHandler = applicationContext.getBean(VerticleRouterHandler.class);
         MicroServiceDiscovery serviceDiscovery = applicationContext.getBean(MicroServiceDiscovery.class);
-        return routerHandler.registerRouter(host, port).compose(x->{
+        return verticleRouterHandler.registerRouter(host, port).compose(x->{
             Optional<AnnotationValue<WebService>> webServiceAnnotationValue = annotation.getAnnotation("service", WebService.class);
             if (!webServiceAnnotationValue.isPresent()) {
                 return Future.succeededFuture();

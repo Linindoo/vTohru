@@ -1,7 +1,9 @@
-package cn.vtohru.web;
+package cn.vtohru.resource;
 
-import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
+import cn.vtohru.web.AbstractResponseHandler;
+import cn.vtohru.web.JsonResponseHandler;
+import io.micronaut.context.annotation.Replaces;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
@@ -9,11 +11,9 @@ import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.List;
 
-
 @Verticle
-@GlobalScope
-public class JsonResponseHandler extends AbstractResponseHandler{
-
+@Replaces(JsonResponseHandler.class)
+public class ResponseBodyHander extends AbstractResponseHandler {
     @Override
     public void successHandler(RoutingContext context, Object result) {
         JsonObject ret = new JsonObject();
