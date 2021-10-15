@@ -26,10 +26,12 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
 
     private final VerticleApplicationContext applicationContext;
     private final ApplicationConfiguration configuration;
+    private List<String> publishVerticles;
 
     public VerticleApplication(ApplicationContext applicationContext, ApplicationConfiguration configuration) {
         this.applicationContext = (VerticleApplicationContext) applicationContext;
         this.configuration = configuration;
+        this.publishVerticles = new ArrayList<>();
     }
 
     @Override
@@ -64,6 +66,7 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
             Promise<Void> promise = Promise.promise();
             applicationContext.getVertx().deployVerticle(bean, deploymentOptions).onSuccess(x -> {
                 logger.info("deploy Verticle : " + bean.getClass().getName() + " success as " + x);
+                publishVerticles.add(x);
                 promise.complete();
             }).onFailure(e -> {
                 logger.error("deploy Verticle : " + bean.getClass().getName() + " fail", e);
@@ -85,15 +88,13 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
         VerticleApplicationContext applicationContext = getApplicationContext();
         if (applicationContext != null && applicationContext.isRunning()) {
             List<Future> endFutures = new ArrayList<>();
-            Collection<BeanDefinition<AbstractVerticle>> beanDefinitions = applicationContext.getBeanDefinitions(AbstractVerticle.class);
-            for (BeanDefinition<AbstractVerticle> beanDefinition : beanDefinitions) {
-                AbstractVerticle bean = applicationContext.getBean(beanDefinition.getBeanType());
+            for (String deplyID : publishVerticles) {
                 Promise<Void> promise = Promise.promise();
-                applicationContext.getVertx().undeploy(bean.deploymentID()).onSuccess(x -> {
-                    logger.info("undeploy Verticle : " + bean.getClass().getName() + " success");
+                applicationContext.getVertx().undeploy(deplyID).onSuccess(x -> {
+                    logger.info("undeploy Verticle : " + deplyID + " success");
                     promise.complete();
                 }).onFailure(e -> {
-                    logger.error("undeploy Verticle : " + bean.getClass().getName() + " fail", e);
+                    logger.error("undeploy Verticle : " + deplyID + " fail", e);
                     promise.fail(e);
                 });
                 endFutures.add(promise.future());
@@ -104,8 +105,6 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
                 e.printStackTrace();
                 logger.error(e);
             }
-            applicationContext.stop();
-            applicationContext.publishEvent(new ApplicationShutdownEvent(this));
         }
         return this;
     }
