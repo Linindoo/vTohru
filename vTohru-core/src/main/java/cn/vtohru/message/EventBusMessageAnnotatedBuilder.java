@@ -41,6 +41,9 @@ public class EventBusMessageAnnotatedBuilder implements ExecutableMethodProcesso
     public void register() {
         for (Map.Entry<BeanDefinition<?>, List<ExecutableMethod<?, ?>>> entry : listenerMethodMap.entrySet()) {
             BeanDefinition<?> beanDefinition = entry.getKey();
+            if (!applicationContext.isScoped(beanDefinition)) {
+                continue;
+            }
             for (ExecutableMethod<?, ?> executableMethod : entry.getValue()) {
                 AnnotationValue<MessageAddress> methodAnnotation = executableMethod.getAnnotation(MessageAddress.class);
                 if (methodAnnotation != null) {

@@ -7,7 +7,7 @@ import cn.vtohru.web.annotation.WebAutoConfigure;
 import cn.vtohru.web.annotation.WebService;
 import io.vertx.core.AbstractVerticle;
 
-@VerticleContaner
+@VerticleContaner(usePackage = "cn.vthsid")
 @WebAutoConfigure(service = @WebService(name = "test"),port = 7777)
 @ServiceAutoConfigure
 @MessageAutoConfigure

@@ -43,7 +43,9 @@ public class ServiceAnnotatedBuilder implements ExecutableMethodProcessor<Servic
         if (serviceMap != null) {
             for (Map.Entry<Class<?>, List<BeanDefinition<?>>> entry : serviceMap.entrySet()) {
                 for (BeanDefinition<?> definition : entry.getValue()) {
-                    this.serviceRegister.registerService(entry.getKey(), definition);
+                    if (context.isScoped(definition)) {
+                        this.serviceRegister.registerService(entry.getKey(), definition);
+                    }
                 }
             }
         }

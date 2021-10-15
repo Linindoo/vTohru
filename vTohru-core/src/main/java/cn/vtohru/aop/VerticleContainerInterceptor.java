@@ -34,13 +34,15 @@ public class VerticleContainerInterceptor implements MethodInterceptor<Object, O
             return null;
         }
         BeanDefinition<?> beanDefinition = applicationContext.getBeanDefinition(verticle.getClass());
-        Collection<VerticleEvent> verticleEvents = applicationContext.getBeansOfType(VerticleEvent.class);
-        if ("start".equalsIgnoreCase(targetMethod.getName()) && targetMethod.getParameterCount() == 1) {
+        if ("init".equalsIgnoreCase(targetMethod.getName())) {
             applicationContext.saveVerticleInfo(beanDefinition);
+        } else if ("start".equalsIgnoreCase(targetMethod.getName()) && targetMethod.getParameterCount() == 1) {
+            Collection<VerticleEvent> verticleEvents = applicationContext.getBeansOfType(VerticleEvent.class);
             for (VerticleEvent verticleEvent : verticleEvents) {
                 verticleEvent.start(beanDefinition);
             }
         } else if ("stop".equalsIgnoreCase(targetMethod.getName()) && targetMethod.getParameterCount() == 1) {
+            Collection<VerticleEvent> verticleEvents = applicationContext.getBeansOfType(VerticleEvent.class);
             for (VerticleEvent verticleEvent : verticleEvents) {
                 verticleEvent.stop(beanDefinition);
             }

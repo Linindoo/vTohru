@@ -31,7 +31,10 @@ import io.vertx.ext.web.Session;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 @Verticle
 @GlobalScope
@@ -43,15 +46,17 @@ public class VerticleRouterHandler {
     private ErrorHandlerRegister errorHandlerRegister;
     private ResponseHandlerRegister responseHandlerRegister;
     private List<Interceptor> interceptorList;
+    private List<ResourceHandler> resourceHandlers;
     private Router router;
     private HttpServer httpServer;
 
-    public VerticleRouterHandler(ApplicationContext context, VerticleAnnotatedMethodRouteBuilder routeBuilder, ErrorHandlerRegister errorHandlerRegister, ResponseHandlerRegister responseHandlerRegister, List<Interceptor> interceptorList) {
+    public VerticleRouterHandler(ApplicationContext context, VerticleAnnotatedMethodRouteBuilder routeBuilder, ErrorHandlerRegister errorHandlerRegister, ResponseHandlerRegister responseHandlerRegister, List<Interceptor> interceptorList, List<ResourceHandler> resourceHandlers) {
         this.context = (VerticleApplicationContext) context;
         this.routeBuilder = routeBuilder;
         this.errorHandlerRegister = errorHandlerRegister;
         this.responseHandlerRegister = responseHandlerRegister;
         this.interceptorList = interceptorList;
+        this.resourceHandlers = resourceHandlers;
         this.router = Router.router(this.context.getVertx());
     }
 
@@ -71,10 +76,8 @@ public class VerticleRouterHandler {
     }
 
     private void buildRouter() {
-        Collection<BeanDefinition<ResourceHandler>> beanDefinitions = context.getBeanDefinitions(ResourceHandler.class);
-        for (BeanDefinition<ResourceHandler> beanDefinition : beanDefinitions) {
-            if (context.isScoped(beanDefinition)) {
-                ResourceHandler resourceHandler = context.getBean(beanDefinition);
+        for (ResourceHandler resourceHandler : resourceHandlers) {
+            if (context.isScoped(context.getBeanDefinition(resourceHandler.getClass()))) {
                 Route route = StringUtils.isEmpty(resourceHandler.path()) ? router.route() : router.route(resourceHandler.path());
                 if (resourceHandler.consumes() != null && resourceHandler.consumes().length > 0) {
                     route.consumes(String.join(";", resourceHandler.consumes()));

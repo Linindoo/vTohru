@@ -113,11 +113,12 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
     }
 
     public <T> Optional<T> getVerticleEnv(String name, Class<T> requiredType) {
+        String scopeName = getScopeName();
         String scopeKey = VTOHRU + "." + name;
-        if (getEnvironment().containsProperties(scopeKey)) {
+        if (StringUtils.isEmpty(scopeName) || getEnvironment().containsProperties(scopeKey)) {
             return getEnvironment().get(scopeKey, ConversionContext.of(Argument.of(requiredType)));
         }
-        scopeKey = VTOHRU + "." + getScopeName().toLowerCase() + "." + name;
+        scopeKey = VTOHRU + "." + scopeName.toLowerCase() + "." + name;
         return get(scopeKey, ConversionContext.of(Argument.of(requiredType)));
     }
 }

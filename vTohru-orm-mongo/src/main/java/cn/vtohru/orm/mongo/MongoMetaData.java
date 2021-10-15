@@ -20,6 +20,8 @@ import cn.vtohru.orm.mapping.IMapper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
@@ -33,17 +35,12 @@ import io.vertx.ext.mongo.MongoClient;
 @Verticle
 @GlobalScope
 public class MongoMetaData implements IDataStoreMetaData {
-  private static final io.vertx.core.logging.Logger LOGGER = io.vertx.core.logging.LoggerFactory
+  private static final Logger LOGGER = LoggerFactory
       .getLogger(MongoMetaData.class);
 
   private final MongoDataStore ds;
   private JsonObject buildInfo;
 
-  /**
-   * Constructor
-   *
-   * @param client the {@link MongoClient} to be used
-   */
   public MongoMetaData(MongoDataStore ds) {
     this.ds = ds;
   }

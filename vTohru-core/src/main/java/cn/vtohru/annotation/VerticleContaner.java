@@ -20,5 +20,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @DefaultScope(Singleton.class)
 public @interface VerticleContaner {
     String value() default "";
-    String[] usePackage() default "";
+    String[] usePackage() default {};
 }

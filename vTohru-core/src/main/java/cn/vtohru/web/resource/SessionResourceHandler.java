@@ -10,7 +10,7 @@ import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 
 @Verticle
-@Order()
+@Order(1)
 @GlobalScope
 public class SessionResourceHandler extends ResourceHandler {
     private SessionHandler sessionHandler;

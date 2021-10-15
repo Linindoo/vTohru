@@ -8,7 +8,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 
 @Verticle
-@Order(1)
+@Order(2)
 @GlobalScope
 public class BodyResourceHandler extends ResourceHandler {
 
