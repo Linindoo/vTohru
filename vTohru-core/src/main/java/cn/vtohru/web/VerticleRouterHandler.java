@@ -4,7 +4,6 @@ import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.web.config.WebServerConfig;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
@@ -50,8 +49,8 @@ public class VerticleRouterHandler {
     private Router router;
     private HttpServer httpServer;
 
-    public VerticleRouterHandler(ApplicationContext context, VerticleAnnotatedMethodRouteBuilder routeBuilder, ErrorHandlerRegister errorHandlerRegister, ResponseHandlerRegister responseHandlerRegister, List<Interceptor> interceptorList, List<ResourceHandler> resourceHandlers) {
-        this.context = (VerticleApplicationContext) context;
+    public VerticleRouterHandler(VerticleApplicationContext context, VerticleAnnotatedMethodRouteBuilder routeBuilder, ErrorHandlerRegister errorHandlerRegister, ResponseHandlerRegister responseHandlerRegister, List<Interceptor> interceptorList, List<ResourceHandler> resourceHandlers) {
+        this.context =  context;
         this.routeBuilder = routeBuilder;
         this.errorHandlerRegister = errorHandlerRegister;
         this.responseHandlerRegister = responseHandlerRegister;
