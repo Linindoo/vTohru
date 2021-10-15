@@ -14,7 +14,7 @@ import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
 
 @Verticle
-@Order(0)
+@Order(1)
 @GlobalScope
 public class LogInterceptor implements Interceptor {
     private static final Logger logger = LoggerFactory.getLogger(WebContainerManager.class);
