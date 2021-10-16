@@ -354,6 +354,7 @@ public class VerticleRouterHandler {
         if (path==null||path.length()==0){
             return path;
         }
+        path = path.replace("//", "/");
         Matcher matcher = pathPattern.matcher(path);
         while (matcher.find()){
 

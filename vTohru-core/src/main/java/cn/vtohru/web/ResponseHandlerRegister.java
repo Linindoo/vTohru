@@ -2,6 +2,7 @@ package cn.vtohru.web;
 
 import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
+import cn.vtohru.context.VerticleApplicationContext;
 
 import javax.ws.rs.core.MediaType;
 import java.util.Collection;
@@ -14,13 +15,15 @@ import java.util.Optional;
 public class ResponseHandlerRegister {
     Map<MediaType, AbstractResponseHandler> decodersByType = new LinkedHashMap<>(3);
 
-    public ResponseHandlerRegister(Collection<AbstractResponseHandler> responseHandlers) {
+    public ResponseHandlerRegister(VerticleApplicationContext context, Collection<AbstractResponseHandler> responseHandlers) {
         if (responseHandlers != null) {
             for (AbstractResponseHandler decoder : responseHandlers) {
-                Collection<MediaType> mediaTypes = decoder.getMediaTypes();
-                for (MediaType mediaType : mediaTypes) {
-                    if (mediaType != null) {
-                        decodersByType.put(mediaType, decoder);
+                if (context.isScoped(context.getBeanDefinition(decoder.getClass()))) {
+                    Collection<MediaType> mediaTypes = decoder.getMediaTypes();
+                    for (MediaType mediaType : mediaTypes) {
+                        if (mediaType != null) {
+                            decodersByType.put(mediaType, decoder);
+                        }
                     }
                 }
             }

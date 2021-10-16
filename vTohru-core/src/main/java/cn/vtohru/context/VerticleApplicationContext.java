@@ -13,6 +13,8 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 
 import java.util.AbstractMap;
 import java.util.Arrays;
@@ -20,6 +22,7 @@ import java.util.HashMap;
 import java.util.Optional;
 
 public class VerticleApplicationContext extends DefaultApplicationContext {
+    private static final Logger logger = LoggerFactory.getLogger(VerticleApplicationContext.class);
     public static final String SCOPE_PACKAGE = "VTOHRU_VERTICLE_SCOPE_PACKAGE";
     public static final String SCOPE_VERTICLE_NAME = "VTOHRU_SCOPE_VERTICLE_NAME";
     public static final String VTOHRU = "vtohru";
@@ -28,7 +31,6 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
 
     public VerticleApplicationContext(ApplicationContextConfiguration configuration) {
         super(configuration);
-        this.vertx = Vertx.vertx();
     }
 
 
