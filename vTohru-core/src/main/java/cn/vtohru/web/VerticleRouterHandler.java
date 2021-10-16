@@ -34,10 +34,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Verticle
 @GlobalScope
 public class VerticleRouterHandler {
+    private static Pattern pathPattern = Pattern.compile("\\{(.*?)\\}");
+
     private static final Logger logger = LoggerFactory.getLogger(VerticleRouterHandler.class);
     private static final String[] DEFAULT_MEDIA_TYPES = new String[]{"application/json"};
     private VerticleApplicationContext context;
@@ -77,7 +81,7 @@ public class VerticleRouterHandler {
     private void buildRouter() {
         for (ResourceHandler resourceHandler : resourceHandlers) {
             if (context.isScoped(context.getBeanDefinition(resourceHandler.getClass()))) {
-                Route route = StringUtils.isEmpty(resourceHandler.path()) ? router.route() : router.route(resourceHandler.path());
+                Route route = StringUtils.isEmpty(resourceHandler.path()) ? router.route() : router.route(converter(resourceHandler.path()));
                 if (resourceHandler.consumes() != null && resourceHandler.consumes().length > 0) {
                     route.consumes(String.join(";", resourceHandler.consumes()));
                 }
@@ -101,7 +105,8 @@ public class VerticleRouterHandler {
                 String[] produces = resolveProduces(method);
                 String[] consumes = resolveConsumes(method);
                 MediaType mediaType = Arrays.stream(produces).findFirst().map(MediaType::valueOf).orElse(MediaType.APPLICATION_JSON_TYPE);
-                Route route = router.route(methodType, beanPath + uri);
+                String path = converter(beanPath + uri);
+                Route route = router.route(methodType, path);
                 if (produces.length > 0) {
                     route.produces(String.join(";", produces));
                 }
@@ -343,5 +348,22 @@ public class VerticleRouterHandler {
             return httpServer.close();
         }
         return Future.succeededFuture();
+    }
+
+    private String converter(String path){
+        if (path==null||path.length()==0){
+            return path;
+        }
+        Matcher matcher = pathPattern.matcher(path);
+        while (matcher.find()){
+
+            String p = matcher.group(0);
+            if (p.length()>0){
+                p = p.replace("{", "").replace("}", "");
+                path = path.replace(matcher.group(0), ":" + p);
+            }
+        }
+        return path;
+
     }
 }
