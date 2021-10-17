@@ -5,7 +5,9 @@ import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.microservice.MicroServiceDiscovery;
 import cn.vtohru.web.annotation.WebAutoConfigure;
 import cn.vtohru.web.annotation.WebService;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Indexed;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.Future;
@@ -19,12 +21,13 @@ import javax.inject.Singleton;
 import java.util.Optional;
 
 @Singleton
+@Indexed(VerticleEvent.class)
 public class WebContainerManager extends VerticleEvent {
     private static final Logger logger = LoggerFactory.getLogger(WebContainerManager.class);
     private VerticleApplicationContext applicationContext;
 
-    public WebContainerManager(VerticleApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
+    public WebContainerManager(ApplicationContext applicationContext) {
+        this.applicationContext = (VerticleApplicationContext) applicationContext;
     }
 
     @Override

@@ -4,6 +4,7 @@ import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.web.Interceptor;
 import cn.vtohru.web.WebContainerManager;
+import io.micronaut.core.annotation.Indexed;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
@@ -16,6 +17,7 @@ import io.vertx.ext.web.RoutingContext;
 @Verticle
 @Order(1)
 @GlobalScope
+@Indexed(Interceptor.class)
 public class LogInterceptor implements Interceptor {
     private static final Logger logger = LoggerFactory.getLogger(WebContainerManager.class);
     @Override

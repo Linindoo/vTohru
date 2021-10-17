@@ -4,6 +4,7 @@ import cn.vtohru.annotation.Verticle;
 import cn.vtohru.web.Interceptor;
 import cn.vtohru.web.Priv;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Indexed;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
@@ -14,6 +15,7 @@ import io.vertx.ext.web.RoutingContext;
 
 @Verticle
 @Order(4)
+@Indexed(Interceptor.class)
 public class LoginPrivInterceptor implements Interceptor {
     @Override
     public Future<Void> preHandler(BeanDefinition<?> beanDefinition, ExecutableMethod<Object, ?> method, RoutingContext routingContext) {

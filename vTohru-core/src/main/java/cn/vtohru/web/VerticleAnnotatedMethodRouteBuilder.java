@@ -2,6 +2,7 @@ package cn.vtohru.web;
 
 import cn.vtohru.web.annotation.Controller;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
+import io.micronaut.core.annotation.Indexed;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.vertx.core.impl.logging.Logger;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Singleton
+@Indexed(VerticleAnnotatedMethodRouteBuilder.class)
 public class VerticleAnnotatedMethodRouteBuilder implements ExecutableMethodProcessor<Controller> {
     private static final Logger logger = LoggerFactory.getLogger(VerticleAnnotatedMethodRouteBuilder.class);
     private List<VerticleAnnotatedMethodRouteBuilder.RouteDefinition> routeDefinitions = new ArrayList<>();

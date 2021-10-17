@@ -2,6 +2,7 @@ package cn.vtohru.web;
 
 import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
+import io.micronaut.core.annotation.Indexed;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
@@ -12,7 +13,8 @@ import java.util.List;
 
 @Verticle
 @GlobalScope
-public class JsonResponseHandler extends AbstractResponseHandler{
+@Indexed(AbstractResponseHandler.class)
+public class JsonResponseHandler extends AbstractResponseHandler {
 
     @Override
     public void successHandler(RoutingContext context, Object result) {

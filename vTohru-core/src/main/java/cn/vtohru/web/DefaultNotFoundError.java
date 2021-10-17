@@ -2,11 +2,13 @@ package cn.vtohru.web;
 
 import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
+import io.micronaut.core.annotation.Indexed;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 @Verticle
 @GlobalScope
+@Indexed(ErrorHandler.class)
 public class DefaultNotFoundError extends ErrorHandler{
     @Override
     public int getCode() {

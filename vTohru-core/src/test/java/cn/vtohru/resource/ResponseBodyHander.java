@@ -4,6 +4,7 @@ import cn.vtohru.annotation.Verticle;
 import cn.vtohru.web.AbstractResponseHandler;
 import cn.vtohru.web.JsonResponseHandler;
 import io.micronaut.context.annotation.Replaces;
+import io.micronaut.core.annotation.Indexed;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 @Verticle
 @Replaces(JsonResponseHandler.class)
+@Indexed(AbstractResponseHandler.class)
 public class ResponseBodyHander extends AbstractResponseHandler {
     @Override
     public void successHandler(RoutingContext context, Object result) {

@@ -42,7 +42,7 @@ public class MicroServiceRegister {
         serviceProxyHandler.register(verticleApplicationContext.getVertx().eventBus(), serviceClass.getName());
         Record record = EventBusService.createRecord(serviceClass.getName(), serviceClass.getName(), serviceClass);
         this.serviceDiscovery.publishService(record).onSuccess(x->{
-            logger.info("Service <" + x.getName() + "> published");
+            logger.info(verticleApplicationContext.getScopeName() + " publish Service <" + x.getName());
         }).onFailure(logger::error);
     }
 }
