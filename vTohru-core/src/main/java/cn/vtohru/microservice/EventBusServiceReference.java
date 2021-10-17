@@ -1,6 +1,7 @@
 package cn.vtohru.microservice;
 
 import cn.vtohru.context.VerticleApplicationContext;
+import io.micronaut.context.ApplicationContext;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.servicediscovery.Record;
@@ -16,9 +17,9 @@ public class EventBusServiceReference<T> extends AbstractServiceReference<T> {
     private final String serviceInterface;
     private VerticleApplicationContext verticleApplicationContext;
 
-    EventBusServiceReference(VerticleApplicationContext verticleApplicationContext, ServiceDiscovery discovery, Record record, JsonObject conf) {
-        super(verticleApplicationContext.getVertx(), discovery, record);
-        this.verticleApplicationContext = verticleApplicationContext;
+    EventBusServiceReference(ApplicationContext verticleApplicationContext, ServiceDiscovery discovery, Record record, JsonObject conf) {
+        super(((VerticleApplicationContext)verticleApplicationContext).getVertx(), discovery, record);
+        this.verticleApplicationContext = (VerticleApplicationContext) verticleApplicationContext;
         this.serviceInterface = record.getMetadata().getString("service.interface");
         if (conf != null) {
             this.deliveryOptions = new DeliveryOptions(conf);

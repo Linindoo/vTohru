@@ -8,8 +8,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
-
-import java.util.Arrays;
+import io.micronaut.core.util.StringUtils;
 
 @Introspected
 public class ScopeCondition implements Condition {
@@ -20,17 +19,15 @@ public class ScopeCondition implements Condition {
         AnnotationMetadata annotationMetadata = component.getAnnotationMetadata();
         if (annotationMetadata.hasDeclaredAnnotation(ScopeRequires.class)) {
             AnnotationValue<ScopeRequires> annotation = annotationMetadata.getAnnotation(ScopeRequires.class);
-            String[] requireVerticles = annotation.get("requireVerticle", String[].class).orElse(new String[]{});
-            String[] notRequireVerticles = annotation.get("notRequireVerticle", String[].class).orElse(new String[]{});
+            String property = annotation.get("property", String.class).orElse("");
+            String notEquals = annotation.get("notEquals", String.class).orElse("");
             BeanContext beanContext = context.getBeanContext();
             if (beanContext instanceof VerticleApplicationContext) {
                 VerticleApplicationContext verticleApplicationContext = (VerticleApplicationContext) beanContext;
-                String scopeName = verticleApplicationContext.getScopeName();
-                if (Arrays.stream(requireVerticles).noneMatch(x -> x.equalsIgnoreCase(scopeName))) {
-                    return false;
-                }
-                if (Arrays.stream(notRequireVerticles).anyMatch(x -> x.equalsIgnoreCase(scopeName))) {
-                    return false;
+                if (StringUtils.isNotEmpty(property)) {
+                    if (notEquals.equals(verticleApplicationContext.getVerticleEnv(property, String.class).orElse(""))) {
+                        return false;
+                    }
                 }
             }
         }

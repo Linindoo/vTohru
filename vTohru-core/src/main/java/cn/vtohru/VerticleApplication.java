@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 @Singleton
-@Requires(missingBeans = EmbeddedApplication.class)
 public class VerticleApplication implements EmbeddedApplication<VerticleApplication> {
     private static final Logger logger = LoggerFactory.getLogger(VerticleApplication.class);
 
@@ -70,6 +69,7 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
             }
         }
         applicationContext.setVertx(vertx);
+        applicationContext.registerSingleton(Vertx.class, vertx);
         Collection<BeanDefinition<AbstractVerticle>> beanDefinitions = applicationContext.getBeanDefinitions(AbstractVerticle.class);
         for (BeanDefinition<AbstractVerticle> beanDefinition : beanDefinitions) {
             AbstractMap map = applicationContext.getScopeMap(beanDefinition);
@@ -81,10 +81,12 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
                 logger.info("deploy Verticle : " + bean.getClass().getName() + " success as " + x);
                 promise.complete();
             }).onFailure(e -> {
+                e.printStackTrace();
                 logger.error("deploy Verticle : " + bean.getClass().getName() + " fail", e);
                 promise.fail(e);
             });
         }
+        applicationContext.start();
         return this;
     }
 

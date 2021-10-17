@@ -12,4 +12,6 @@ import java.lang.annotation.*;
 public @interface ScopeRequires {
     String[] requireVerticle() default "";
     String[] notRequireVerticle() default "";
+    String property() default "";
+    String notEquals() default "";
 }

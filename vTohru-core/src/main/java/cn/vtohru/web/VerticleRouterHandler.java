@@ -4,7 +4,9 @@ import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.web.config.WebServerConfig;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Indexed;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
@@ -30,18 +32,15 @@ import io.vertx.ext.web.Session;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Verticle
 @GlobalScope
+@Indexed(VerticleRouterHandler.class)
 public class VerticleRouterHandler {
     private static Pattern pathPattern = Pattern.compile("\\{(.*?)\\}");
-
     private static final Logger logger = LoggerFactory.getLogger(VerticleRouterHandler.class);
     private static final String[] DEFAULT_MEDIA_TYPES = new String[]{"application/json"};
     private VerticleApplicationContext context;
@@ -53,8 +52,8 @@ public class VerticleRouterHandler {
     private Router router;
     private HttpServer httpServer;
 
-    public VerticleRouterHandler(VerticleApplicationContext context, VerticleAnnotatedMethodRouteBuilder routeBuilder, ErrorHandlerRegister errorHandlerRegister, ResponseHandlerRegister responseHandlerRegister, List<Interceptor> interceptorList, List<ResourceHandler> resourceHandlers) {
-        this.context =  context;
+    public VerticleRouterHandler(ApplicationContext context, VerticleAnnotatedMethodRouteBuilder routeBuilder, ErrorHandlerRegister errorHandlerRegister, ResponseHandlerRegister responseHandlerRegister, List<Interceptor> interceptorList, List<ResourceHandler> resourceHandlers) {
+        this.context = (VerticleApplicationContext) context;
         this.routeBuilder = routeBuilder;
         this.errorHandlerRegister = errorHandlerRegister;
         this.responseHandlerRegister = responseHandlerRegister;
@@ -70,7 +69,7 @@ public class VerticleRouterHandler {
             WebServerConfig webServerConfig = new WebServerConfig();
             webServerConfig.setHost(host);
             webServerConfig.setPort(x.actualPort());
-            logger.info("start http server success at port:" + x.actualPort());
+            logger.info(context.getScopeName() + "-start http server success at port:" + x.actualPort());
             return Future.succeededFuture(webServerConfig);
         }, e -> {
             logger.error(e);
@@ -79,7 +78,7 @@ public class VerticleRouterHandler {
     }
 
     private void buildRouter() {
-        for (ResourceHandler resourceHandler : resourceHandlers) {
+        for (ResourceHandler resourceHandler : this.resourceHandlers) {
             if (context.isScoped(context.getBeanDefinition(resourceHandler.getClass()))) {
                 Route route = StringUtils.isEmpty(resourceHandler.path()) ? router.route() : router.route(converter(resourceHandler.path()));
                 if (resourceHandler.consumes() != null && resourceHandler.consumes().length > 0) {

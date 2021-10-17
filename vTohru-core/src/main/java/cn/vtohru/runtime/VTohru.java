@@ -38,7 +38,7 @@ public class VTohru extends DefaultApplicationContextBuilder {
         VerticleApplicationContext applicationContext = (VerticleApplicationContext) super.build();
         try {
             VTohruUtil.setContext(applicationContext);
-            applicationContext.registerSingleton(VerticleApplicationContext.class, applicationContext);
+            applicationContext.registerSingleton(applicationContext, false);
             applicationContext.start();
             Optional<EmbeddedApplication> embeddedContainerBean = applicationContext.findBean(EmbeddedApplication.class);
             embeddedContainerBean.ifPresent((embeddedApplication) -> {
