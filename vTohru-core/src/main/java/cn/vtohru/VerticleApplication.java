@@ -2,7 +2,6 @@ package cn.vtohru;
 
 import cn.vtohru.context.VerticleApplicationContext;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.EmbeddedApplication;
@@ -70,23 +69,23 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
         }
         applicationContext.setVertx(vertx);
         applicationContext.registerSingleton(Vertx.class, vertx);
-        Collection<BeanDefinition<AbstractVerticle>> beanDefinitions = applicationContext.getBeanDefinitions(AbstractVerticle.class);
-        for (BeanDefinition<AbstractVerticle> beanDefinition : beanDefinitions) {
+        Collection<AbstractVerticle> abstractVerticles = applicationContext.getBeansOfType(AbstractVerticle.class);
+        Future<String> publishFuture = null;
+        for (AbstractVerticle abstractVerticle : abstractVerticles) {
+            BeanDefinition<? extends AbstractVerticle> beanDefinition = applicationContext.getBeanDefinition(abstractVerticle.getClass());
             AbstractMap map = applicationContext.getScopeMap(beanDefinition);
             DeploymentOptions deploymentOptions = new DeploymentOptions();
             deploymentOptions.setConfig(new JsonObject(map));
-            AbstractVerticle bean = applicationContext.getBean(beanDefinition.getBeanType());
-            Promise<Void> promise = Promise.promise();
-            applicationContext.getVertx().deployVerticle(bean, deploymentOptions).onSuccess(x -> {
-                logger.info("deploy Verticle : " + bean.getClass().getName() + " success as " + x);
-                promise.complete();
-            }).onFailure(e -> {
-                e.printStackTrace();
-                logger.error("deploy Verticle : " + bean.getClass().getName() + " fail", e);
-                promise.fail(e);
-            });
+            if (publishFuture == null) {
+                publishFuture = applicationContext.getVertx().deployVerticle(abstractVerticle, deploymentOptions);
+            } else {
+                publishFuture = publishFuture.compose(x->{
+                    return applicationContext.getVertx().deployVerticle(abstractVerticle, deploymentOptions);
+                },e->{
+                    return applicationContext.getVertx().deployVerticle(abstractVerticle, deploymentOptions);
+                });
+            }
         }
-        applicationContext.start();
         return this;
     }
 
