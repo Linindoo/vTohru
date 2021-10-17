@@ -2,6 +2,7 @@ package cn.vtohru.message;
 
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.message.annotation.MessageType;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
 import io.micronaut.inject.BeanDefinition;
@@ -18,6 +19,7 @@ import io.vertx.serviceproxy.HelperUtils;
 import javax.ws.rs.QueryParam;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class EventBusMessageHandler<T> implements Handler<Message<JsonObject>> {
@@ -29,8 +31,8 @@ public class EventBusMessageHandler<T> implements Handler<Message<JsonObject>> {
     private boolean includeDebugInfo = false;
 
 
-    public EventBusMessageHandler(VerticleApplicationContext applicationContext, BeanDefinition<T> beanDefinition, ExecutableMethod<T, Object> executableMethod, MessageType.Type msgType) {
-        this.applicationContext = applicationContext;
+    public EventBusMessageHandler(ApplicationContext applicationContext, BeanDefinition<T> beanDefinition, ExecutableMethod<T, Object> executableMethod, MessageType.Type msgType) {
+        this.applicationContext = (VerticleApplicationContext) applicationContext;
         this.beanDefinition = beanDefinition;
         this.executableMethod = executableMethod;
         this.msgType = msgType;
@@ -47,7 +49,7 @@ public class EventBusMessageHandler<T> implements Handler<Message<JsonObject>> {
                 params[i] = HelperUtils.createHandler(message, this.includeDebugInfo);
             } else {
                 AnnotationValue<QueryParam> annotation = argument.getAnnotation(QueryParam.class);
-                String paramName = annotation.stringValue().orElse(argument.getName());
+                String paramName = Optional.ofNullable(annotation).map(x->x.stringValue().orElse(argument.getName())).orElse(argument.getName());
                 params[i] = body.getMap().get(paramName);
             }
         }
