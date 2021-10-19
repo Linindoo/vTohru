@@ -6,7 +6,10 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.EmbeddedApplication;
 import io.micronaut.runtime.exceptions.ApplicationStartupException;
-import io.vertx.core.*;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
@@ -70,21 +73,17 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
         applicationContext.setVertx(vertx);
         applicationContext.registerSingleton(Vertx.class, vertx);
         Collection<AbstractVerticle> abstractVerticles = applicationContext.getBeansOfType(AbstractVerticle.class);
-        Future<String> publishFuture = null;
         for (AbstractVerticle abstractVerticle : abstractVerticles) {
             BeanDefinition<? extends AbstractVerticle> beanDefinition = applicationContext.getBeanDefinition(abstractVerticle.getClass());
             AbstractMap map = applicationContext.getScopeMap(beanDefinition);
             DeploymentOptions deploymentOptions = new DeploymentOptions();
             deploymentOptions.setConfig(new JsonObject(map));
-            if (publishFuture == null) {
-                publishFuture = applicationContext.getVertx().deployVerticle(abstractVerticle, deploymentOptions);
-            } else {
-                publishFuture = publishFuture.compose(x->{
-                    return applicationContext.getVertx().deployVerticle(abstractVerticle, deploymentOptions);
-                },e->{
-                    return applicationContext.getVertx().deployVerticle(abstractVerticle, deploymentOptions);
-                });
-            }
+            applicationContext.getVertx().deployVerticle(abstractVerticle, deploymentOptions).onSuccess(x -> {
+                logger.info("deploy Verticle : " + abstractVerticle.getClass().getName() + " success as " + x);
+            }).onFailure(e -> {
+                e.printStackTrace();
+                logger.error("deploy Verticle : " + abstractVerticle.getClass().getName() + " fail", e);
+            });
         }
         return this;
     }

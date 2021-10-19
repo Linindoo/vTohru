@@ -88,6 +88,7 @@ public class VerticleRouterHandler {
                     route.produces(String.join(";", resourceHandler.produces()));
                 }
                 route.handler(resourceHandler);
+                logger.info(context.getScopeName() + ":register resourceHandler-" + resourceHandler.getClass().getName());
             }
         }
 
@@ -116,6 +117,7 @@ public class VerticleRouterHandler {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: " + uri);
                 }
+                logger.info(context.getScopeName() + ":register routerHandler:" + uri);
             }
         }
         if (errorHandlerRegister != null) {

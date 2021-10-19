@@ -6,6 +6,7 @@ import cn.vtohru.event.VerticleTerminatedEvent;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.LifeCycle;
 import io.micronaut.context.event.ApplicationEventListener;
+import io.micronaut.context.exceptions.BeanDestructionException;
 import io.micronaut.context.scope.BeanCreationContext;
 import io.micronaut.context.scope.CreatedBean;
 import io.micronaut.context.scope.CustomScope;
@@ -18,15 +19,14 @@ import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 
 import javax.inject.Singleton;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<VerticleCustomScope>, ApplicationEventListener<VerticleTerminatedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(VerticleCustomScope.class);
     public static final String SCOPED_BEANS_ATTRIBUTE = "CN.VTOHRU.SCOPED_BEANS";
-    private static final String SCOPED_BEAN_DEFINITIONS = "CN.VTOHRU.SCOPED_BEAN_DEFINITIONS";
     private VerticleApplicationContext beanContext;
 
     public VerticleCustomScope(ApplicationContext beanContext) {
@@ -64,7 +64,33 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
 
     @Override
     public <T> Optional<T> remove(BeanIdentifier identifier) {
-        return Optional.empty();
+        if (identifier == null) {
+            return Optional.empty();
+        }
+        Map<BeanIdentifier, CreatedBean<?>> scopeMap;
+        try {
+            scopeMap = getScopeMap(false);
+        } catch (IllegalStateException e) {
+            return Optional.empty();
+        }
+        if (CollectionUtils.isNotEmpty(scopeMap)) {
+            final CreatedBean<?> createdBean = scopeMap.get(identifier);
+            if (createdBean != null) {
+                try {
+                    createdBean.close();
+                } catch (BeanDestructionException e) {
+                    handleDestructionException(e);
+                }
+                return (Optional<T>) Optional.ofNullable(createdBean.bean());
+            } else {
+                return Optional.empty();
+            }
+        } else {
+            return Optional.empty();
+        }
+    }
+    private void handleDestructionException(BeanDestructionException e) {
+        logger.error("Error occurred destroying bean of scope @" + this.annotationType().getSimpleName() + ": " + e.getMessage(), e);
     }
 
 
@@ -84,7 +110,7 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
     }
 
     private void destroyBeans(Context context) {
-        ConcurrentHashMap<BeanIdentifier, CreatedBean<?>> requestScopedBeans =
+        Map<BeanIdentifier, CreatedBean<?>> requestScopedBeans =
                 getRequestScopedBeans(context, false);
         if (requestScopedBeans != null) {
             destroyScope(requestScopedBeans);
@@ -99,21 +125,16 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
         }
     }
 
-    private synchronized <T> ConcurrentHashMap<BeanIdentifier, CreatedBean<?>> getRequestScopedBeans(Context httpRequest, boolean create) {
-        return this.getRequestAttributeMap(httpRequest, SCOPED_BEANS_ATTRIBUTE, create);
+    private synchronized <T> Map<BeanIdentifier, CreatedBean<?>> getRequestScopedBeans(Context context, boolean create) {
+        return this.getRequestAttributeMap(context, SCOPED_BEANS_ATTRIBUTE, create);
     }
-
-    private synchronized <T> ConcurrentHashMap<?, ?> getRequestScopedBeanDefinitions(Context httpRequest, boolean create) {
-        return this.getRequestAttributeMap(httpRequest, SCOPED_BEAN_DEFINITIONS, create);
-    }
-
-    private <T> ConcurrentHashMap<BeanIdentifier, CreatedBean<?>> getRequestAttributeMap(Context context, String attribute, boolean create) {
-        ConcurrentHashMap<BeanIdentifier, CreatedBean<?>> local = context.get(attribute);
+    private <T> Map<BeanIdentifier, CreatedBean<?>> getRequestAttributeMap(Context context, String attribute, boolean create) {
+        HashMap<BeanIdentifier, CreatedBean<?>> local = context.get(attribute);
         if (local != null) {
             return local;
         }
         if (create) {
-            ConcurrentHashMap<BeanIdentifier, CreatedBean<?>> scopedBeans = new ConcurrentHashMap<>(5);
+            Map<BeanIdentifier, CreatedBean<?>> scopedBeans = new HashMap<>(5);
             context.put(attribute, scopedBeans);
             return scopedBeans;
         }
