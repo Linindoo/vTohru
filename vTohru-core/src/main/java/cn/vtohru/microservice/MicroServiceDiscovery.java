@@ -4,6 +4,7 @@ import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.core.annotation.Indexed;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.servicediscovery.Record;
@@ -14,6 +15,7 @@ import io.vertx.servicediscovery.types.EventBusService;
 
 @Verticle
 @GlobalScope
+@Indexed(MicroServiceDiscovery.class)
 public class MicroServiceDiscovery extends DiscoveryImpl {
     private VerticleApplicationContext verticleApplicationContext;
 
