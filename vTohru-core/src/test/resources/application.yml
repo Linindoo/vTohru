@@ -1,3 +1,6 @@
 vtohru:
   testverticle:
     name: devVerticle
+    web:
+      body:
+        enable: false

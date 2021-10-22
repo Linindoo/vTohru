@@ -79,7 +79,7 @@ public class VerticleRouterHandler {
 
     private void buildRouter() {
         for (ResourceHandler resourceHandler : this.resourceHandlers) {
-            if (context.isScoped(context.getBeanDefinition(resourceHandler.getClass()))) {
+            if (resourceHandler.enable() && context.isScoped(context.getBeanDefinition(resourceHandler.getClass()))) {
                 Route route = StringUtils.isEmpty(resourceHandler.path()) ? router.route() : router.route(converter(resourceHandler.path()));
                 if (resourceHandler.consumes() != null && resourceHandler.consumes().length > 0) {
                     route.consumes(String.join(";", resourceHandler.consumes()));
