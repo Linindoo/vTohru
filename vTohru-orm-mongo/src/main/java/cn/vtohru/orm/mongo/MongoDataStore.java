@@ -29,12 +29,9 @@ import cn.vtohru.orm.mongo.dataaccess.MongoWrite;
 import cn.vtohru.orm.mongo.init.MongoDataStoreSynchronizer;
 import cn.vtohru.orm.mongo.mapper.MongoMapperFactory;
 import cn.vtohru.orm.mongo.mapper.datastore.MongoTableGenerator;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.convert.TypeConverter;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -67,14 +64,16 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
   public static final String DATABASE_NAME = "db_name";
   private static final String MONGO_CONFIG_KEY = "mongo";
   private MongoClient client;
-  public MongoDataStore(VerticleApplicationContext context) {
-    super(context, new JsonObject(), new DataStoreSettings());
-    AbstractMap abstractMap = context.getVerticleEnv(MONGO_CONFIG_KEY, AbstractMap.class).orElse(new HashMap());
+  private VerticleApplicationContext verticleApplicationContext;
+  public MongoDataStore(ApplicationContext context) {
+    super((VerticleApplicationContext) context, new JsonObject(), new DataStoreSettings());
+    verticleApplicationContext = (VerticleApplicationContext) context;
+    AbstractMap abstractMap = verticleApplicationContext.getVerticleEnv(MONGO_CONFIG_KEY, AbstractMap.class).orElse(new HashMap());
     JsonObject mongo = new JsonObject(abstractMap);
     mongo.put("connection_string", mongo.getString("connection-string"));
     mongo.remove("connection-string");
     Boolean shared = mongo.getBoolean("shared", false);
-    this.client = shared ? MongoClient.createShared(context.getVertx(), mongo) : MongoClient.create(context.getVertx(), mongo);
+    this.client = shared ? MongoClient.createShared(verticleApplicationContext.getVertx(), mongo) : MongoClient.create(verticleApplicationContext.getVertx(), mongo);
     MongoMapperFactory mf = new MongoMapperFactory(this);
     setMapperFactory(mf);
     MongoStoreObjectFactory storeObjectFactory = new MongoStoreObjectFactory();
