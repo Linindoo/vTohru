@@ -206,7 +206,16 @@ public class VerticleRouterHandler {
                 });
             }
             AbstractResponseHandler responseHandler = responseHandlerRegister.findResponseHandler(mediaType).orElse(this.context.getBean(JsonResponseHandler.class));
-            promise.future().onSuccess(x -> responseHandler.successHandler(routingContext, x)).onFailure(e -> responseHandler.exceptionHandler(routingContext, e));
+            promise.future().onComplete(x->{
+                if (routingContext.response().ended()) {
+                    return;
+                }
+                if (x.succeeded()) {
+                    responseHandler.successHandler(routingContext, x.result());
+                } else {
+                    responseHandler.exceptionHandler(routingContext, x.cause());
+                }
+            });
         };
     }
 
@@ -222,8 +231,6 @@ public class VerticleRouterHandler {
             future.onSuccess(promise::complete).onFailure(promise::fail);
         } else if (result instanceof Throwable) {
             promise.fail((Throwable) result);
-        } else {
-            promise.complete(result);
         }
         return promise.future();
     }
