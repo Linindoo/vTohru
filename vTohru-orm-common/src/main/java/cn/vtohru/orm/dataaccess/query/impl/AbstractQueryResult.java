@@ -129,7 +129,9 @@ public abstract class AbstractQueryResult<T> extends AbstractCollectionAsync<T> 
     @Override
     public void next(final Handler<AsyncResult<T>> handler) {
       int thisIndex = currentIndex++;
-      if (pojoResult[thisIndex] == null) {
+      if (thisIndex >= pojoResult.length) {
+        handler.handle(Future.failedFuture("no result data"));
+      } else if (pojoResult[thisIndex] == null) {
         generatePojo(thisIndex).onComplete(handler);
       } else {
         handler.handle(Future.succeededFuture(pojoResult[thisIndex]));
