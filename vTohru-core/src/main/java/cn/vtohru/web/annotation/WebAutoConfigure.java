@@ -1,5 +1,6 @@
 package cn.vtohru.web.annotation;
 
+import cn.vtohru.annotation.VerticleContaner;
 import io.micronaut.core.annotation.EntryPoint;
 
 import java.lang.annotation.Documented;
@@ -13,6 +14,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Target(TYPE)
 @EntryPoint
+@VerticleContaner
 public @interface WebAutoConfigure {
     int port() default 0;
     String host() default "0.0.0.0";

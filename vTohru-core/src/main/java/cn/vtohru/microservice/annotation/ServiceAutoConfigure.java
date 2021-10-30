@@ -1,5 +1,6 @@
 package cn.vtohru.microservice.annotation;
 
+import cn.vtohru.annotation.VerticleContaner;
 import io.micronaut.core.annotation.EntryPoint;
 
 import java.lang.annotation.Documented;
@@ -13,5 +14,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Target(TYPE)
 @EntryPoint
+@VerticleContaner
 public @interface ServiceAutoConfigure {
 }
