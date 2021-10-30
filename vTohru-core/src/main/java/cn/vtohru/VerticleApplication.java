@@ -86,6 +86,11 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
                 });
             }
         }
+        if (publishFuture != null) {
+            publishFuture.onFailure(logger::error).onSuccess(x->{
+                logger.info("all verticle publish success");
+            });
+        }
         return this;
     }
 
