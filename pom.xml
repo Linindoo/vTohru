@@ -9,6 +9,7 @@
         <module>vTohru-core</module>
         <module>vTohru-orm-common</module>
         <module>vTohru-orm-mongo</module>
+        <module>vTohru-task</module>
     </modules>
     <groupId>cn.lindoo.vtohru</groupId>
     <version>0.0.1-dev</version>
