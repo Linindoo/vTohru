@@ -86,7 +86,10 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
             }
         }
         if (publishFuture != null) {
-            publishFuture.onFailure(logger::error).onSuccess(x->{
+            publishFuture.onFailure(e -> {
+                e.printStackTrace();
+                logger.error(e);
+            }).onSuccess(x -> {
                 logger.info("all verticle publish success");
             });
         }

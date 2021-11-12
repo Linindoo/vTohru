@@ -1,5 +1,6 @@
 package cn.vtohru.task;
 
+import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.task.annotation.Delay;
@@ -14,6 +15,7 @@ import io.vertx.core.Vertx;
 import javax.ws.rs.core.Context;
 
 @Verticle
+@GlobalScope
 public class TaskHandlerRegister {
     private VerticleApplicationContext context;
     private TaskAnnotatedMethodHandler taskAnnotatedMethodHandler;
