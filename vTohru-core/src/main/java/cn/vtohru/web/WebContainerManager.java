@@ -12,6 +12,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
@@ -25,6 +26,7 @@ import java.util.Optional;
 @Singleton
 @Indexed(VerticleEvent.class)
 public class WebContainerManager extends VerticleEvent {
+    private static final String WEB_CONFIG_PREFIX = "web";
     private static final Logger logger = LoggerFactory.getLogger(WebContainerManager.class);
     private VerticleApplicationContext applicationContext;
     private HttpServer httpServer;
@@ -39,13 +41,17 @@ public class WebContainerManager extends VerticleEvent {
         if (annotation == null) {
             return Future.succeededFuture();
         }
-        int port = annotation.intValue("port").orElse(applicationContext.getVProperty("web.port", Integer.class).orElse(0));
-        String host = annotation.stringValue("host").orElse(applicationContext.getVProperty("web.host", String.class).orElse("0.0.0.0"));
+        JsonObject httpConfig = applicationContext.getVProperty(WEB_CONFIG_PREFIX, JsonObject.class).orElse(new JsonObject());
+        int port = annotation.intValue("port").orElse(httpConfig.getInteger("port", 0));
+        String host = annotation.stringValue("host").orElse(httpConfig.getString("host", "0.0.0.0"));
         MicroServiceDiscovery serviceDiscovery = applicationContext.getBean(MicroServiceDiscovery.class);
         VerticleRouterHandler verticleRouterHandler = applicationContext.getBean(VerticleRouterHandler.class);
-        this.httpServer = applicationContext.getVertx().createHttpServer();
+        HttpServerOptions httpServerOptions = new HttpServerOptions(httpConfig);
+        httpServerOptions.setPort(port);
+        httpServerOptions.setHost(host);
+        this.httpServer = applicationContext.getVertx().createHttpServer(httpServerOptions);
         Router router = verticleRouterHandler.buildRouter();
-        return this.httpServer.requestHandler(router).listen(port, host).compose(x->{
+        return this.httpServer.requestHandler(router).listen().compose(x->{
             logger.info(applicationContext.getScopeName() + "-start http server success at port:" + x.actualPort());
             Optional<AnnotationValue<WebService>> webServiceAnnotationValue = annotation.getAnnotation("service", WebService.class);
             if (!webServiceAnnotationValue.isPresent()) {

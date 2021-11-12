@@ -9,7 +9,6 @@ import cn.vtohru.runtime.VTohru;
 import io.micronaut.aop.InterceptedProxy;
 import io.micronaut.context.*;
 import io.micronaut.context.env.BootstrapPropertySourceLocator;
-import io.micronaut.context.env.DefaultEnvironment;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertySource;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -18,9 +17,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.TypeConverter;
 import io.micronaut.core.convert.TypeConverterRegistrar;
-import io.micronaut.core.io.scan.ClassPathResourceLoader;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.BeanDefinitionReference;
@@ -30,7 +27,10 @@ import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 public class VerticleApplicationContext extends DefaultApplicationContext {
     private Environment environment;
@@ -41,7 +41,6 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
     private Vertx vertx;
     public VerticleApplicationContext(ApplicationContextConfiguration configuration) {
         super(configuration);
-        ConversionService.SHARED.addConverter(Map.class, JsonObject.class, (object, targetType, context1) -> Optional.of(new JsonObject(object)));
     }
 
 
@@ -209,7 +208,7 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
             return getEnvironment().get(scopeKey, ConversionContext.of(Argument.of(requiredType)));
         }
         scopeKey = VTOHRU + "." + scopeName.toLowerCase() + "." + name;
-        return get(scopeKey, ConversionContext.of(Argument.of(requiredType)));
+        return  getEnvironment().get(scopeKey, ConversionContext.of(Argument.of(requiredType)));
     }
 
     public boolean isNull(Object bean) {

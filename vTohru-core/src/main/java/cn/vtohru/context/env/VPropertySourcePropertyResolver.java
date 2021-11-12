@@ -316,9 +316,9 @@ public class VPropertySourcePropertyResolver implements PropertyResolver {
                     } else if (JsonObject.class.isAssignableFrom(requiredType)) {
                         Map<String, Object> subMap = resolveSubMap(name, entries, conversionContext);
                         if (!subMap.isEmpty()) {
-                            return conversionService.convert(new JsonObject(subMap), requiredType, conversionContext);
+                            return (Optional<T>) Optional.of(new JsonObject(subMap));
                         } else {
-                            return (Optional<T>) Optional.of(subMap);
+                            return (Optional<T>) Optional.of(new JsonObject());
                         }
                     } else if (PropertyResolver.class.isAssignableFrom(requiredType)) {
                         Map<String, Object> subMap = resolveSubMap(name, entries, conversionContext);
