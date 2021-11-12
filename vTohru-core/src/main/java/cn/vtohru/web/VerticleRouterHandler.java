@@ -49,7 +49,6 @@ public class VerticleRouterHandler {
     private ResponseHandlerRegister responseHandlerRegister;
     private List<Interceptor> interceptorList;
     private List<ResourceHandler> resourceHandlers;
-    private Router router;
     private HttpServer httpServer;
 
     public VerticleRouterHandler(ApplicationContext context, VerticleAnnotatedMethodRouteBuilder routeBuilder, ErrorHandlerRegister errorHandlerRegister, ResponseHandlerRegister responseHandlerRegister, List<Interceptor> interceptorList, List<ResourceHandler> resourceHandlers) {
@@ -59,12 +58,11 @@ public class VerticleRouterHandler {
         this.responseHandlerRegister = responseHandlerRegister;
         this.interceptorList = interceptorList;
         this.resourceHandlers = resourceHandlers;
-        this.router = Router.router(this.context.getVertx());
     }
 
     public Future<WebServerConfig> registerRouter(String host, int port) {
-        buildRouter();
-        return context.getVertx().createHttpServer().requestHandler(this.router).listen(port).compose(x -> {
+        Router router = buildRouter();
+        return context.getVertx().createHttpServer().requestHandler(router).listen(port).compose(x -> {
             this.httpServer = x;
             WebServerConfig webServerConfig = new WebServerConfig();
             webServerConfig.setHost(host);
@@ -77,7 +75,8 @@ public class VerticleRouterHandler {
         });
     }
 
-    private void buildRouter() {
+    private Router buildRouter() {
+        Router router = Router.router(this.context.getVertx());
         for (ResourceHandler resourceHandler : this.resourceHandlers) {
             if (resourceHandler.enable() && context.isScoped(context.getBeanDefinition(resourceHandler.getClass()))) {
                 Route route = StringUtils.isEmpty(resourceHandler.path()) ? router.route() : router.route(converter(resourceHandler.path()));
@@ -125,7 +124,7 @@ public class VerticleRouterHandler {
                 router.errorHandler(errorHandlerEntry.getKey(), errorHandlerEntry.getValue());
             }
         }
-
+        return router;
     }
 
     private String getBeanPath(BeanDefinition beanDefinition) {
