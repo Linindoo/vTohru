@@ -45,6 +45,9 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
 
     @Override
     public <T> T getOrCreate(BeanCreationContext<T> creationContext) {
+        if (!beanContext.isScoped(creationContext.definition())) {
+            return null;
+        }
         final Map<BeanIdentifier, CreatedBean<?>> scopeMap = getScopeMap(true);
         final BeanIdentifier id = creationContext.id();
         CreatedBean<?> createdBean = scopeMap.get(id);

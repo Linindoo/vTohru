@@ -63,7 +63,7 @@ public class VerticleRouterHandler {
     public Router buildRouter() {
         Router router = Router.router(this.context.getVertx());
         for (ResourceHandler resourceHandler : this.resourceHandlers) {
-            if (resourceHandler.enable() && context.isScoped(context.getBeanDefinition(resourceHandler.getClass()))) {
+            if (!context.isNull(resourceHandler)) {
                 Route route = StringUtils.isEmpty(resourceHandler.path()) ? router.route() : router.route(converter(resourceHandler.path()));
                 if (resourceHandler.consumes() != null && resourceHandler.consumes().length > 0) {
                     route.consumes(String.join(";", resourceHandler.consumes()));
@@ -162,6 +162,9 @@ public class VerticleRouterHandler {
                 Future<Void> interceptorFuture = null;
                 List<Interceptor> revertInterceptors = new ArrayList<>();
                 for (Interceptor interceptor : interceptorList) {
+                    if (context.isNull(interceptor)) {
+                        continue;
+                    }
                     if (interceptorFuture == null) {
                         interceptorFuture = interceptor.preHandler(beanDefinition, method, routingContext);
                         revertInterceptors.add(interceptor);

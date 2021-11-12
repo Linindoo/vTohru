@@ -39,8 +39,8 @@ public class WebContainerManager extends VerticleEvent {
         if (annotation == null) {
             return Future.succeededFuture();
         }
-        int port = annotation.intValue("port").orElse(applicationContext.getVerticleEnv("web.port", Integer.class).orElse(0));
-        String host = annotation.stringValue("host").orElse(applicationContext.getVerticleEnv("web.host", String.class).orElse("0.0.0.0"));
+        int port = annotation.intValue("port").orElse(applicationContext.getVProperty("web.port", Integer.class).orElse(0));
+        String host = annotation.stringValue("host").orElse(applicationContext.getVProperty("web.host", String.class).orElse("0.0.0.0"));
         MicroServiceDiscovery serviceDiscovery = applicationContext.getBean(MicroServiceDiscovery.class);
         VerticleRouterHandler verticleRouterHandler = applicationContext.getBean(VerticleRouterHandler.class);
         this.httpServer = applicationContext.getVertx().createHttpServer();

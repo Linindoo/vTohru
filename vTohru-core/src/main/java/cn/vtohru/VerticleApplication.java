@@ -14,7 +14,6 @@ import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 import javax.inject.Singleton;
-import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
@@ -73,9 +72,9 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
         Future<String> publishFuture = null;
         for (AbstractVerticle abstractVerticle : abstractVerticles) {
             BeanDefinition<? extends AbstractVerticle> beanDefinition = applicationContext.getBeanDefinition(abstractVerticle.getClass());
-            AbstractMap map = applicationContext.getScopeMap(beanDefinition);
+            JsonObject map = applicationContext.getVConfig(beanDefinition);
             DeploymentOptions deploymentOptions = new DeploymentOptions();
-            deploymentOptions.setConfig(new JsonObject(map));
+            deploymentOptions.setConfig(map);
             if (publishFuture == null) {
                 publishFuture = applicationContext.getVertx().deployVerticle(abstractVerticle, deploymentOptions);
             } else {

@@ -68,12 +68,9 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
   public MongoDataStore(ApplicationContext context) {
     super((VerticleApplicationContext) context, new JsonObject(), new DataStoreSettings());
     verticleApplicationContext = (VerticleApplicationContext) context;
-    AbstractMap abstractMap = verticleApplicationContext.getVerticleEnv(MONGO_CONFIG_KEY, AbstractMap.class).orElse(new HashMap());
-    JsonObject mongo = new JsonObject(abstractMap);
-    mongo.put("connection_string", mongo.getString("connection-string"));
-    mongo.remove("connection-string");
-    Boolean shared = mongo.getBoolean("shared", false);
-    this.client = shared ? MongoClient.createShared(verticleApplicationContext.getVertx(), mongo) : MongoClient.create(verticleApplicationContext.getVertx(), mongo);
+    JsonObject mongoConfig = verticleApplicationContext.getVProperty(MONGO_CONFIG_KEY, JsonObject.class).orElse(new JsonObject());
+    Boolean shared = mongoConfig.getBoolean("shared", false);
+    this.client = shared ? MongoClient.createShared(verticleApplicationContext.getVertx(), mongoConfig) : MongoClient.create(verticleApplicationContext.getVertx(), mongoConfig);
     MongoMapperFactory mf = new MongoMapperFactory(this);
     setMapperFactory(mf);
     MongoStoreObjectFactory storeObjectFactory = new MongoStoreObjectFactory();

@@ -41,7 +41,7 @@ public class BodyResourceHandler extends ResourceHandler {
 
     @Override
     public boolean enable() {
-        return "true".equals(this.context.getVerticleEnv("web.body.enable", String.class).orElse("true"));
+        return "true".equals(this.context.getVProperty("web.body.enable", String.class).orElse("true"));
     }
 
 }
