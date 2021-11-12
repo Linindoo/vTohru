@@ -3,7 +3,6 @@ package cn.vtohru.web;
 import cn.vtohru.annotation.GlobalScope;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
-import cn.vtohru.web.config.WebServerConfig;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Indexed;
@@ -17,7 +16,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.impl.logging.Logger;
@@ -32,7 +30,10 @@ import io.vertx.ext.web.Session;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,7 +50,6 @@ public class VerticleRouterHandler {
     private ResponseHandlerRegister responseHandlerRegister;
     private List<Interceptor> interceptorList;
     private List<ResourceHandler> resourceHandlers;
-    private HttpServer httpServer;
 
     public VerticleRouterHandler(ApplicationContext context, VerticleAnnotatedMethodRouteBuilder routeBuilder, ErrorHandlerRegister errorHandlerRegister, ResponseHandlerRegister responseHandlerRegister, List<Interceptor> interceptorList, List<ResourceHandler> resourceHandlers) {
         this.context = (VerticleApplicationContext) context;
@@ -60,22 +60,7 @@ public class VerticleRouterHandler {
         this.resourceHandlers = resourceHandlers;
     }
 
-    public Future<WebServerConfig> registerRouter(String host, int port) {
-        Router router = buildRouter();
-        return context.getVertx().createHttpServer().requestHandler(router).listen(port).compose(x -> {
-            this.httpServer = x;
-            WebServerConfig webServerConfig = new WebServerConfig();
-            webServerConfig.setHost(host);
-            webServerConfig.setPort(x.actualPort());
-            logger.info(context.getScopeName() + "-start http server success at port:" + x.actualPort());
-            return Future.succeededFuture(webServerConfig);
-        }, e -> {
-            logger.error(e);
-            return Future.failedFuture(e);
-        });
-    }
-
-    private Router buildRouter() {
+    public Router buildRouter() {
         Router router = Router.router(this.context.getVertx());
         for (ResourceHandler resourceHandler : this.resourceHandlers) {
             if (resourceHandler.enable() && context.isScoped(context.getBeanDefinition(resourceHandler.getClass()))) {
@@ -348,13 +333,6 @@ public class VerticleRouterHandler {
             return routingContext.vertx();
         }
         return null;
-    }
-
-    public Future<Void> stopServer() {
-        if (httpServer != null) {
-            return httpServer.close();
-        }
-        return Future.succeededFuture();
     }
 
     private String converter(String path){

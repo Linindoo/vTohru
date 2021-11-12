@@ -11,9 +11,11 @@ import io.micronaut.core.annotation.Indexed;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.Future;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
 import io.vertx.servicediscovery.Record;
 import io.vertx.servicediscovery.types.HttpEndpoint;
 
@@ -25,6 +27,7 @@ import java.util.Optional;
 public class WebContainerManager extends VerticleEvent {
     private static final Logger logger = LoggerFactory.getLogger(WebContainerManager.class);
     private VerticleApplicationContext applicationContext;
+    private HttpServer httpServer;
 
     public WebContainerManager(ApplicationContext applicationContext) {
         this.applicationContext = (VerticleApplicationContext) applicationContext;
@@ -40,7 +43,10 @@ public class WebContainerManager extends VerticleEvent {
         String host = annotation.stringValue("host").orElse(applicationContext.getVerticleEnv("web.host", String.class).orElse("0.0.0.0"));
         MicroServiceDiscovery serviceDiscovery = applicationContext.getBean(MicroServiceDiscovery.class);
         VerticleRouterHandler verticleRouterHandler = applicationContext.getBean(VerticleRouterHandler.class);
-        return verticleRouterHandler.registerRouter(host, port).compose(x->{
+        this.httpServer = applicationContext.getVertx().createHttpServer();
+        Router router = verticleRouterHandler.buildRouter();
+        return this.httpServer.requestHandler(router).listen(port, host).compose(x->{
+            logger.info(applicationContext.getScopeName() + "-start http server success at port:" + x.actualPort());
             Optional<AnnotationValue<WebService>> webServiceAnnotationValue = annotation.getAnnotation("service", WebService.class);
             if (!webServiceAnnotationValue.isPresent()) {
                 return Future.succeededFuture();
@@ -50,7 +56,7 @@ public class WebContainerManager extends VerticleEvent {
                 return Future.succeededFuture();
             }
             String root = webServiceAnnotationValue.get().stringValue("root").orElse("/");
-            Record record = HttpEndpoint.createRecord(name, x.getHost(), x.getPort(), root,
+            Record record = HttpEndpoint.createRecord(name, host, x.actualPort(), root,
                     new JsonObject().put("api.name", name));
             return serviceDiscovery.publishService(record).compose(y -> {
                 logger.info("publish web service success:" + name);
@@ -61,7 +67,10 @@ public class WebContainerManager extends VerticleEvent {
 
     @Override
     public Future<Void> stop(BeanDefinition<?> beanDefinition) {
-        VerticleRouterHandler routerHandler = applicationContext.getBean(VerticleRouterHandler.class);
-        return routerHandler.stopServer();
+        if (httpServer != null) {
+            return httpServer.close();
+        }
+        return Future.succeededFuture();
     }
+
 }
