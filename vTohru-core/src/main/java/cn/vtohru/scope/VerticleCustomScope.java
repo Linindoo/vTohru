@@ -34,8 +34,7 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
     }
 
     protected <T> CreatedBean<T> doCreate(@NonNull BeanCreationContext<T> creationContext) {
-        CreatedBean<T> createdBean = creationContext.create();
-        return createdBean;
+        return creationContext.create();
     }
 
     @Override
@@ -48,19 +47,19 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
         if (!beanContext.isScoped(creationContext.definition())) {
             return null;
         }
-        final Map<BeanIdentifier, CreatedBean<?>> scopeMap = getScopeMap(true);
+        final Map<BeanIdentifier, CreatedBean<T>> scopeMap = getScopeMap(true);
         final BeanIdentifier id = creationContext.id();
-        CreatedBean<?> createdBean = scopeMap.get(id);
+        CreatedBean<T> createdBean = scopeMap.get(id);
         if (createdBean != null) {
-            return (T) createdBean.bean();
+            return createdBean.bean();
         } else {
             createdBean = scopeMap.get(id);
             if (createdBean != null) {
-                return (T) createdBean.bean();
+                return createdBean.bean();
             } else {
                 createdBean = doCreate(creationContext);
                 scopeMap.put(id, createdBean);
-                return (T) createdBean.bean();
+                return createdBean.bean();
             }
         }
     }
@@ -70,21 +69,21 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
         if (identifier == null) {
             return Optional.empty();
         }
-        Map<BeanIdentifier, CreatedBean<?>> scopeMap;
+        Map<BeanIdentifier, CreatedBean<T>> scopeMap;
         try {
             scopeMap = getScopeMap(false);
         } catch (IllegalStateException e) {
             return Optional.empty();
         }
         if (CollectionUtils.isNotEmpty(scopeMap)) {
-            final CreatedBean<?> createdBean = scopeMap.get(identifier);
+            CreatedBean<T> createdBean = scopeMap.get(identifier);
             if (createdBean != null) {
                 try {
                     createdBean.close();
                 } catch (BeanDestructionException e) {
                     handleDestructionException(e);
                 }
-                return (Optional<T>) Optional.ofNullable(createdBean.bean());
+                return  Optional.of(createdBean.bean());
             } else {
                 return Optional.empty();
             }
@@ -97,7 +96,7 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
     }
 
 
-    protected Map<BeanIdentifier, CreatedBean<?>> getScopeMap(boolean forCreation) {
+    protected <T> Map<BeanIdentifier, CreatedBean<T>> getScopeMap(boolean forCreation) {
         Context context = beanContext.getVertx().getOrCreateContext();
         return getRequestScopedBeans(context, forCreation);
     }
@@ -112,14 +111,14 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
         return true;
     }
 
-    private void destroyBeans(Context context) {
-        Map<BeanIdentifier, CreatedBean<?>> requestScopedBeans =
+    private <T> void destroyBeans(Context context) {
+        Map<BeanIdentifier, CreatedBean<T>> requestScopedBeans =
                 getRequestScopedBeans(context, false);
         if (requestScopedBeans != null) {
             destroyScope(requestScopedBeans);
         }
     }
-    protected void destroyScope(@Nullable Map<BeanIdentifier, CreatedBean<?>> scopeMap) {
+    protected <T> void destroyScope(@Nullable Map<BeanIdentifier, CreatedBean<T>> scopeMap) {
         if (CollectionUtils.isNotEmpty(scopeMap)) {
             for (CreatedBean<?> createdBean : scopeMap.values()) {
                     createdBean.close();
@@ -128,16 +127,16 @@ public class VerticleCustomScope implements CustomScope<Verticle>, LifeCycle<Ver
         }
     }
 
-    private synchronized <T> Map<BeanIdentifier, CreatedBean<?>> getRequestScopedBeans(Context context, boolean create) {
+    private synchronized <T> Map<BeanIdentifier, CreatedBean<T>> getRequestScopedBeans(Context context, boolean create) {
         return this.getRequestAttributeMap(context, SCOPED_BEANS_ATTRIBUTE, create);
     }
-    private <T> Map<BeanIdentifier, CreatedBean<?>> getRequestAttributeMap(Context context, String attribute, boolean create) {
-        HashMap<BeanIdentifier, CreatedBean<?>> local = context.get(attribute);
+    private <T> Map<BeanIdentifier, CreatedBean<T>> getRequestAttributeMap(Context context, String attribute, boolean create) {
+        HashMap<BeanIdentifier, CreatedBean<T>> local = context.get(attribute);
         if (local != null) {
             return local;
         }
         if (create) {
-            Map<BeanIdentifier, CreatedBean<?>> scopedBeans = new HashMap<>(5);
+            Map<BeanIdentifier, CreatedBean<T>> scopedBeans = new HashMap<>(5);
             context.put(attribute, scopedBeans);
             return scopedBeans;
         }
