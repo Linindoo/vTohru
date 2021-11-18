@@ -11,6 +11,10 @@ import javax.ws.rs.Path;
 @Controller
 @Path("/message")
 public class MessageTestController {
+    public MessageTestController() {
+        System.out.println(this.toString());
+    }
+
     private HelloClient helloClient;
 
     public MessageTestController(HelloClient helloClient) {

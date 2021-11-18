@@ -107,6 +107,21 @@
                 <version>${vtohru.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>2.12.2</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.12.2</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>2.12.2</version>
+            </dependency>
+            <dependency>
                 <groupId>cn.lindoo.vtohru</groupId>
                 <artifactId>vTohru-orm-mongo</artifactId>
                 <version>${vtohru.version}</version>

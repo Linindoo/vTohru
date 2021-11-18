@@ -76,33 +76,35 @@ public class VerticleRouterHandler {
             }
         }
 
-        for (VerticleAnnotatedMethodRouteBuilder.RouteDefinition routeDefinition : routeBuilder.getRouteDefinitions()) {
-            if (context.isScoped(routeDefinition.getBeanDefinition())) {
-                HttpMethod methodType = getMethodType(routeDefinition.getExecutableMethod());
-                if (methodType == null) {
-                    continue;
+        for (Map.Entry<BeanDefinition<?>, List<ExecutableMethod<?, ?>>> beanDefinitionListEntry : routeBuilder.getRouterMap().entrySet()) {
+            BeanDefinition<?> beanDefinition = beanDefinitionListEntry.getKey();
+            if (context.isScoped(beanDefinition)) {
+                Object bean= context.getBean(beanDefinition);
+
+                for (ExecutableMethod executableMethod : beanDefinitionListEntry.getValue()) {
+                    HttpMethod methodType = getMethodType(executableMethod);
+                    if (methodType == null) {
+                        continue;
+                    }
+                    String uri = executableMethod.stringValue(Path.class).orElse("");
+                    String[] produces = resolveProduces(executableMethod);
+                    String[] consumes = resolveConsumes(executableMethod);
+                    MediaType mediaType = Arrays.stream(produces).findFirst().map(MediaType::valueOf).orElse(MediaType.APPLICATION_JSON_TYPE);
+                    String beanPath = getBeanPath(beanDefinition);
+                    String path = converter(beanPath + uri);
+                    Route route = router.route(methodType, path);
+                    if (produces.length > 0) {
+                        route.produces(String.join(";", produces));
+                    }
+                    if (consumes.length > 0) {
+                        route.consumes(String.join(";", consumes));
+                    }
+                    route.handler(invokeInterceptor(bean, beanDefinition, executableMethod, mediaType));
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Created Route: " + uri);
+                    }
+                    logger.info(context.getScopeName() + ":register routerHandler:" + uri);
                 }
-                BeanDefinition beanDefinition = routeDefinition.getBeanDefinition();
-                ExecutableMethod method = routeDefinition.getExecutableMethod();
-                String beanPath = getBeanPath(beanDefinition);
-                String uri = method.stringValue(Path.class).orElse("");
-                String[] produces = resolveProduces(method);
-                String[] consumes = resolveConsumes(method);
-                MediaType mediaType = Arrays.stream(produces).findFirst().map(MediaType::valueOf).orElse(MediaType.APPLICATION_JSON_TYPE);
-                String path = converter(beanPath + uri);
-                Route route = router.route(methodType, path);
-                if (produces.length > 0) {
-                    route.produces(String.join(";", produces));
-                }
-                if (consumes.length > 0) {
-                    route.consumes(String.join(";", consumes));
-                }
-                Object bean= context.getBean(method.getDeclaringType());
-                route.handler(invokeInterceptor(bean, beanDefinition, method, mediaType));
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Created Route: " + uri);
-                }
-                logger.info(context.getScopeName() + ":register routerHandler:" + uri);
             }
         }
         if (errorHandlerRegister != null) {
