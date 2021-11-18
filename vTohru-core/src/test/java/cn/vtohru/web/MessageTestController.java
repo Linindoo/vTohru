@@ -20,6 +20,7 @@ public class MessageTestController {
     @GET
     @Path("/")
     public Future<String> hello() {
+        System.out.println(this.toString());
         Promise<String> promise = Promise.promise();
         helloClient.hello("olange", x -> {
             if (x.succeeded()) {
@@ -34,6 +35,7 @@ public class MessageTestController {
     @GET
     @Path("/bye")
     public Future<String> bye() {
+        System.out.println(this.toString());
         Promise<String> promise = Promise.promise();
         helloClient.bye("olange");
         promise.complete("bye");

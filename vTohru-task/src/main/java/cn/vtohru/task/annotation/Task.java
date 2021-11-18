@@ -18,6 +18,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Bean
 @Executable
 @DefaultScope(Verticle.class)
+@Verticle
 public @interface Task {
 
 }

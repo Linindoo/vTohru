@@ -82,9 +82,9 @@ public class VerticleRouterHandler {
                 if (methodType == null) {
                     continue;
                 }
-                BeanDefinition bean = routeDefinition.getBeanDefinition();
+                BeanDefinition beanDefinition = routeDefinition.getBeanDefinition();
                 ExecutableMethod method = routeDefinition.getExecutableMethod();
-                String beanPath = getBeanPath(bean);
+                String beanPath = getBeanPath(beanDefinition);
                 String uri = method.stringValue(Path.class).orElse("");
                 String[] produces = resolveProduces(method);
                 String[] consumes = resolveConsumes(method);
@@ -97,7 +97,8 @@ public class VerticleRouterHandler {
                 if (consumes.length > 0) {
                     route.consumes(String.join(";", consumes));
                 }
-                route.handler(invokeInterceptor(bean, method, mediaType));
+                Object bean= context.getBean(method.getDeclaringType());
+                route.handler(invokeInterceptor(bean, beanDefinition, method, mediaType));
                 if (logger.isDebugEnabled()) {
                     logger.debug("Created Route: " + uri);
                 }
@@ -153,11 +154,11 @@ public class VerticleRouterHandler {
         return null;
     }
 
-    private Handler<RoutingContext> invokeInterceptor(BeanDefinition<?> beanDefinition, ExecutableMethod<Object, ?> method, MediaType mediaType) {
+    private Handler<RoutingContext> invokeInterceptor(Object bean, BeanDefinition<?> beanDefinition, ExecutableMethod<Object, ?> method, MediaType mediaType) {
         return routingContext -> {
             Promise<Object> promise = Promise.promise();
             if (interceptorList == null || interceptorList.size() == 0) {
-                invokeHandler(routingContext, beanDefinition, method, mediaType).onSuccess(promise::complete).onFailure(promise::fail);
+                invokeHandler(routingContext, bean, method, mediaType).onSuccess(promise::complete).onFailure(promise::fail);
             } else {
                 Future<Void> interceptorFuture = null;
                 List<Interceptor> revertInterceptors = new ArrayList<>();
@@ -175,14 +176,14 @@ public class VerticleRouterHandler {
                         }, Future::failedFuture);
                     }
                 }
-                interceptorFuture.compose(x -> invokeHandler(routingContext, beanDefinition, method, mediaType), Future::failedFuture).onComplete(x -> {
+                interceptorFuture.compose(x -> invokeHandler(routingContext, bean, method, mediaType), Future::failedFuture).onComplete(x -> {
                     Future<Void> afterFuture = null;
                     for (int i = revertInterceptors.size() - 1; i >= 0; i--) {
                         Interceptor interceptor = revertInterceptors.get(i);
                         if (afterFuture == null) {
                             afterFuture = interceptor.afterHandler(beanDefinition, method, routingContext, x);
                         } else {
-                            afterFuture = afterFuture.compose(y-> interceptor.afterHandler(beanDefinition, method, routingContext, x), e-> interceptor.afterHandler(beanDefinition, method, routingContext, x));
+                            afterFuture = afterFuture.compose(y -> interceptor.afterHandler(beanDefinition, method, routingContext, x), e -> interceptor.afterHandler(beanDefinition, method, routingContext, x));
                         }
                     }
                     if (afterFuture == null) {
@@ -193,7 +194,7 @@ public class VerticleRouterHandler {
                 });
             }
             AbstractResponseHandler responseHandler = responseHandlerRegister.findResponseHandler(mediaType).orElse(this.context.getBean(JsonResponseHandler.class));
-            promise.future().onComplete(x->{
+            promise.future().onComplete(x -> {
                 if (routingContext.response().ended()) {
                     return;
                 }
@@ -206,9 +207,8 @@ public class VerticleRouterHandler {
         };
     }
 
-    private Future<Object> invokeHandler(RoutingContext routingContext, BeanDefinition<?> beanDefinition, ExecutableMethod<Object, ?> method, MediaType mediaType) {
+    private Future<Object> invokeHandler(RoutingContext routingContext, Object bean, ExecutableMethod<Object, ?> method, MediaType mediaType) {
         Object[] args = getArgs(routingContext, method);
-        Object bean = this.context.getBean(beanDefinition);
         Object result = method.invoke(bean, args);
         Promise<Object> promise = Promise.promise();
         if (result instanceof Promise) {
