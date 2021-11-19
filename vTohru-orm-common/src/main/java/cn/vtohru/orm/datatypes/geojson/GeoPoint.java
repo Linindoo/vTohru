@@ -14,8 +14,6 @@ package cn.vtohru.orm.datatypes.geojson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import static org.bson.assertions.Assertions.notNull;
-
 /**
  * A representation of a GeoJSON Point.
  * 
@@ -38,7 +36,7 @@ public class GeoPoint extends GeoJsonObject {
    *          the non-null coordinate of the point
    */
   public GeoPoint(final Position coordinate) {
-    this.coordinates = notNull("coordinates", coordinate);
+    this.coordinates =  coordinate;
     validateCoordinates(coordinate);
   }
 

@@ -14,7 +14,6 @@ package cn.vtohru.orm.datatypes.geojson;
 
 import java.util.List;
 
-import static org.bson.assertions.Assertions.notNull;
 
 /**
  * A representation of a GeoJSON Polygon.
@@ -44,7 +43,7 @@ public class GeoPolygon extends GeoJsonObject {
    *          the coordinates
    */
   public GeoPolygon(final PolygonCoordinates coordinates) {
-    this.coordinates = notNull("coordinates", coordinates);
+    this.coordinates =  coordinates;
   }
 
   /*

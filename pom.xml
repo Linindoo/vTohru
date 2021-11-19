@@ -133,6 +133,4 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    <dependencies>
-    </dependencies>
 </project>

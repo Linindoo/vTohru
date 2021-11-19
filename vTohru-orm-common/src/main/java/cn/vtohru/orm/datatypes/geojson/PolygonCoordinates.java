@@ -12,9 +12,6 @@
  */
 package cn.vtohru.orm.datatypes.geojson;
 
-import static org.bson.assertions.Assertions.isTrueArgument;
-import static org.bson.assertions.Assertions.notNull;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,26 +29,14 @@ public class PolygonCoordinates {
   /**
    * Construct an instance.
    *
-   * @param exterior
-   *          the exterior ring of the polygon
-   * @param holes
-   *          optional interior rings of the polygon
+   * @param exterior the exterior ring of the polygon
+   * @param holes    optional interior rings of the polygon
    */
   public PolygonCoordinates(final List<Position> exterior, final List<Position>... holes) {
-    notNull("exteriorRing", exterior);
-    isTrueArgument("ring contains only non-null positions", !exterior.contains(null));
-    isTrueArgument("ring must contain at least four positions", exterior.size() >= 4);
-    isTrueArgument("first and last position must be the same",
-        exterior.get(0).equals(exterior.get(exterior.size() - 1)));
-
     this.exterior = Collections.unmodifiableList(exterior);
 
     List<List<Position>> holesList = new ArrayList<>(holes.length);
     for (List<Position> hole : holes) {
-      notNull("interiorRing", hole);
-      isTrueArgument("ring contains only non-null positions", !hole.contains(null));
-      isTrueArgument("ring must contain at least four positions", hole.size() >= 4);
-      isTrueArgument("first and last position must be the same", hole.get(0).equals(hole.get(hole.size() - 1)));
       holesList.add(Collections.unmodifiableList(hole));
     }
 
