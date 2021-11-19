@@ -1,7 +1,6 @@
 package cn.vtohru.runtime;
 
 import cn.vtohru.context.VerticleApplicationContext;
-import cn.vtohru.util.VTohruUtil;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.DefaultApplicationContextBuilder;
 import io.micronaut.context.banner.MicronautBanner;
@@ -37,7 +36,6 @@ public class VTohru extends DefaultApplicationContextBuilder {
         this.printBanner();
         VerticleApplicationContext applicationContext = (VerticleApplicationContext) super.build();
         try {
-            VTohruUtil.setContext(applicationContext);
             applicationContext.registerSingleton(applicationContext, false);
             applicationContext.start();
             Optional<EmbeddedApplication> embeddedContainerBean = applicationContext.findBean(EmbeddedApplication.class);

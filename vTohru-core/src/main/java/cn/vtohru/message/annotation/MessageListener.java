@@ -15,9 +15,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Retention(RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
-@Bean
 @Executable
-@DefaultScope(Verticle.class)
 @Verticle
 public @interface MessageListener {
 }
