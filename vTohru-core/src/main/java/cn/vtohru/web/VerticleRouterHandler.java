@@ -30,10 +30,7 @@ import io.vertx.ext.web.Session;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -80,7 +77,6 @@ public class VerticleRouterHandler {
             BeanDefinition<?> beanDefinition = beanDefinitionListEntry.getKey();
             if (context.isScoped(beanDefinition)) {
                 Object bean= context.getBean(beanDefinition);
-
                 for (ExecutableMethod executableMethod : beanDefinitionListEntry.getValue()) {
                     HttpMethod methodType = getMethodType(executableMethod);
                     if (methodType == null) {
