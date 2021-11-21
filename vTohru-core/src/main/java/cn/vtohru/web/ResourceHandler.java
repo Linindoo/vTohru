@@ -13,7 +13,4 @@ public abstract class ResourceHandler implements Handler<RoutingContext> {
 
     public abstract String path();
 
-    public boolean enable(){
-        return true;
-    }
 }

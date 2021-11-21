@@ -1,11 +1,11 @@
 package cn.vtohru.web.resource;
 
 import cn.vtohru.annotation.GlobalScope;
+import cn.vtohru.annotation.ScopeRequires;
 import cn.vtohru.annotation.Verticle;
-import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.web.ResourceHandler;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Order;
+import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.sstore.LocalSessionStore;
@@ -13,12 +13,11 @@ import io.vertx.ext.web.sstore.LocalSessionStore;
 @Verticle
 @Order(1)
 @GlobalScope
+@ScopeRequires(property = "web.session.enable",notEquals = "false")
 public class SessionResourceHandler extends ResourceHandler {
     private SessionHandler sessionHandler;
-    private VerticleApplicationContext context;
-    public SessionResourceHandler(ApplicationContext context) {
-        this.context = (VerticleApplicationContext) context;
-        this.sessionHandler = SessionHandler.create(LocalSessionStore.create(((VerticleApplicationContext) context).getVertx(), "vtohru.session"));
+    public SessionResourceHandler(Vertx vertx) {
+        this.sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx, "vtohru.session"));
     }
 
     @Override
@@ -39,10 +38,5 @@ public class SessionResourceHandler extends ResourceHandler {
     @Override
     public void handle(RoutingContext context) {
         sessionHandler.handle(context);
-    }
-
-    @Override
-    public boolean enable() {
-        return "true".equals(this.context.getVProperty("web.session.enable", String.class).orElse("true"));
     }
 }

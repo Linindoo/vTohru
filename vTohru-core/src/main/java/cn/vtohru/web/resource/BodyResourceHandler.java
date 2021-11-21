@@ -1,6 +1,7 @@
 package cn.vtohru.web.resource;
 
 import cn.vtohru.annotation.GlobalScope;
+import cn.vtohru.annotation.ScopeRequires;
 import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.web.ResourceHandler;
@@ -12,6 +13,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 @Verticle
 @Order(2)
 @GlobalScope
+@ScopeRequires(property = "web.body.enable",notEquals = "false")
 public class BodyResourceHandler extends ResourceHandler {
     private BodyHandler bodyHandler;
     private VerticleApplicationContext context;
@@ -37,11 +39,6 @@ public class BodyResourceHandler extends ResourceHandler {
     @Override
     public void handle(RoutingContext context) {
         bodyHandler.handle(context);
-    }
-
-    @Override
-    public boolean enable() {
-        return "true".equals(this.context.getVProperty("web.body.enable", String.class).orElse("true"));
     }
 
 }

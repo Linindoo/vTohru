@@ -10,8 +10,7 @@ import java.lang.annotation.*;
 @Target({ElementType.PACKAGE, ElementType.TYPE})
 @Requires(condition = ScopeCondition.class)
 public @interface ScopeRequires {
-    String[] requireVerticle() default "";
-    String[] notRequireVerticle() default "";
     String property() default "";
     String notEquals() default "";
+    String equals() default "";
 }

@@ -21,11 +21,15 @@ public class ScopeCondition implements Condition {
             AnnotationValue<ScopeRequires> annotation = annotationMetadata.getAnnotation(ScopeRequires.class);
             String property = annotation.get("property", String.class).orElse("");
             String notEquals = annotation.get("notEquals", String.class).orElse("");
+            String equals = annotation.get("equals", String.class).orElse("");
             BeanContext beanContext = context.getBeanContext();
             if (beanContext instanceof VerticleApplicationContext) {
                 VerticleApplicationContext verticleApplicationContext = (VerticleApplicationContext) beanContext;
                 if (StringUtils.isNotEmpty(property)) {
                     if (notEquals.equals(verticleApplicationContext.getVProperty(property, String.class).orElse(""))) {
+                        return false;
+                    }
+                    if (StringUtils.isNotEmpty(equals) && !equals.equals(verticleApplicationContext.getVProperty(property, String.class).orElse(""))) {
                         return false;
                     }
                 }
