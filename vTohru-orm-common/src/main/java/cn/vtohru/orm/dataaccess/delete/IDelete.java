@@ -14,8 +14,10 @@
 package cn.vtohru.orm.dataaccess.delete;
 
 import cn.vtohru.orm.dataaccess.IDataAccessObject;
+import cn.vtohru.orm.dataaccess.ISession;
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 
 /**
@@ -35,6 +37,8 @@ public interface IDelete<T> extends IDataAccessObject<T> {
    *          a handler, which will receive information about the {@link IDeleteResult}
    */
   public void delete(Handler<AsyncResult<IDeleteResult>> resultHandler);
+
+  Future<Void> execute(ISession session);
 
   /**
    * Defines the {@link IQuery} which is used as base to delete records from the datastore.

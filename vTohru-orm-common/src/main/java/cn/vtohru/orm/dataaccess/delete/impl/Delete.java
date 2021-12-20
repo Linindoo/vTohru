@@ -44,8 +44,8 @@ import java.util.List;
 public abstract class Delete<T> extends AbstractDataAccessObject<T> implements IDelete<T> {
 
   private static final String ERROR_MESSAGE = "You can only use ONE source for deletion, either an IQuery or a list of instances";
-  private IQuery<T> query;
-  private final List<T> recordList = new ArrayList<>();
+  protected IQuery<T> query;
+  protected final List<T> recordList = new ArrayList<>();
 
   /**
    * @param mapperClass
@@ -121,7 +121,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
     });
   }
 
-  private Future<IDeleteResult> doDeleteRecords() {
+  protected Future<IDeleteResult> doDeleteRecords() {
     Promise<IDeleteResult> promise = Promise.promise();
     IIdInfo idInfo = getMapper().getIdInfo();
     IdField idField = idInfo.getIndexedField();
@@ -163,7 +163,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
   }
 
   @SuppressWarnings("rawtypes")
-  private List<Future> executeLifeCycle(final Class lifecycleClass) {
+  protected List<Future> executeLifeCycle(final Class lifecycleClass) {
     List<Future> fl = new ArrayList<>();
     for (T record : getRecordList()) {
       Promise<Object> promise = Promise.promise();
@@ -239,7 +239,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
    * @param idField
    */
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  private List<Future> getRecordIds(final IProperty idField) {
+  protected List<Future> getRecordIds(final IProperty idField) {
     List<Future> fList = new ArrayList<>();
     for (T record : getRecordList()) {
       fList.add(idField.readData(record));

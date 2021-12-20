@@ -29,6 +29,7 @@ import cn.vtohru.orm.mongo.dataaccess.MongoWrite;
 import cn.vtohru.orm.mongo.init.MongoDataStoreSynchronizer;
 import cn.vtohru.orm.mongo.mapper.MongoMapperFactory;
 import cn.vtohru.orm.mongo.mapper.datastore.MongoTableGenerator;
+import cn.vtohru.orm.transaction.Trans;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.convert.ConversionService;
@@ -105,6 +106,11 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
   @Override
   public Object getClient() {
     return client;
+  }
+
+  @Override
+  public Trans createTrans() {
+    return new MongoTransaction(this, this.verticleApplicationContext.getVertx());
   }
 
   /**

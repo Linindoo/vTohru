@@ -15,6 +15,7 @@ package cn.vtohru.orm.dataaccess;
 
 import cn.vtohru.orm.IDataStore;
 import cn.vtohru.orm.mapping.IMapper;
+import io.vertx.core.Future;
 
 /**
  * describes common methods for all dataaccess objects
@@ -46,5 +47,7 @@ public interface IDataAccessObject<T> {
    * @return the mapper
    */
   IMapper<T> getMapper();
+
+  void setSession(ISession session);
 
 }

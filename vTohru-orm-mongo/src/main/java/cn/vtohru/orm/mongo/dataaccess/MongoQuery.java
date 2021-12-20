@@ -13,6 +13,7 @@
 package cn.vtohru.orm.mongo.dataaccess;
 
 import cn.vtohru.orm.IDataStore;
+import cn.vtohru.orm.dataaccess.ISession;
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import cn.vtohru.orm.dataaccess.query.IQueryCountResult;
 import cn.vtohru.orm.dataaccess.query.IQueryResult;
@@ -166,4 +167,8 @@ public class MongoQuery<T> extends Query<T> implements MongoDataAccesObject<T> {
     return MongoQueryExpression.class;
   }
 
+  @Override
+  public void setSession(ISession session) {
+
+  }
 }

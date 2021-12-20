@@ -26,8 +26,6 @@ public class ClassDao {
     private float min;
     private Status status;
 
-    private SchoolDao schoolDao;
-
     public String getId() {
         return id;
     }
@@ -108,11 +106,4 @@ public class ClassDao {
         this.status = status;
     }
 
-    public SchoolDao getSchoolDao() {
-        return schoolDao;
-    }
-
-    public void setSchoolDao(SchoolDao schoolDao) {
-        this.schoolDao = schoolDao;
-    }
 }

@@ -14,14 +14,19 @@
 package cn.vtohru.orm.mongo.dataaccess;
 
 import cn.vtohru.orm.IDataStore;
+import cn.vtohru.orm.annotation.lifecycle.AfterDelete;
+import cn.vtohru.orm.annotation.lifecycle.BeforeDelete;
+import cn.vtohru.orm.dataaccess.ISession;
 import cn.vtohru.orm.dataaccess.delete.IDelete;
 import cn.vtohru.orm.dataaccess.delete.IDeleteResult;
 import cn.vtohru.orm.dataaccess.delete.impl.Delete;
 import cn.vtohru.orm.dataaccess.query.IQuery;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
+import cn.vtohru.orm.dataaccess.query.ISearchCondition;
+import cn.vtohru.orm.dataaccess.query.IdField;
+import cn.vtohru.orm.mapping.IIdInfo;
+import cn.vtohru.orm.observer.IObserverContext;
+import com.mongodb.session.ClientSession;
+import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClientDeleteResult;
 
@@ -33,6 +38,7 @@ import io.vertx.ext.mongo.MongoClientDeleteResult;
  *          the type of the underlaying mapper
  */
 public class MongoDelete<T> extends Delete<T> implements MongoDataAccesObject<T> {
+  private ClientSession session;
 
   /**
    * Constructor
@@ -70,4 +76,58 @@ public class MongoDelete<T> extends Delete<T> implements MongoDataAccesObject<T>
     return promise.future().recover(retryMethod(tryCount, count -> removeDocuments(queryExpression, count)));
   }
 
+  @Override
+  public void setSession(ISession session) {
+    this.session = (ClientSession) session;
+  }
+
+  @Override
+  public Future<Void> execute(ISession session) {
+    Promise<Void> promise = Promise.promise();
+    if (getQuery() != null) {
+      query.buildQueryExpression(null, qDefResult -> {
+        if (qDefResult.succeeded()) {
+          JsonObject queryDefinition = ((MongoQueryExpression) qDefResult.result()).getQueryDefinition();
+          getMongoClient().removeDocuments((com.mongodb.reactivestreams.client.ClientSession) session.getSession(), getCollection(), queryDefinition).onSuccess(x -> promise.complete()).onFailure(promise::fail);
+        } else {
+          promise.fail(qDefResult.cause());
+        }
+      });
+    } else if (!recordList.isEmpty()) {
+      CompositeFuture cf = CompositeFuture.all(executeLifeCycle(BeforeDelete.class));
+      cf.onComplete(res -> {
+        if (res.succeeded()) {
+            IObserverContext context = IObserverContext.createInstance();
+          preDelete(context).compose(pre -> doDeleteRecordsBySession(session)).compose(dr -> postDelete(dr, context));
+        }
+      });
+    } else {
+      promise.complete();
+    }
+    return promise.future();
+  }
+
+  protected Future<IDeleteResult> doDeleteRecordsBySession(ISession session) {
+    Promise<IDeleteResult> promise = Promise.promise();
+    IIdInfo idInfo = getMapper().getIdInfo();
+    IdField idField = idInfo.getIndexedField();
+    CompositeFuture cf = CompositeFuture.all(getRecordIds(idInfo.getField()));
+    cf.onComplete(res -> {
+      if (res.failed()) {
+        promise.fail(res.cause());
+      } else {
+        IQuery<T> q = getDataStore().createQuery(getMapperClass());
+        q.setSearchCondition(ISearchCondition.in(idField, cf.list()));
+        query.buildQueryExpression(null, qDefResult -> {
+          if (qDefResult.succeeded()) {
+            JsonObject queryDefinition = ((MongoQueryExpression) qDefResult.result()).getQueryDefinition();
+            getMongoClient().removeDocuments((com.mongodb.reactivestreams.client.ClientSession) session.getSession(), getCollection(), queryDefinition).onSuccess(x -> promise.complete()).onFailure(promise::fail);
+          } else {
+            promise.fail(qDefResult.cause());
+          }
+        });
+      }
+    });
+    return promise.future();
+  }
 }

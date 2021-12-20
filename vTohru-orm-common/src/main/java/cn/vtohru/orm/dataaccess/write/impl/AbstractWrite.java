@@ -20,6 +20,7 @@ import java.util.List;
 
 import cn.vtohru.orm.IDataStore;
 import cn.vtohru.orm.annotation.lifecycle.AfterSave;
+import cn.vtohru.orm.dataaccess.ISession;
 import cn.vtohru.orm.dataaccess.impl.AbstractDataAccessObject;
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import cn.vtohru.orm.dataaccess.write.IWrite;
@@ -42,6 +43,8 @@ import io.vertx.core.Promise;
  */
 
 public abstract class AbstractWrite<T> extends AbstractDataAccessObject<T> implements IWrite<T> {
+
+  private ISession session;
 
   private static final io.vertx.core.logging.Logger LOGGER = io.vertx.core.logging.LoggerFactory
       .getLogger(AbstractWrite.class);
@@ -93,13 +96,13 @@ public abstract class AbstractWrite<T> extends AbstractDataAccessObject<T> imple
    * @param nextFuture
    */
   protected void postSave(final IWriteResult wr, final IObserverContext context,
-      final Promise<IWriteResult> nextFuture) {
+      final Handler<AsyncResult<IWriteResult>> nextFuture) {
     Future<Void> f = getMapper().getObserverHandler().handleAfterInsert(this, wr, context);
     f.onComplete(res -> {
       if (f.failed()) {
-        nextFuture.fail(f.cause());
+        nextFuture.handle(Future.failedFuture(f.cause()));
       } else {
-        nextFuture.complete(wr);
+        nextFuture.handle(Future.succeededFuture(wr));
       }
     });
   }
@@ -187,6 +190,11 @@ public abstract class AbstractWrite<T> extends AbstractDataAccessObject<T> imple
   @Override
   public void setPartialUpdate(final boolean partialUpdate) {
     this.partialUpdate = partialUpdate;
+  }
+
+  @Override
+  public void setSession(ISession session) {
+    this.session = session;
   }
 
 }

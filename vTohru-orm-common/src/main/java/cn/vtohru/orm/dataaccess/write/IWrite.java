@@ -16,8 +16,10 @@ import java.util.Collection;
 
 import cn.vtohru.orm.IDataStore;
 import cn.vtohru.orm.dataaccess.IDataAccessObject;
+import cn.vtohru.orm.dataaccess.ISession;
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 
 /**
@@ -55,15 +57,14 @@ public interface IWrite<T> extends IDataAccessObject<T> {
   public void save(Handler<AsyncResult<IWriteResult>> resultHandler);
 
   /**
-   * Get the number of records to be saved
+   * Get the number   of records to be saved
    *
    * @return the count
    */
   public int size();
 
   /**
-   * Defines the {@link IQuery} which is used match documents to update.
-   *
+    *
    * @param query
    *          the {@link IQuery} which shall be used to specify the records to be updated from the {@link IDataStore}
    */
@@ -71,4 +72,5 @@ public interface IWrite<T> extends IDataAccessObject<T> {
 
   public void setPartialUpdate(boolean partialUpdate);
 
+  Future<Void> execute(ISession session);
 }

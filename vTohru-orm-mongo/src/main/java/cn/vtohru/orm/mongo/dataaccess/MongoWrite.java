@@ -12,6 +12,8 @@
  */
 package cn.vtohru.orm.mongo.dataaccess;
 
+import cn.vtohru.orm.dataaccess.IAccessResult;
+import cn.vtohru.orm.dataaccess.ISession;
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import cn.vtohru.orm.dataaccess.query.ISearchCondition;
 import cn.vtohru.orm.dataaccess.query.impl.IQueryExpression;
@@ -201,6 +203,60 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
       document.put("$setOnInsert", setOnInsertFields);
     }
     return BulkOperation.createUpdate(filter, document, upsert, false);
+  }
+
+  @Override
+  public Future<Void> execute(ISession session) {
+    IObserverContext context = IObserverContext.createInstance();
+    Promise<Void> promise = Promise.promise();
+    internalSaveBySession(context, session).onSuccess(wr -> postSave(wr, context, x->{
+      if (x.succeeded()) {
+        promise.complete();
+      } else {
+        promise.fail(x.cause());
+      }
+    })).onFailure(promise::fail);
+    return promise.future();
+  }
+
+  public Future<IWriteResult> internalSaveBySession(final IObserverContext context, ISession session) {
+    Promise<IWriteResult> promise = Promise.promise();
+    List<T> entities = getObjectsToSave();
+    if (getQuery() != null && entities.size() > 1)
+      promise.fail(new IllegalStateException("Can only update one entity at once if a query is defined"));
+    else if (entities.isEmpty()) {
+      promise.complete(new MongoWriteResult());
+    } else {
+      CompositeFuture.all(entities.stream().map(entity -> convertEntity(entity, context)).collect(toList()))
+              .compose(cfConvert -> {
+                List<StoreObjectHolder> holders = cfConvert.list();
+                return writeEntitiesBySession(holders, session).recover(e -> {
+                  if (entities.size() == 1 && e instanceof MongoBulkWriteException)
+                    return handleSingleWriteError(holders, (MongoBulkWriteException) e);
+                  else
+                    return Future.failedFuture(e);
+                });
+              }).onSuccess(x -> promise.complete(new MongoWriteResult(x.list()))).onFailure(promise::fail);
+    }
+    return promise.future();
+  }
+
+  private Future<CompositeFuture> writeEntitiesBySession(final List<StoreObjectHolder> holders, ISession session) {
+    List<BulkOperation> bulkOperations = holders.stream().map(storeObjectHolder -> storeObjectHolder.bulkOperation)
+            .collect(toList());
+    return writeBySession(bulkOperations, session, START_TRY_COUNT).compose(writeResult -> {
+      @SuppressWarnings("rawtypes")
+      List<Future> futures = IntStream.range(0, holders.size())
+              .mapToObj(i -> finishWrite(getObjectsToSave().get(i), holders.get(i), writeResult)).collect(toList());
+      return CompositeFuture.all(futures);
+    });
+  }
+
+  private Future<MongoClientBulkWriteResult> writeBySession(List<BulkOperation> bulkOperations, ISession session, final int tryCount) {
+    Promise<MongoClientBulkWriteResult> promise = Promise.promise();
+    String collection = getCollection();
+    getMongoClient().bulkWrite(collection, bulkOperations).onComplete(promise);
+    return promise.future().recover(retryMethod(tryCount, count -> write(bulkOperations, count)));
   }
 
   private class StoreObjectHolder {

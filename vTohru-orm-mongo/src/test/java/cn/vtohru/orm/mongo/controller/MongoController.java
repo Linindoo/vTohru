@@ -7,12 +7,11 @@ import cn.vtohru.orm.dataaccess.query.IQueryResult;
 import cn.vtohru.orm.dataaccess.query.ISearchCondition;
 import cn.vtohru.orm.dataaccess.query.exception.VariableSyntaxException;
 import cn.vtohru.orm.dataaccess.write.IWrite;
-import cn.vtohru.orm.dataaccess.write.IWriteEntry;
-import cn.vtohru.orm.dataaccess.write.IWriteResult;
 import cn.vtohru.orm.mongo.MongoDataStore;
 import cn.vtohru.orm.mongo.dao.ClassDao;
 import cn.vtohru.orm.mongo.dao.SchoolDao;
 import cn.vtohru.orm.mongo.dao.Status;
+import cn.vtohru.orm.transaction.Trans;
 import cn.vtohru.web.annotation.Controller;
 import io.micronaut.core.util.StringUtils;
 import io.vertx.core.Future;
@@ -25,7 +24,6 @@ import javax.ws.rs.QueryParam;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 @Controller
 @Path("/mongo")
@@ -47,24 +45,22 @@ public class MongoController {
         classDao.setMin(8.90F);
         classDao.setTags(Arrays.asList("one", "two"));
         classDao.setStatus(Status.ACTIVE);
+
         SchoolDao schoolDao = new SchoolDao();
         schoolDao.setName("学校");
-        schoolDao.setId(UUID.randomUUID().toString());
-        classDao.setSchoolDao(schoolDao);
         IWrite<ClassDao> write = mongoDataStore.createWrite(ClassDao.class);
+        Trans trans = mongoDataStore.createTrans();
+        IWrite<SchoolDao> schoolDaoIWrite = mongoDataStore.createWrite(SchoolDao.class);
+        schoolDaoIWrite.add(schoolDao);
         write.add(classDao);
-        write.save(x->{
-            if (x.succeeded()) {
-                IWriteResult result = x.result();
-                for (IWriteEntry iWriteEntry : result) {
-                    System.out.println("ID:" + iWriteEntry.getId());
-                }
-                System.out.println("size: " + result.size());
-                promise.complete(result.size());
-            } else {
-                promise.fail(x.cause());
-                x.cause().printStackTrace();
-            }
+        trans.add(schoolDaoIWrite);
+        trans.add(write);
+        trans.commit().onSuccess(x -> {
+            System.out.println("success");
+            promise.complete();
+        }).onFailure(e->{
+            e.printStackTrace();
+            promise.fail(e);
         });
         return promise.future();
     }

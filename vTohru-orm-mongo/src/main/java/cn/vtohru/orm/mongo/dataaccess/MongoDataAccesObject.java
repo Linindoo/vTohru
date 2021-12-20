@@ -1,7 +1,9 @@
 package cn.vtohru.orm.mongo.dataaccess;
 
 import cn.vtohru.orm.dataaccess.IDataAccessObject;
+import cn.vtohru.orm.dataaccess.ISession;
 import cn.vtohru.orm.mongo.MongoDataStore;
+import cn.vtohru.orm.mongo.MongoSession;
 import com.mongodb.MongoCommandException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;

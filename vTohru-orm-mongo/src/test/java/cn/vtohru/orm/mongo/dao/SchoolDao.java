@@ -1,10 +1,12 @@
 package cn.vtohru.orm.mongo.dao;
 
 import javax.persistence.Entity;
+import javax.persistence.Id;
 
 @Entity
 public class SchoolDao {
     private String name;
+    @Id
     private String id;
 
     public String getName() {

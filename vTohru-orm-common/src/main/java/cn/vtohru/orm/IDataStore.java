@@ -20,6 +20,7 @@ import cn.vtohru.orm.impl.IEncoder;
 import cn.vtohru.orm.init.DataStoreSettings;
 import cn.vtohru.orm.mapping.*;
 import cn.vtohru.orm.mapping.datastore.ITableGenerator;
+import cn.vtohru.orm.transaction.Trans;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -202,5 +203,7 @@ public interface IDataStore<S, U> {
    * @return
    */
   DataStoreSettings getSettings();
+
+  Trans createTrans();
 
 }
