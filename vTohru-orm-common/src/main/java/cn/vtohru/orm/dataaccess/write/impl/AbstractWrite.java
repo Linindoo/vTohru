@@ -148,9 +148,4 @@ public abstract class AbstractWrite<T> extends AbstractDataAccessObject<T> imple
     this.partialUpdate = partialUpdate;
   }
 
-  @Override
-  public void setSession(ISession session) {
-    this.session = session;
-  }
-
 }

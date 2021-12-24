@@ -34,8 +34,6 @@ import io.vertx.ext.mongo.MongoClientDeleteResult;
  *          the type of the underlaying mapper
  */
 public class MongoDelete<T> extends Delete<T> implements MongoDataAccesObject<T> {
-  private ISession session;
-
   /**
    * Constructor
    *
@@ -70,11 +68,6 @@ public class MongoDelete<T> extends Delete<T> implements MongoDataAccesObject<T>
     Promise<MongoClientDeleteResult> promise = Promise.promise();
     getMongoClient().removeDocuments(getCollection(), queryExpression, promise);
     return promise.future().recover(retryMethod(tryCount, count -> removeDocuments(queryExpression, count)));
-  }
-
-  @Override
-  public void setSession(ISession session) {
-    this.session =  session;
   }
 
   @Override

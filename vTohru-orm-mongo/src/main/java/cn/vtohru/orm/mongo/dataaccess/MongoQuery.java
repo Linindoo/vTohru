@@ -166,9 +166,4 @@ public class MongoQuery<T> extends Query<T> implements MongoDataAccesObject<T> {
   protected Class<? extends IQueryExpression> getQueryExpressionClass() {
     return MongoQueryExpression.class;
   }
-
-  @Override
-  public void setSession(ISession session) {
-
-  }
 }

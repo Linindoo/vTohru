@@ -47,7 +47,4 @@ public interface IDataAccessObject<T> {
    * @return the mapper
    */
   IMapper<T> getMapper();
-
-  void setSession(ISession session);
-
 }

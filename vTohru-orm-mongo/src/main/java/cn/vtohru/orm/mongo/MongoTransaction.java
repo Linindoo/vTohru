@@ -45,7 +45,6 @@ public class MongoTransaction extends AbstractTrans {
                 List<Future> transFutures = new ArrayList<>();
                 for (IDataAccessObject<?> dataAccess : getDataAccess()) {
                     MongoSession session = new MongoSession(x);
-                    dataAccess.setSession(session);
                     if (dataAccess instanceof IDelete) {
                         IDelete delete = (IDelete) dataAccess;
                         transFutures.add(delete.execute(session));
