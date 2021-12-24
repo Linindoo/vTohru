@@ -1,16 +1,3 @@
-/*-
- * #%L
- * vertx-pojo-mapper-common
- * %%
- * Copyright (C) 2017 Braintags GmbH
- * %%
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * #L%
- */
-
 package cn.vtohru.orm.dataaccess.write.impl;
 
 import java.util.ArrayList;
@@ -19,16 +6,13 @@ import java.util.Iterator;
 import java.util.List;
 
 import cn.vtohru.orm.IDataStore;
-import cn.vtohru.orm.annotation.lifecycle.AfterSave;
 import cn.vtohru.orm.dataaccess.ISession;
 import cn.vtohru.orm.dataaccess.impl.AbstractDataAccessObject;
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import cn.vtohru.orm.dataaccess.write.IWrite;
 import cn.vtohru.orm.dataaccess.write.IWriteResult;
 import cn.vtohru.orm.mapping.IProperty;
-import cn.vtohru.orm.mapping.IPropertyAccessor;
 import cn.vtohru.orm.mapping.IStoreObject;
-import cn.vtohru.orm.observer.IObserverContext;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -80,8 +64,7 @@ public abstract class AbstractWrite<T> extends AbstractDataAccessObject<T> imple
         try {
           Promise<IWriteResult> rf = Promise.promise();
           rf.future().onComplete(resultHandler);
-          IObserverContext context = IObserverContext.createInstance();
-          internalSave(context).onSuccess(wr -> postSave(wr, context, rf)).onFailure(rf::fail);
+          internalSave().onSuccess(rf::complete).onFailure(rf::fail);
         } catch (Exception e) {
           resultHandler.handle(Future.failedFuture(e));
         }
@@ -89,29 +72,12 @@ public abstract class AbstractWrite<T> extends AbstractDataAccessObject<T> imple
     });
   }
 
-  /**
-   * Execution done after entities were stored into the datastore
-   *
-   * @param wr
-   * @param nextFuture
-   */
-  protected void postSave(final IWriteResult wr, final IObserverContext context,
-      final Handler<AsyncResult<IWriteResult>> nextFuture) {
-    Future<Void> f = getMapper().getObserverHandler().handleAfterInsert(this, wr, context);
-    f.onComplete(res -> {
-      if (f.failed()) {
-        nextFuture.handle(Future.failedFuture(f.cause()));
-      } else {
-        nextFuture.handle(Future.succeededFuture(wr));
-      }
-    });
-  }
 
   /**
    * This method is called after the sync call to execute the write action
    *
    */
-  protected abstract Future<IWriteResult> internalSave(IObserverContext context);
+  protected abstract Future<IWriteResult> internalSave();
 
   /**
    * Get the objects that shall be saved
@@ -137,16 +103,6 @@ public abstract class AbstractWrite<T> extends AbstractDataAccessObject<T> imple
     for (T mapper : mapperList) {
       add(mapper);
     }
-  }
-
-  /**
-   * execute the methods marked with {@link AfterSave}
-   *
-   * @param entity
-   *          the entity to be handled
-   */
-  protected void executePostSave(final T entity, final Handler<AsyncResult<Void>> resultHandler) {
-    getMapper().executeLifecycle(AfterSave.class, entity, resultHandler);
   }
 
   /**

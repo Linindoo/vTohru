@@ -52,9 +52,14 @@ public class MongoController {
         Trans trans = mongoDataStore.createTrans();
         IWrite<SchoolDao> schoolDaoIWrite = mongoDataStore.createWrite(SchoolDao.class);
         schoolDaoIWrite.add(schoolDao);
-        write.add(classDao);
+//        write.add(classDao);
         trans.add(schoolDaoIWrite);
-        trans.add(write);
+//        trans.add(write);
+        IDelete<SchoolDao> delete = mongoDataStore.createDelete(SchoolDao.class);
+        SchoolDao deleteSchool = new SchoolDao();
+        deleteSchool.setId("61c477c3ed056a4b0fb53698");
+        delete.add(deleteSchool);
+        trans.add(delete);
         trans.commit().onSuccess(x -> {
             System.out.println("success");
             promise.complete();
@@ -62,6 +67,7 @@ public class MongoController {
             e.printStackTrace();
             promise.fail(e);
         });
+        promise.complete();
         return promise.future();
     }
 

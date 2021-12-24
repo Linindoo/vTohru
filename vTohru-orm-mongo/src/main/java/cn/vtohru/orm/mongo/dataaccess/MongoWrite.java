@@ -12,7 +12,6 @@
  */
 package cn.vtohru.orm.mongo.dataaccess;
 
-import cn.vtohru.orm.dataaccess.IAccessResult;
 import cn.vtohru.orm.dataaccess.ISession;
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import cn.vtohru.orm.dataaccess.query.ISearchCondition;
@@ -29,7 +28,6 @@ import cn.vtohru.orm.mapping.IMapper;
 import cn.vtohru.orm.mongo.MongoDataStore;
 import cn.vtohru.orm.mongo.MongoStoreObjectFactory;
 import cn.vtohru.orm.mongo.mapper.datastore.MongoColumnInfo;
-import cn.vtohru.orm.observer.IObserverContext;
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.bulk.BulkWriteError;
 import io.vertx.core.*;
@@ -68,7 +66,7 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
   }
 
   @Override
-  public Future<IWriteResult> internalSave(final IObserverContext context) {
+  public Future<IWriteResult> internalSave() {
     Promise<IWriteResult> promise = Promise.promise();
     List<T> entities = getObjectsToSave();
     if (getQuery() != null && entities.size() > 1)
@@ -76,7 +74,7 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
     else if (entities.isEmpty()) {
       promise.complete(new MongoWriteResult());
     } else {
-      CompositeFuture.all(entities.stream().map(entity -> convertEntity(entity, context)).collect(toList()))
+      CompositeFuture.all(entities.stream().map(this::convertEntity).collect(toList()))
               .compose(cfConvert -> {
                 List<StoreObjectHolder> holders = cfConvert.list();
                 return writeEntities(holders).recover(e -> {
@@ -151,8 +149,8 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
     return fAfterWrite;
   }
 
-  private Future<StoreObjectHolder> convertEntity(final T entity, final IObserverContext context) {
-    return preSave(entity, context).compose(v -> createStoreObject(entity)).compose(this::createBulkOperation);
+  private Future<StoreObjectHolder> convertEntity(final T entity) {
+    return createStoreObject(entity).compose(this::createBulkOperation);
   }
 
   private Future<StoreObjectHolder> createBulkOperation(final MongoStoreObject<T> storeObject) {
@@ -207,19 +205,12 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
 
   @Override
   public Future<Void> execute(ISession session) {
-    IObserverContext context = IObserverContext.createInstance();
     Promise<Void> promise = Promise.promise();
-    internalSaveBySession(context, session).onSuccess(wr -> postSave(wr, context, x->{
-      if (x.succeeded()) {
-        promise.complete();
-      } else {
-        promise.fail(x.cause());
-      }
-    })).onFailure(promise::fail);
+    internalSaveBySession(session).onSuccess(x -> promise.complete()).onFailure(promise::fail);
     return promise.future();
   }
 
-  public Future<IWriteResult> internalSaveBySession(final IObserverContext context, ISession session) {
+  public Future<IWriteResult> internalSaveBySession(ISession session) {
     Promise<IWriteResult> promise = Promise.promise();
     List<T> entities = getObjectsToSave();
     if (getQuery() != null && entities.size() > 1)
@@ -227,7 +218,7 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
     else if (entities.isEmpty()) {
       promise.complete(new MongoWriteResult());
     } else {
-      CompositeFuture.all(entities.stream().map(entity -> convertEntity(entity, context)).collect(toList()))
+      CompositeFuture.all(entities.stream().map(this::convertEntity).collect(toList()))
               .compose(cfConvert -> {
                 List<StoreObjectHolder> holders = cfConvert.list();
                 return writeEntitiesBySession(holders, session).recover(e -> {
@@ -277,21 +268,6 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
     return promise.future();
   }
 
-  /**
-   * Execution done before instances are stored into the datastore
-   *
-   * @return
-   */
-  protected Future<Void> preSave(final T entity, final IObserverContext context) {
-    return getMapper().getIdInfo().getField().readData(entity).compose(x -> {
-      if (x == null) {
-        return getMapper().getObserverHandler().handleBeforeInsert(this, entity, context);
-      } else {
-        return getMapper().getObserverHandler().handleBeforeUpdate(this, entity, context);
-      }
-    });
-  }
-
   private void finishQueryUpdate(final Object id, final T entity, final MongoStoreObject<T> storeObject,
       final MongoClientBulkWriteResult updateResult, final Handler<AsyncResult<IWriteEntry>> resultHandler) {
     if (updateResult.getMatchedCount() != 0 && updateResult.getMatchedCount() == updateResult.getModifiedCount()) {
@@ -311,25 +287,13 @@ public class MongoWrite<T> extends AbstractWrite<T> implements MongoDataAccesObj
         resultHandler.handle(Future.failedFuture(result.cause()));
         return;
       }
-      executePostSave(entity, lcr -> {
-        if (lcr.failed()) {
-          resultHandler.handle(Future.failedFuture(lcr.cause()));
-        } else {
-          resultHandler.handle(Future.succeededFuture(new WriteEntry(storeObject, id, WriteAction.INSERT)));
-        }
-      });
+      resultHandler.handle(Future.succeededFuture(new WriteEntry(storeObject, id, WriteAction.INSERT)));
     });
   }
 
   private void finishUpdate(final Object id, final T entity, final MongoStoreObject<T> storeObject,
       final Handler<AsyncResult<IWriteEntry>> resultHandler) {
-    executePostSave(entity, lcr -> {
-      if (lcr.failed()) {
-        resultHandler.handle(Future.failedFuture(lcr.cause()));
-      } else {
-        resultHandler.handle(Future.succeededFuture(new WriteEntry(storeObject, id, WriteAction.UPDATE)));
-      }
-    });
+    resultHandler.handle(Future.succeededFuture(new WriteEntry(storeObject, id, WriteAction.UPDATE)));
   }
 
   public void setView(final JsonObject view) {

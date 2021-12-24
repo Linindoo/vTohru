@@ -41,27 +41,39 @@ public class MongoTransaction extends AbstractTrans {
         Promise<Void> commitPromise = Promise.promise();
         mongoDataStoreClient.startSession().onSuccess(x -> {
             x.startTransaction(txnOptions);
-            List<Future> transFutures = new ArrayList<>();
-            for (IDataAccessObject<?> dataAccess : getDataAccess()) {
-                MongoSession session = new MongoSession(x);
-                dataAccess.setSession(session);
-                if (dataAccess instanceof IDelete) {
-                    IDelete delete = (IDelete) dataAccess;
-                    transFutures.add(delete.execute(session));
-                } else if (dataAccess instanceof IWrite) {
-                    IWrite write = (IWrite) dataAccess;
-                    transFutures.add(write.execute(session));
+            try {
+                List<Future> transFutures = new ArrayList<>();
+                for (IDataAccessObject<?> dataAccess : getDataAccess()) {
+                    MongoSession session = new MongoSession(x);
+                    dataAccess.setSession(session);
+                    if (dataAccess instanceof IDelete) {
+                        IDelete delete = (IDelete) dataAccess;
+                        transFutures.add(delete.execute(session));
+                    } else if (dataAccess instanceof IWrite) {
+                        IWrite write = (IWrite) dataAccess;
+                        transFutures.add(write.execute(session));
+                    }
                 }
-            }
-            CompositeFuture.all(transFutures).onComplete(y -> {
-                if (y.succeeded()) {
-                    x.commitTransaction().subscribe(new CompletionSubscriber<>(commitPromise));
-                } else {
-                    x.abortTransaction();
-                    commitPromise.fail(y.cause());
-                }
+                CompositeFuture.all(transFutures).onComplete(y -> {
+                    Promise<Void> endPromise = Promise.promise();
+                    if (y.succeeded()) {
+                        x.commitTransaction().subscribe(new CompletionSubscriber<>(endPromise));
+                    } else {
+                        x.abortTransaction().subscribe(new CompletionSubscriber<>(endPromise));
+                    }
+                    endPromise.future().onComplete(t -> {
+                        x.close();
+                        if (y.succeeded()) {
+                            commitPromise.complete();
+                        } else {
+                            commitPromise.fail(y.cause());
+                        }
+                    });
+                });
+            } catch (Exception e) {
+                x.abortTransaction();
                 x.close();
-            });
+            }
         }).onFailure(commitPromise::fail);
         return commitPromise.future();
     }

@@ -18,8 +18,6 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import cn.vtohru.orm.observer.ObserverEventType;
 import cn.vtohru.orm.versioning.IMapperVersion;
 
 /**
@@ -34,14 +32,6 @@ import cn.vtohru.orm.versioning.IMapperVersion;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE })
 public @interface VersionInfo {
-
-  /**
-   * Defines the event type, during which defined converters shall be executed
-   * Allowed event types are BEFORE_UPDATE or AFTER_LOAD, default is BEFORE_UPDATE
-   * 
-   * @return
-   */
-  ObserverEventType eventType() default ObserverEventType.BEFORE_UPDATE;
 
   /**
    * Defines the version of the mapper for the mapper versioning system. If this value is defined with a value > 0, the

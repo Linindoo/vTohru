@@ -1,22 +1,9 @@
-/*
-* #%L
- * vertx-pojo-mapper-common
- * %%
- * Copyright (C) 2017 Braintags GmbH
- * %%
- * All rights reserved. This program and the accompanying materials
- *  are made available under the terms of the Eclipse Public License v1.0
- *  which accompanies this distribution, and is available at
- *  http://www.eclipse.org/legal/epl-v10.html
- * #L%
-*/
 package cn.vtohru.orm.mapping.impl;
 
 import cn.vtohru.orm.annotation.Index;
 import cn.vtohru.orm.annotation.Indexes;
 import cn.vtohru.orm.annotation.KeyGenerator;
 import cn.vtohru.orm.annotation.VersionInfo;
-import cn.vtohru.orm.annotation.lifecycle.*;
 import cn.vtohru.orm.dataaccess.query.IIndexedField;
 import cn.vtohru.orm.dataaccess.query.IdField;
 import cn.vtohru.orm.exception.MappingException;
@@ -24,9 +11,6 @@ import cn.vtohru.orm.mapping.*;
 import cn.vtohru.orm.mapping.datastore.IColumnHandler;
 import cn.vtohru.orm.mapping.datastore.ITableGenerator;
 import cn.vtohru.orm.mapping.datastore.ITableInfo;
-import cn.vtohru.orm.observer.IObserverHandler;
-import cn.vtohru.orm.observer.ObserverEventType;
-import cn.vtohru.orm.util.ClassUtil;
 import cn.vtohru.orm.versioning.IMapperVersion;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
@@ -52,12 +36,6 @@ import java.util.*;
 
 public abstract class AbstractMapper<T> implements IMapper<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractMapper.class);
-
-  /**
-   * all annotations which shall be examined for the mapper class itself
-   */
-  protected static final List<Class<? extends Annotation>> LIFECYCLE_ANNOTATIONS = Arrays.asList(AfterDelete.class,
-      AfterLoad.class, AfterSave.class, BeforeDelete.class, BeforeLoad.class, BeforeSave.class);
   /**
    * all annotations which shall be examined for the mapper class itself
    */
@@ -75,7 +53,6 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
   private Set<IIndexDefinition> indexes;
   private ITableInfo tableInfo;
   private boolean syncNeeded = true;
-  private IObserverHandler observerHandler;
   private BeanIntrospection<T> beanIntrospection;
 
   /**
@@ -101,14 +78,12 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
     if (LOGGER.isDebugEnabled())
       LOGGER.debug("examining " + getMapperClass().getName());
     computePersistentFields();
-    computeLifeCycleAnnotations();
     computeClassAnnotations();
     computeEntity();
     computeVersionInfo();
     computeKeyGenerator();
     generateTableInfo();
     computeIndexes();
-    observerHandler = IObserverHandler.createInstance(this);
     internalValidate();
   }
 
@@ -121,11 +96,6 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
     if (getVersionInfo() != null && !IMapperVersion.class.isAssignableFrom(getMapperClass())) {
       throw new MappingException(
           "Mapper, where the property Entity.version is set must implement the interface IMapperVersion");
-    }
-    if (getVersionInfo() != null && !getVersionInfo().eventType().equals(ObserverEventType.AFTER_LOAD)
-        && !getVersionInfo().eventType().equals(ObserverEventType.BEFORE_UPDATE)) {
-      throw new MappingException("VersionConverter can only be handled at phase AFTER_LOAD or BEFORE_UPDATE; mapper: "
-          + getMapperClass().getName());
     }
     validate();
   }
@@ -252,21 +222,6 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
       Annotation ann = mapperClass.getAnnotation(annClass);
       if (ann != null)
         existingClassAnnotations.put(annClass, ann);
-    }
-  }
-
-  /**
-   * Computes the methods, which are annotated with the lifecycle annotations like {@link BeforeLoad}
-   */
-  protected final void computeLifeCycleAnnotations() {
-//    mapperFactory
-    List<Method> methods = ClassUtil.getDeclaredAndInheritedMethods(mapperClass);
-    for (Method method : methods) {
-      for (Class<? extends Annotation> ann : LIFECYCLE_ANNOTATIONS) {
-        if (method.isAnnotationPresent(ann)) {
-          addLifecycleAnnotationMethod(ann, method);
-        }
-      }
     }
   }
 
@@ -503,11 +458,6 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
     return indexes;
   }
 
-  /**
-   * Get the {@link MapperFactory} which created the current instance
-   *
-   * @return
-   */
   @Override
   public IMapperFactory getMapperFactory() {
     return this.mapperFactory;
@@ -517,8 +467,4 @@ public abstract class AbstractMapper<T> implements IMapper<T> {
     return mappedProperties;
   }
 
-  @Override
-  public IObserverHandler getObserverHandler() {
-    return this.observerHandler;
-  }
 }

@@ -1,18 +1,5 @@
-/*
- * #%L
- * vertx-pojongo
- * %%
- * Copyright (C) 2017 Braintags GmbH
- * %%
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * #L%
- */
 package cn.vtohru.orm.mongo;
 
-import cn.vtohru.orm.annotation.lifecycle.BeforeSave;
 import cn.vtohru.orm.mapping.IMapper;
 import cn.vtohru.orm.mapping.IStoreObject;
 import cn.vtohru.orm.mapping.impl.AbstractStoreObjectFactory;
@@ -34,18 +21,12 @@ public class MongoStoreObjectFactory extends AbstractStoreObjectFactory<JsonObje
   @Override
   public <T> void createStoreObject(final IMapper<T> mapper, final T entity,
       final Handler<AsyncResult<IStoreObject<T, JsonObject>>> handler) {
-    mapper.executeLifecycle(BeforeSave.class, entity, lcr -> {
-      if (lcr.failed()) {
-        handler.handle(Future.failedFuture(lcr.cause()));
+    MongoStoreObject<T> storeObject = new MongoStoreObject<>(mapper, entity);
+    storeObject.initFromEntity(initResult -> {
+      if (initResult.failed()) {
+        handler.handle(Future.failedFuture(initResult.cause()));
       } else {
-        MongoStoreObject<T> storeObject = new MongoStoreObject<>(mapper, entity);
-        storeObject.initFromEntity(initResult -> {
-          if (initResult.failed()) {
-            handler.handle(Future.failedFuture(initResult.cause()));
-          } else {
-            handler.handle(Future.succeededFuture(storeObject));
-          }
-        });
+        handler.handle(Future.succeededFuture(storeObject));
       }
     });
   }
@@ -65,18 +46,12 @@ public class MongoStoreObjectFactory extends AbstractStoreObjectFactory<JsonObje
 
   public <T> void createStoreObject(final IMapper<T> mapper, final T entity, final JsonObject view,
       final Handler<AsyncResult<IStoreObject<T, JsonObject>>> handler) {
-    mapper.executeLifecycle(BeforeSave.class, entity, lcr -> {
-      if (lcr.failed()) {
-        handler.handle(Future.failedFuture(lcr.cause()));
+    MongoStoreObject<T> storeObject = new MongoStoreObject<T>(mapper, entity, view);
+    storeObject.initFromEntity(initResult -> {
+      if (initResult.failed()) {
+        handler.handle(Future.failedFuture(initResult.cause()));
       } else {
-        MongoStoreObject<T> storeObject = new MongoStoreObject<T>(mapper, entity, view);
-        storeObject.initFromEntity(initResult -> {
-          if (initResult.failed()) {
-            handler.handle(Future.failedFuture(initResult.cause()));
-          } else {
-            handler.handle(Future.succeededFuture(storeObject));
-          }
-        });
+        handler.handle(Future.succeededFuture(storeObject));
       }
     });
   }

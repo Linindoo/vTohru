@@ -13,24 +13,8 @@
 package cn.vtohru.orm.versioning;
 
 import cn.vtohru.orm.IDataStore;
-import cn.vtohru.orm.annotation.VersionConverterDefinition;
-import cn.vtohru.orm.annotation.VersionInfo;
-import cn.vtohru.orm.observer.IObserverContext;
 import io.vertx.core.Future;
 
-/**
- * An IVersionConverter is used to convert instances of {@link IMapperVersion} from one version to a higher one. The
- * declaration is done by using the annotation {@link VersionInfo}, where inside the {@link VersionConverterDefinition}
- * contains the IVersionConverterClass, which shall be used.
- * The conversion is processed by the observer {@link ExecuteVersionConverter}, which will be automatically added for
- * all mapper declarations, which contain the annotation {@link VersionInfo}. If an instance is saved or loaded, where
- * the version {@link IMapperVersion#getMapperVersion()} is smaller than the current one, then the
- * ExecuteVersionConverter searches for all converter, which are defined to be executed and executes them.
- * 
- * @author Michael Remme
- * @param <T>
- *          the mapper class which will be handled
- */
 public interface IVersionConverter<T> {
 
   /**
@@ -38,9 +22,8 @@ public interface IVersionConverter<T> {
    * 
    * @param datastore
    * @param toBeConverted
-   * @param context
    * @return
    */
-  Future<Void> convert(IDataStore<?, ?> datastore, T toBeConverted, IObserverContext context);
+  Future<Void> convert(IDataStore<?, ?> datastore, T toBeConverted);
 
 }

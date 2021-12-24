@@ -23,7 +23,6 @@ import cn.vtohru.orm.dataaccess.query.IQueryCountResult;
 import cn.vtohru.orm.dataaccess.query.IQueryResult;
 import cn.vtohru.orm.dataaccess.query.ISearchCondition;
 import cn.vtohru.orm.dataaccess.query.ISortDefinition;
-import cn.vtohru.orm.observer.IObserverContext;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -68,11 +67,6 @@ public abstract class Query<T> extends AbstractDataAccessObject<T> implements IQ
     execute(null, getDataStore().getDefaultQueryLimit(), 0, resultHandler);
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see cn.vtohru.orm.dataaccess.query.IQuery#execute(io.vertx.core.Handler)
-   */
   @Override
   public final void execute(final IFieldValueResolver resolver, final int limit, final int offset,
       final Handler<AsyncResult<IQueryResult<T>>> resultHandler) {
@@ -84,15 +78,13 @@ public abstract class Query<T> extends AbstractDataAccessObject<T> implements IQ
         try {
           Promise<IQueryResult<T>> rf = Promise.promise();
           rf.future().onComplete(resultHandler);
-          IObserverContext context = IObserverContext.createInstance();
-          preQuery(context).compose(pre -> executeQuery(resolver, limit, offset))
-              .compose(wr -> postQuery(wr, context).map(v -> {
+         executeQuery(resolver, limit, offset).map(v -> {
                 long queryTime = System.currentTimeMillis() - startTime;
                 if (queryTime > SLOW_QUERY_WARNING_MS) {
                   LOGGER.warn("[queryTime: " + queryTime + " ms] Slow query", new SlowQueryException(this));
                 }
-                return wr;
-              })).onComplete(resultHandler);
+                return v;
+              }).onComplete(resultHandler);
         } catch (Exception e) {
           resultHandler.handle(Future.failedFuture(e));
         }
@@ -113,26 +105,6 @@ public abstract class Query<T> extends AbstractDataAccessObject<T> implements IQ
       }
     });
     return f.future();
-  }
-
-  /**
-   * Execution done before instances are stored into the datastore
-   * 
-   * @param context
-   * @return
-   */
-  protected Future<Void> preQuery(final IObserverContext context) {
-    return getMapper().getObserverHandler().handleBeforeLoad(this, context);
-  }
-
-  /**
-   * Execution done after entities were stored into the datastore
-   * 
-   * @param qr
-   * @param context
-   */
-  protected Future<Void> postQuery(final IQueryResult<T> qr, final IObserverContext context) {
-    return getMapper().getObserverHandler().handleAfterLoad(this, qr, context);
   }
 
   /**

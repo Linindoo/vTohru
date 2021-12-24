@@ -18,7 +18,6 @@ import java.util.Set;
 
 import cn.vtohru.orm.annotation.VersionInfo;
 import cn.vtohru.orm.mapping.datastore.ITableInfo;
-import cn.vtohru.orm.observer.IObserverHandler;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 
@@ -185,11 +184,4 @@ public interface IMapper<T> {
    * @return
    */
   String getKeyGeneratorReference();
-
-  /**
-   * Get the instance of {@link IObserverHandler} for the current mapper
-   *
-   * @return
-   */
-  IObserverHandler getObserverHandler();
 }

@@ -33,7 +33,6 @@ public class DataStoreSettings {
   private String databaseName;
   private List<EncoderSettings> encoders = new ArrayList<>();
   private boolean clearDatabaseOnInit = false;
-  private ObserverSettings observerSettings = new ObserverSettings();
 
   /**
    * Standard constructor needed for saving as local file
@@ -180,17 +179,7 @@ public class DataStoreSettings {
     for (EncoderSettings encoder : encoders) {
       res.encoders.add(encoder.deepCopy());
     }
-    res.observerSettings = new ObserverSettings(observerSettings);
     return res;
-  }
-
-  /**
-   * The list of defined ObserverDefinitions
-   * 
-   * @return the observerSettings
-   */
-  public ObserverSettings getObserverSettings() {
-    return observerSettings;
   }
 
 }

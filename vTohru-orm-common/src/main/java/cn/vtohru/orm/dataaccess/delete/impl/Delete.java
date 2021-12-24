@@ -14,8 +14,6 @@
 package cn.vtohru.orm.dataaccess.delete.impl;
 
 import cn.vtohru.orm.IDataStore;
-import cn.vtohru.orm.annotation.lifecycle.AfterDelete;
-import cn.vtohru.orm.annotation.lifecycle.BeforeDelete;
 import cn.vtohru.orm.dataaccess.delete.IDelete;
 import cn.vtohru.orm.dataaccess.delete.IDeleteResult;
 import cn.vtohru.orm.dataaccess.impl.AbstractDataAccessObject;
@@ -25,7 +23,6 @@ import cn.vtohru.orm.dataaccess.query.IdField;
 import cn.vtohru.orm.exception.ParameterRequiredException;
 import cn.vtohru.orm.mapping.IIdInfo;
 import cn.vtohru.orm.mapping.IProperty;
-import cn.vtohru.orm.observer.IObserverContext;
 import io.vertx.core.*;
 
 import java.util.ArrayList;
@@ -105,20 +102,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
       resultHandler.handle(Future.succeededFuture());
       return;
     }
-
-    CompositeFuture cf = CompositeFuture.all(executeLifeCycle(BeforeDelete.class));
-    cf.onComplete(res -> {
-      if (res.failed()) {
-        resultHandler.handle(Future.failedFuture(res.cause()));
-      } else {
-        try {
-          IObserverContext context = IObserverContext.createInstance();
-          preDelete(context).compose(pre -> doDeleteRecords()).compose(dr -> postDelete(dr, context)).onComplete(resultHandler);
-        } catch (Exception e) {
-          resultHandler.handle(Future.failedFuture(e));
-        }
-      }
-    });
+    doDeleteRecords().onComplete(resultHandler);
   }
 
   protected Future<IDeleteResult> doDeleteRecords() {
@@ -131,32 +115,6 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
         promise.fail(res.cause());
       } else {
         deleteRecordsById(idField, cf.list(), promise);
-      }
-    });
-    return promise.future();
-  }
-
-  /**
-   * Execution done before instances are deleted from the datastore
-   *
-   * @return
-   */
-  protected Future<Void> preDelete(final IObserverContext context) {
-    return getMapper().getObserverHandler().handleBeforeDelete(this, context);
-  }
-
-  /**
-   * Execution done after entities were deleted from the datastore
-   *
-   */
-  protected Future<IDeleteResult> postDelete(final IDeleteResult dr, final IObserverContext context) {
-    Future<Void> f = getMapper().getObserverHandler().handleAfterDelete(this, dr, context);
-    Promise<IDeleteResult> promise = Promise.promise();
-    f.onComplete(res -> {
-      if (res.failed()) {
-        promise.fail(res.cause());
-      } else {
-        promise.complete(dr);
       }
     });
     return promise.future();
@@ -265,14 +223,7 @@ public abstract class Delete<T> extends AbstractDataAccessObject<T> implements I
       if (dr.failed()) {
         resultHandler.handle(dr);
       } else {
-        CompositeFuture cf = CompositeFuture.all(executeLifeCycle(AfterDelete.class));
-        cf.onComplete(res -> {
-          if (res.failed()) {
-            resultHandler.handle(Future.failedFuture(res.cause()));
-          } else {
-            resultHandler.handle(dr);
-          }
-        });
+        resultHandler.handle(dr);
       }
     });
   }

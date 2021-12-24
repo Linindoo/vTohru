@@ -14,8 +14,6 @@
 package cn.vtohru.orm.mongo.dataaccess;
 
 import cn.vtohru.orm.IDataStore;
-import cn.vtohru.orm.annotation.lifecycle.AfterDelete;
-import cn.vtohru.orm.annotation.lifecycle.BeforeDelete;
 import cn.vtohru.orm.dataaccess.ISession;
 import cn.vtohru.orm.dataaccess.delete.IDelete;
 import cn.vtohru.orm.dataaccess.delete.IDeleteResult;
@@ -24,8 +22,6 @@ import cn.vtohru.orm.dataaccess.query.IQuery;
 import cn.vtohru.orm.dataaccess.query.ISearchCondition;
 import cn.vtohru.orm.dataaccess.query.IdField;
 import cn.vtohru.orm.mapping.IIdInfo;
-import cn.vtohru.orm.observer.IObserverContext;
-import com.mongodb.session.ClientSession;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClientDeleteResult;
@@ -38,7 +34,7 @@ import io.vertx.ext.mongo.MongoClientDeleteResult;
  *          the type of the underlaying mapper
  */
 public class MongoDelete<T> extends Delete<T> implements MongoDataAccesObject<T> {
-  private ClientSession session;
+  private ISession session;
 
   /**
    * Constructor
@@ -78,7 +74,7 @@ public class MongoDelete<T> extends Delete<T> implements MongoDataAccesObject<T>
 
   @Override
   public void setSession(ISession session) {
-    this.session = (ClientSession) session;
+    this.session =  session;
   }
 
   @Override
@@ -94,13 +90,7 @@ public class MongoDelete<T> extends Delete<T> implements MongoDataAccesObject<T>
         }
       });
     } else if (!recordList.isEmpty()) {
-      CompositeFuture cf = CompositeFuture.all(executeLifeCycle(BeforeDelete.class));
-      cf.onComplete(res -> {
-        if (res.succeeded()) {
-            IObserverContext context = IObserverContext.createInstance();
-          preDelete(context).compose(pre -> doDeleteRecordsBySession(session)).compose(dr -> postDelete(dr, context));
-        }
-      });
+      doDeleteRecordsBySession(session).onSuccess(x -> promise.complete()).onFailure(promise::fail);
     } else {
       promise.complete();
     }
@@ -118,7 +108,7 @@ public class MongoDelete<T> extends Delete<T> implements MongoDataAccesObject<T>
       } else {
         IQuery<T> q = getDataStore().createQuery(getMapperClass());
         q.setSearchCondition(ISearchCondition.in(idField, cf.list()));
-        query.buildQueryExpression(null, qDefResult -> {
+        q.buildQueryExpression(null, qDefResult -> {
           if (qDefResult.succeeded()) {
             JsonObject queryDefinition = ((MongoQueryExpression) qDefResult.result()).getQueryDefinition();
             getMongoClient().removeDocuments((com.mongodb.reactivestreams.client.ClientSession) session.getSession(), getCollection(), queryDefinition).onSuccess(x -> promise.complete()).onFailure(promise::fail);
