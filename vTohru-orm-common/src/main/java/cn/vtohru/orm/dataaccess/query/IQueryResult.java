@@ -16,40 +16,32 @@ import cn.vtohru.orm.IDataStore;
 import cn.vtohru.orm.dataaccess.IAccessResult;
 import cn.vtohru.orm.dataaccess.query.impl.IQueryExpression;
 import cn.vtohru.orm.mapping.IMapper;
-import cn.vtohru.orm.util.CollectionAsync;
 
-/**
- * The result of an executed {@link IQuery}. Acts as an unmodifyable {@link CollectionAsync}, so that implementations
- * can decide to perform a lazy load of found results
- *
- * @author Michael Remme
- * @param <E>
- *          the underlaying mapper class
- *
- */
+import java.util.List;
+import java.util.Optional;
 
-public interface IQueryResult<E> extends CollectionAsync<E>, IAccessResult {
+public interface IQueryResult<E> extends IAccessResult {
 
   /**
    * Get the {@link IDataStore} by which the current instance was created
    *
    * @return
    */
-  public IDataStore getDataStore();
+  IDataStore getDataStore();
 
   /**
    * Get the underlaying {@link IMapper}
    *
    * @return
    */
-  public IMapper getMapper();
+  IMapper<E> getMapper();
 
   /**
    * Get the original query, which was executed in the datastore
    *
    * @return the query
    */
-  public IQueryExpression getOriginalQuery();
+  IQueryExpression getOriginalQuery();
 
   /**
    * If the {@link IQuery#setReturnCompleteCount(boolean)} is set to true and {@link IQuery#setLimit(int)} is set with a
@@ -58,6 +50,13 @@ public interface IQueryResult<E> extends CollectionAsync<E>, IAccessResult {
    *
    * @return the complete number of records
    */
-  public long getCompleteResult();
+  long getCompleteResult();
+
+  List<E> result();
+
+  Optional<E> first();
+
+  int size();
+
 
 }

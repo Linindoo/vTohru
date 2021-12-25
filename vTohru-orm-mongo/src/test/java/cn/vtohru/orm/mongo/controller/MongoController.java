@@ -73,10 +73,6 @@ public class MongoController {
     public Future<Object> list() {
         Promise<Object> promise = Promise.promise();
         IQuery<ClassDao> query = mongoDataStore.createQuery(ClassDao.class);
-        ISearchConditionContainer iSearchConditionContainer = ISearchCondition.or();
-        ISearchCondition.isEqual("ID","");
-        query.setSearchCondition(iSearchConditionContainer);
-
         query.execute(new IFieldValueResolver() {
             @Override
             public Object resolve(String variableName) throws VariableSyntaxException {
@@ -86,14 +82,10 @@ public class MongoController {
             if (x.succeeded()) {
                 IQueryResult<ClassDao> qres = x.result();
                 if (qres.size() > 0) {
-                    qres.iterator().result(y->{
-                        if (y.succeeded()) {
-                            List<ClassDao> classDaos = y.result();
-                            promise.complete(classDaos);
-                        } else {
-                            promise.fail(y.cause());
-                        }
-                    });
+                    List<ClassDao> result = qres.result();
+                    promise.complete(result);
+                } else {
+                    promise.fail("no date");
                 }
             } else {
                 promise.fail(x.cause());
@@ -162,15 +154,8 @@ public class MongoController {
                 if (x.succeeded()) {
                     IQueryResult<ClassDao> qres = x.result();
                     if (qres.size() > 0) {
-                        qres.iterator().next(y->{
-                            if (y.succeeded()) {
-                                ClassDao classDaos = y.result();
-                                promise.complete(classDaos);
-                            } else {
-                                y.cause().printStackTrace();
-                                promise.fail(y.cause());
-                            }
-                        });
+                        List<ClassDao> result = qres.result();
+                        promise.complete(result.get(0));
                     }
                 } else {
                     promise.fail(x.cause());

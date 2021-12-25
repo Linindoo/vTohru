@@ -1,28 +1,14 @@
-/*
- * #%L
- * vertx-pojo-mapper-common
- * %%
- * Copyright (C) 2017 Braintags GmbH
- * %%
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * #L%
- */
 package cn.vtohru.orm.util;
-
-import java.util.Arrays;
-import java.util.List;
 
 import cn.vtohru.orm.IDataStore;
 import cn.vtohru.orm.dataaccess.query.IQuery;
-import cn.vtohru.orm.dataaccess.query.IQueryResult;
 import cn.vtohru.orm.dataaccess.query.ISearchCondition;
 import cn.vtohru.orm.exception.NoSuchRecordException;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+
+import java.util.List;
 
 /**
  * A helper class with several static methods to simplyfy search actions
@@ -87,22 +73,14 @@ public class QueryHelper {
       if (result.failed()) {
         handler.handle(Future.failedFuture(result.cause()));
       } else {
-        IteratorAsync<T> it = result.result().iterator();
-        if (it.hasNext()) {
-          it.next(itResult -> {
-            if (itResult.failed()) {
-              handler.handle(Future.failedFuture(itResult.cause()));
-            } else {
-              handler.handle(Future.succeededFuture(itResult.result()));
-            }
-          });
+        List<T> data = result.result().result();
+        if (data != null && data.size() > 0) {
+          handler.handle(Future.succeededFuture(data.get(0)));
+        } else if (required) {
+          handler.handle(Future.failedFuture(new NoSuchRecordException(
+                  "expected record not found for query " + result.result().getOriginalQuery().toString())));
         } else {
-          if (required) {
-            handler.handle(Future.failedFuture(new NoSuchRecordException(
-                "expected record not found for query " + result.result().getOriginalQuery().toString())));
-          } else {
-            handler.handle(Future.succeededFuture(null));
-          }
+          handler.handle(Future.succeededFuture(null));
         }
       }
     });
@@ -125,28 +103,8 @@ public class QueryHelper {
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("executed query: " + result.result().toString());
         }
-        queryResultToList(result.result(), handler);
-      }
-    });
-  }
-
-  /**
-   * Creates a complete {@link List} of objects from the given {@link IQueryResult}
-   *
-   * @param queryResult
-   *          the {@link IQueryResult} to be handled
-   * @param handler
-   *          the handler to be informed
-   */
-  @SuppressWarnings("unchecked")
-  public static final <T> void queryResultToList(final IQueryResult<T> queryResult,
-      final Handler<AsyncResult<List<T>>> handler) {
-    queryResult.toArray(result -> {
-      if (result.failed()) {
-        handler.handle(Future.failedFuture(result.cause()));
-      } else {
-        Object[] resultArray = result.result();
-        handler.handle(Future.succeededFuture((List<T>) Arrays.asList(resultArray)));
+        List<T> data = result.result().result();
+        handler.handle(Future.succeededFuture(data));
       }
     });
   }

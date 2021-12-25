@@ -8,12 +8,12 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
-import com.mongodb.reactivestreams.client.MongoClient;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.VertxInternal;
+import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.mongo.impl.CompletionSubscriber;
 
 import java.util.ArrayList;
@@ -21,7 +21,6 @@ import java.util.List;
 
 
 public class MongoTransaction extends AbstractTrans {
-    private MongoClient mongoClient;
     private MongoDataStore mongoDataStore;
     private VertxInternal vertx;
 
@@ -37,11 +36,11 @@ public class MongoTransaction extends AbstractTrans {
                 .readConcern(ReadConcern.MAJORITY)
                 .writeConcern(WriteConcern.MAJORITY)
                 .build();
-        io.vertx.ext.mongo.MongoClient mongoDataStoreClient = (io.vertx.ext.mongo.MongoClient) mongoDataStore.getClient();
+        MongoClient mongoDataStoreClient = (MongoClient) mongoDataStore.getClient();
         Promise<Void> commitPromise = Promise.promise();
         mongoDataStoreClient.startSession().onSuccess(x -> {
-            x.startTransaction(txnOptions);
             try {
+                x.startTransaction(txnOptions);
                 List<Future> transFutures = new ArrayList<>();
                 for (IDataAccessObject<?> dataAccess : getDataAccess()) {
                     MongoSession session = new MongoSession(x);
@@ -70,8 +69,9 @@ public class MongoTransaction extends AbstractTrans {
                     });
                 });
             } catch (Exception e) {
-                x.abortTransaction();
-                x.close();
+                Promise<Void> end = Promise.promise();
+                x.abortTransaction().subscribe(new CompletionSubscriber<>(end));
+                end.future().onComplete(c -> x.close());
             }
         }).onFailure(commitPromise::fail);
         return commitPromise.future();

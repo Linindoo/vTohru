@@ -2,14 +2,11 @@ package cn.vtohru.orm.mongo.dataaccess;
 
 import cn.vtohru.orm.dataaccess.query.IQueryResult;
 import cn.vtohru.orm.dataaccess.query.impl.AbstractQueryResult;
-import cn.vtohru.orm.mapping.IStoreObjectFactory;
 import cn.vtohru.orm.mongo.MongoDataStore;
 import cn.vtohru.orm.mongo.mapper.MongoMapper;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
-import io.vertx.core.json.JsonObject;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * An implementation of {@link IQueryResult} for Mongo
@@ -22,37 +19,28 @@ public class MongoQueryResult<T> extends AbstractQueryResult<T> {
   /**
    * Contains the original result from mongo
    */
-  private List<JsonObject> jsonResult;
+  private List<T> jsonResult;
 
-
-  /**
-   * @param jsonResult
-   * @param store
-   * @param mapper
-   */
-  public MongoQueryResult(List<JsonObject> jsonResult, MongoDataStore store, MongoMapper mapper,
+  
+  public MongoQueryResult(List<T> result, MongoDataStore store, MongoMapper mapper,
       MongoQueryExpression queryExpression) {
-    super(store, mapper, jsonResult.size(), queryExpression);
-    this.jsonResult = jsonResult;
+    super(store, mapper, queryExpression);
+    this.jsonResult = result;
+  }
+
+
+  @Override
+  public List<T> result() {
+    return jsonResult;
   }
 
   @Override
-  protected Future<T> generatePojo(int i) {
-    JsonObject sourceObject = jsonResult.get(i);
-    IStoreObjectFactory<JsonObject> sf = getDataStore().getStoreObjectFactory();
-    Promise<T> promise = Promise.promise();
-    sf.createStoreObject(sourceObject, getMapper(), result -> {
-      if (result.failed()) {
-        promise.fail(result.cause());
-      } else {
-        T pojo = result.result().getEntity();
-        promise.complete(pojo);
-      }
-    });
-    return promise.future();
+  public Optional<T> first() {
+    return Optional.ofNullable(jsonResult).filter(x -> x.size() > 0).map(x -> x.get(0));
   }
 
-  public List<JsonObject> getOriginalResult() {
-    return jsonResult;
+  @Override
+  public int size() {
+    return jsonResult != null ? jsonResult.size() : 0;
   }
 }

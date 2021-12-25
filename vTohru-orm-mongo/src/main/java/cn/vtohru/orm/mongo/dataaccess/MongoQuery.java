@@ -13,7 +13,6 @@
 package cn.vtohru.orm.mongo.dataaccess;
 
 import cn.vtohru.orm.IDataStore;
-import cn.vtohru.orm.dataaccess.ISession;
 import cn.vtohru.orm.dataaccess.query.IQuery;
 import cn.vtohru.orm.dataaccess.query.IQueryCountResult;
 import cn.vtohru.orm.dataaccess.query.IQueryResult;
@@ -21,14 +20,13 @@ import cn.vtohru.orm.dataaccess.query.impl.IQueryExpression;
 import cn.vtohru.orm.dataaccess.query.impl.Query;
 import cn.vtohru.orm.dataaccess.query.impl.QueryCountResult;
 import cn.vtohru.orm.exception.QueryException;
+import cn.vtohru.orm.mapping.IStoreObjectFactory;
 import cn.vtohru.orm.mongo.MongoDataStore;
 import cn.vtohru.orm.mongo.mapper.MongoMapper;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
+import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -128,21 +126,47 @@ public class MongoQuery<T> extends Query<T> implements MongoDataAccesObject<T> {
 
   private void createQueryResult(final List<JsonObject> findList, final MongoQueryExpression queryExpression,
       final Handler<AsyncResult<IQueryResult<T>>> resultHandler) {
-    MongoQueryResult<T> qR = new MongoQueryResult<>(findList, (MongoDataStore) getDataStore(),
-        (MongoMapper) getMapper(), queryExpression);
-    if (isReturnCompleteCount()) {
-      if (queryExpression.getOffset() == 0 && queryExpression.getLimit() > 0
-          && qR.size() < queryExpression.getLimit()) {
-        qR.setCompleteResult(qR.size());
-        resultHandler.handle(Future.succeededFuture(qR));
+    generateResult(findList).onSuccess(x -> {
+      MongoQueryResult<T> qR = new MongoQueryResult<T>(x, (MongoDataStore) getDataStore(),
+              (MongoMapper) getMapper(), queryExpression);
+      if (isReturnCompleteCount()) {
+        if (queryExpression.getOffset() == 0 && queryExpression.getLimit() > 0
+                && qR.size() < queryExpression.getLimit()) {
+          qR.setCompleteResult(qR.size());
+          resultHandler.handle(Future.succeededFuture(qR));
+        } else {
+          fetchCompleteCount(qR, resultHandler);
+        }
       } else {
-        fetchCompleteCount(qR, resultHandler);
+        qR.setCompleteResult(-1);
+        resultHandler.handle(Future.succeededFuture(qR));
       }
-    } else {
-      qR.setCompleteResult(-1);
-      resultHandler.handle(Future.succeededFuture(qR));
-    }
+    }).onFailure(e -> resultHandler.handle(Future.failedFuture(e)));
   }
+
+  public Future<List<T>> generateResult(List<JsonObject> result) {
+    List<Future> futures = new ArrayList<>();
+    for (int i = 0; i < result.size(); i++) {
+      IStoreObjectFactory<JsonObject> sf = (IStoreObjectFactory<JsonObject>) getDataStore().getStoreObjectFactory();
+      Promise<T> promise = Promise.promise();
+      sf.createStoreObject(result.get(i), getMapper(), x -> {
+        if (x.failed()) {
+          promise.fail(x.cause());
+        } else {
+          T pojo = x.result().getEntity();
+          promise.complete(pojo);
+        }
+      });
+      futures.add(promise.future());
+    }
+    Promise<List<T>> promise = Promise.promise();
+    CompositeFuture.all(futures).onSuccess(x -> {
+      promise.complete(x.result().list());
+    }).onFailure(promise::fail);
+    return promise.future();
+  }
+
+
 
   private void fetchCompleteCount(final MongoQueryResult<T> qR,
       final Handler<AsyncResult<IQueryResult<T>>> resultHandler) {
