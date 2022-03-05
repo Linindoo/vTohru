@@ -113,14 +113,6 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
     return new MongoTransaction(this, this.verticleApplicationContext.getVertx());
   }
 
-  /**
-   * @return the database
-   */
-  @Override
-  public String getDatabase() {
-    return getProperties().getString(DATABASE_NAME).toLowerCase();
-  }
-
   @Override
   public void shutdown(Handler<AsyncResult<Void>> resultHandler) {
     try {

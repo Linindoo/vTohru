@@ -115,13 +115,6 @@ public interface IDataStore<S, U> {
   ITableGenerator getTableGenerator();
 
   /**
-   * Get the name of the database, the current instance is using
-   *
-   * @return the name of the schema or database
-   */
-  String getDatabase();
-
-  /**
    * The properties by which the current instance was initialized
    *
    * @return the properties set for the current instance
