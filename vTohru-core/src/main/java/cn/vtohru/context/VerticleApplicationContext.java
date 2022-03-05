@@ -38,6 +38,7 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
     public static final String SCOPE_PACKAGE = "VTOHRU_VERTICLE_SCOPE_PACKAGE";
     public static final String SCOPE_VERTICLE_NAME = "VTOHRU_SCOPE_VERTICLE_NAME";
     public static final String VTOHRU = "vtohru";
+    public static final String VERTICLE_PREFIX = "vtc-";
     private Vertx vertx;
     public VerticleApplicationContext(ApplicationContextConfiguration configuration) {
         super(configuration);
@@ -197,7 +198,7 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
 
     public JsonObject getVConfig(BeanDefinition<?> beanDefinition) {
         String verticleName = this.getVerticleName(beanDefinition);
-        String verticleConfigKey = "vtohru." + verticleName.toLowerCase();
+        String verticleConfigKey = VTOHRU + "." + VERTICLE_PREFIX + verticleName.toLowerCase();
         return getEnvironment().get(verticleConfigKey, JsonObject.class).orElse(new JsonObject());
     }
 

@@ -1,5 +1,5 @@
 vtohru:
-  testverticle:
+  vtc-testverticle:
     name: devVerticle
     web:
       body:
