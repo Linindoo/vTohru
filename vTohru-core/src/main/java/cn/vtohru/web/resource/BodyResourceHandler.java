@@ -13,7 +13,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 @Verticle
 @Order(2)
 @GlobalScope
-@ScopeRequires(property = "web.body.enable",notEquals = "false")
+@ScopeRequires(property = "vtohru.web.body.enable",notEquals = "false")
 public class BodyResourceHandler extends ResourceHandler {
     private BodyHandler bodyHandler;
     private VerticleApplicationContext context;

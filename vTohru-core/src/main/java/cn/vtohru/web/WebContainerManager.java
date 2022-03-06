@@ -26,7 +26,7 @@ import java.util.Optional;
 @Singleton
 @Indexed(VerticleEvent.class)
 public class WebContainerManager extends VerticleEvent {
-    private static final String WEB_CONFIG_PREFIX = "web";
+    private static final String WEB_CONFIG_PREFIX = "vtohru.web";
     private static final Logger logger = LoggerFactory.getLogger(WebContainerManager.class);
     private VerticleApplicationContext applicationContext;
     private HttpServer httpServer;
@@ -41,7 +41,7 @@ public class WebContainerManager extends VerticleEvent {
         if (annotation == null) {
             return Future.succeededFuture();
         }
-        JsonObject httpConfig = applicationContext.getVProperty(WEB_CONFIG_PREFIX, JsonObject.class).orElse(new JsonObject());
+        JsonObject httpConfig = applicationContext.getProperty(WEB_CONFIG_PREFIX, JsonObject.class).orElse(new JsonObject());
         int port = annotation.intValue("port").orElse(httpConfig.getInteger("port", 0));
         String host = annotation.stringValue("host").orElse(httpConfig.getString("host", "0.0.0.0"));
         MicroServiceDiscovery serviceDiscovery = applicationContext.getBean(MicroServiceDiscovery.class);

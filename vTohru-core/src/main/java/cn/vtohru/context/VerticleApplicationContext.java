@@ -5,6 +5,7 @@ import cn.vtohru.annotation.VerticleContaner;
 import cn.vtohru.context.env.VBootstrapApplicationContext;
 import cn.vtohru.context.env.VBootstrapEnvironment;
 import cn.vtohru.context.env.VDefaultEnvironment;
+import cn.vtohru.context.env.VPropertySourcePropertyResolver;
 import cn.vtohru.runtime.VTohru;
 import io.micronaut.aop.InterceptedProxy;
 import io.micronaut.context.*;
@@ -13,10 +14,8 @@ import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertySource;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.convert.TypeConverter;
-import io.micronaut.core.convert.TypeConverterRegistrar;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.*;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
@@ -27,10 +26,7 @@ import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class VerticleApplicationContext extends DefaultApplicationContext {
     private Environment environment;
@@ -158,11 +154,17 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
 
 
     private void savePackage(String[] packages) {
+        if (vertx == null) {
+            return;
+        }
         Context context = vertx.getOrCreateContext();
         context.put(SCOPE_PACKAGE, packages);
     }
 
     public String getScopeName() {
+        if (vertx == null) {
+            return null;
+        }
         Context context = vertx.getOrCreateContext();
         return context.get(SCOPE_VERTICLE_NAME);
     }
@@ -200,16 +202,6 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
         String verticleName = this.getVerticleName(beanDefinition);
         String verticleConfigKey = VTOHRU + "." + VERTICLE_PREFIX + verticleName.toLowerCase();
         return getEnvironment().get(verticleConfigKey, JsonObject.class).orElse(new JsonObject());
-    }
-
-    public <T> Optional<T> getVProperty(String name, Class<T> requiredType) {
-        String scopeName = getScopeName();
-        String scopeKey = VTOHRU + "." + name;
-        if (StringUtils.isEmpty(scopeName) || getEnvironment().containsProperties(scopeKey)) {
-            return getEnvironment().get(scopeKey, ConversionContext.of(Argument.of(requiredType)));
-        }
-        scopeKey = VTOHRU + "." + scopeName.toLowerCase() + "." + name;
-        return  getEnvironment().get(scopeKey, ConversionContext.of(Argument.of(requiredType)));
     }
 
     public boolean isNull(Object bean) {
@@ -313,6 +305,61 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
             for (String pkg : bootstrapEnvironment.getPackages()) {
                 addPackage(pkg);
             }
+        }
+
+        public <T> Optional<T> getProperty(String name, ArgumentConversionContext<T> conversionContext) {
+            if (!name.startsWith(VTOHRU)) {
+                return super.getProperty(name, conversionContext);
+            }
+            String scopeName = getScopeName();
+            if (StringUtils.isEmpty(scopeName)) {
+                return super.getProperty(name, conversionContext);
+            }
+
+            String scopeKey = name.replace(VTOHRU, VTOHRU + "." + VERTICLE_PREFIX + scopeName.toLowerCase());
+            if (this.containsProperties(scopeKey)) {
+                return super.getProperty(scopeKey, conversionContext);
+            }
+            return super.getProperty(name, conversionContext);
+        }
+
+        public boolean containsProperty(@Nullable String name) {
+            if (StringUtils.isEmpty(name)) {
+                return false;
+            }
+            if (!name.startsWith(VTOHRU)) {
+                return super.containsProperty(name);
+            }
+            String scopeName = getScopeName();
+            if (StringUtils.isEmpty(scopeName)) {
+                return super.containsProperty(name);
+            }
+
+            String scopeKey = name.replace(VTOHRU, VTOHRU + "." + VERTICLE_PREFIX + scopeName.toLowerCase());
+            boolean ret = super.containsProperty(scopeKey);
+            if (ret) {
+                return true;
+            }
+            return super.containsProperty(name);
+        }
+        public boolean containsProperties(@Nullable String name) {
+            if (StringUtils.isEmpty(name)) {
+                return false;
+            }
+            if (!name.startsWith(VTOHRU)) {
+                return super.containsProperties(name);
+            }
+            String scopeName = getScopeName();
+            if (StringUtils.isEmpty(scopeName)) {
+                return super.containsProperties(name);
+            }
+
+            String scopeKey = name.replace(VTOHRU, VTOHRU + "." + VERTICLE_PREFIX + scopeName.toLowerCase());
+            boolean ret = super.containsProperties(scopeKey);
+            if (ret) {
+                return true;
+            }
+            return super.containsProperties(name);
         }
     }
 }

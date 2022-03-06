@@ -63,13 +63,13 @@ public class MongoDataStore extends AbstractDataStore<JsonObject, JsonObject> {
    * The name of the property, which describes the database to be used
    */
   public static final String DATABASE_NAME = "db_name";
-  private static final String MONGO_CONFIG_KEY = "mongo";
+  private static final String MONGO_CONFIG_KEY = "vtohru.mongo";
   private MongoClient client;
   private VerticleApplicationContext verticleApplicationContext;
   public MongoDataStore(ApplicationContext context) {
     super((VerticleApplicationContext) context, new JsonObject(), new DataStoreSettings());
     verticleApplicationContext = (VerticleApplicationContext) context;
-    JsonObject mongoConfig = verticleApplicationContext.getVProperty(MONGO_CONFIG_KEY, JsonObject.class).orElse(new JsonObject());
+    JsonObject mongoConfig = verticleApplicationContext.getProperty(MONGO_CONFIG_KEY, JsonObject.class).orElse(new JsonObject());
     Boolean shared = mongoConfig.getBoolean("shared", false);
     this.client = shared ? MongoClient.createShared(verticleApplicationContext.getVertx(), mongoConfig) : MongoClient.create(verticleApplicationContext.getVertx(), mongoConfig);
     MongoMapperFactory mf = new MongoMapperFactory(this);

@@ -13,7 +13,7 @@ import io.vertx.ext.web.sstore.LocalSessionStore;
 @Verticle
 @Order(1)
 @GlobalScope
-@ScopeRequires(property = "web.session.enable",notEquals = "false")
+@ScopeRequires(property = "vtohru.web.session.enable",notEquals = "false")
 public class SessionResourceHandler extends ResourceHandler {
     private SessionHandler sessionHandler;
     public SessionResourceHandler(Vertx vertx) {

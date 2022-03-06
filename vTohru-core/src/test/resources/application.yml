@@ -1,6 +1,14 @@
 vtohru:
+  cdemo:
+    name: zsan2
+    path: /home/path2
   vtc-testverticle:
+    cdemo:
+      name: zsan
+      path: /home/path
     name: devVerticle
+    hello: world
+    bye: goodbye
     web:
       body:
         enable: false

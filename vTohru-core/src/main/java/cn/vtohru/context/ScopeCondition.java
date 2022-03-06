@@ -26,10 +26,10 @@ public class ScopeCondition implements Condition {
             if (beanContext instanceof VerticleApplicationContext) {
                 VerticleApplicationContext verticleApplicationContext = (VerticleApplicationContext) beanContext;
                 if (StringUtils.isNotEmpty(property)) {
-                    if (notEquals.equals(verticleApplicationContext.getVProperty(property, String.class).orElse(""))) {
+                    if (notEquals.equals(verticleApplicationContext.getProperty(property, String.class).orElse(""))) {
                         return false;
                     }
-                    if (StringUtils.isNotEmpty(equals) && !equals.equals(verticleApplicationContext.getVProperty(property, String.class).orElse(""))) {
+                    if (StringUtils.isNotEmpty(equals) && !equals.equals(verticleApplicationContext.getProperty(property, String.class).orElse(""))) {
                         return false;
                     }
                 }
