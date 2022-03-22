@@ -1,6 +1,6 @@
+micronaut:
+  environments: dev
 vtohru:
-  mongo:
-    connection_string: mongodb://localhost/test233
   mongoverticle:
     name: devVerticle
     web:

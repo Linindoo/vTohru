@@ -1,0 +1,6 @@
+vtohru:
+  vtc-testverticle:
+    hello: world-prod
+    cdemo:
+      name: zsan-prod
+      path: /home/path

@@ -7,6 +7,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.EventBus;
@@ -43,17 +44,23 @@ public class EventBusMessageHandler<T> implements Handler<Message<JsonObject>> {
         JsonObject body = message.body();
         Argument[] arguments = this.executableMethod.getArguments();
         Object[] params = new Object[arguments.length];
+        boolean futureUse = Future.class.isAssignableFrom(this.executableMethod.getReturnType().getType());
         for (int i = 0; i < arguments.length; i++) {
             Argument argument = arguments[i];
             if (argument.getType().isAssignableFrom(Handler.class)) {
                 params[i] = HelperUtils.createHandler(message, this.includeDebugInfo);
+                futureUse = false;
             } else {
                 AnnotationValue<QueryParam> annotation = argument.getAnnotation(QueryParam.class);
                 String paramName = Optional.ofNullable(annotation).map(x->x.stringValue().orElse(argument.getName())).orElse(argument.getName());
                 params[i] = body.getMap().get(paramName);
             }
         }
-        this.executableMethod.invoke(applicationContext.getBean(beanDefinition), params);
+        Object invoke = this.executableMethod.invoke(applicationContext.getBean(beanDefinition), params);
+        if (futureUse) {
+            Future<Object> future = (Future<Object>) invoke;
+            future.onComplete(HelperUtils.createHandler(message, this.includeDebugInfo));
+        }
     }
 
     public MessageConsumer<JsonObject> register(EventBus eventBus, String address) {

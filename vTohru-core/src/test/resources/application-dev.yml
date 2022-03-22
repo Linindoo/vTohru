@@ -1,0 +1,7 @@
+vtohru:
+  hello: world-dev
+  vtc-testverticle:
+    hello: world-dev
+    cdemo:
+      name: zsan-dev
+      path: /home/path

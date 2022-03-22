@@ -6,6 +6,8 @@ import cn.vtohru.message.annotation.MessageType;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
+
 import javax.ws.rs.QueryParam;
 
 @MessageListener
@@ -25,5 +27,13 @@ public class HelloMessage {
     @MessageAddress(value = "goodmorning",type = MessageType.Type.P2P)
     public void goodMorning(@QueryParam("msg") String name) {
         System.out.println("morning:" + name);
+    }
+
+    @MessageAddress(value = "good", type = MessageType.Type.REQUEST)
+    public Future<String> googlucker(String name) {
+        Promise<String> promise = Promise.promise();
+        System.out.println("name:" + name);
+        promise.complete("lucker");
+        return promise.future();
     }
 }

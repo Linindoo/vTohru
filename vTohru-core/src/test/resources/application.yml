@@ -1,14 +1,14 @@
 vtohru:
+  hello: yes
+  bye: bye
   cdemo:
-    name: zsan2
-    path: /home/path2
+    name: zsan
+    path: /home/path
   vtc-testverticle:
-    cdemo:
-      name: zsan
-      path: /home/path
     name: devVerticle
-    hello: world
     bye: goodbye
     web:
       body:
         enable: false
+micronaut:
+  environments: dev

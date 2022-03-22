@@ -4,6 +4,7 @@ import cn.vtohru.message.annotation.MessageAddress;
 import cn.vtohru.message.annotation.MessageClient;
 import cn.vtohru.message.annotation.MessageType;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 
 @MessageClient
@@ -16,4 +17,8 @@ public interface HelloClient {
 
     @MessageAddress(value = "goodmorning")
     void goodMorning(String msg);
+
+    @MessageAddress(value = "good", type = MessageType.Type.REQUEST)
+    Future<String> luck(String name);
+
 }

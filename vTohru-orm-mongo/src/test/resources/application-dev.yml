@@ -1,0 +1,9 @@
+vtohru:
+  hello: world-dev
+  mongo:
+    connection_string: mongodb://localhost/test1234
+  vtc-testverticle:
+    hello: world-dev
+    cdemo:
+      name: zsan-dev
+      path: /home/path
