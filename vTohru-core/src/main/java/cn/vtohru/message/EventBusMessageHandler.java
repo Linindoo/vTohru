@@ -14,6 +14,7 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.serviceproxy.HelperUtils;
 
@@ -53,7 +54,21 @@ public class EventBusMessageHandler<T> implements Handler<Message<JsonObject>> {
             } else {
                 AnnotationValue<QueryParam> annotation = argument.getAnnotation(QueryParam.class);
                 String paramName = Optional.ofNullable(annotation).map(x->x.stringValue().orElse(argument.getName())).orElse(argument.getName());
-                params[i] = body.getMap().get(paramName);
+                Object value = body.getMap().get(paramName);
+                if (value != null) {
+                    if (argument.isInstance(value)) {
+                        params[i] = body.getMap().get(paramName);
+                    } else if (argument.getType().isAssignableFrom(JsonObject.class)) {
+                        params[i] = body.getJsonObject(paramName);
+                    } else if (argument.getType().isAssignableFrom(JsonArray.class)) {
+                        params[i] = body.getJsonArray(paramName);
+                    } else {
+                        JsonObject entries = body.getJsonObject(paramName);
+                        params[i] = entries.mapTo(argument.getType());
+                    }
+                } else {
+                    params[i] = null;
+                }
             }
         }
         Object invoke = this.executableMethod.invoke(applicationContext.getBean(beanDefinition), params);

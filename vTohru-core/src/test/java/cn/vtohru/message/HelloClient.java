@@ -6,6 +6,7 @@ import cn.vtohru.message.annotation.MessageType;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonObject;
 
 @MessageClient
 public interface HelloClient {
@@ -19,6 +20,5 @@ public interface HelloClient {
     void goodMorning(String msg);
 
     @MessageAddress(value = "good", type = MessageType.Type.REQUEST)
-    Future<String> luck(String name);
-
+    Future<String> luck(String name, JsonObject data);
 }

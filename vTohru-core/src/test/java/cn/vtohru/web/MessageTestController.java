@@ -9,11 +9,11 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Value;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import java.util.Optional;
 
 @Controller
 @Path("/message")
@@ -50,7 +50,9 @@ public class MessageTestController {
     @Path("/luck")
     public Future<String> luck() {
         Promise<String> promise = Promise.promise();
-        Future<String> future = helloClient.luck("wang");
+        JsonObject data = new JsonObject();
+        data.put("name", "zhanfgsan");
+        Future<String> future = helloClient.luck("wang", data);
         future.onComplete(x -> {
             if (x.succeeded()) {
                 promise.complete(x.result());

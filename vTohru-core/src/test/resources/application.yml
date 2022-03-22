@@ -10,5 +10,3 @@ vtohru:
     web:
       body:
         enable: false
-micronaut:
-  environments: dev

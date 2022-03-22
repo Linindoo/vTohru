@@ -3,10 +3,12 @@ package cn.vtohru.message;
 import cn.vtohru.message.annotation.MessageAddress;
 import cn.vtohru.message.annotation.MessageListener;
 import cn.vtohru.message.annotation.MessageType;
+import cn.vtohru.model.SimpleModel;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
 
 import javax.ws.rs.QueryParam;
 
@@ -30,7 +32,7 @@ public class HelloMessage {
     }
 
     @MessageAddress(value = "good", type = MessageType.Type.REQUEST)
-    public Future<String> googlucker(String name) {
+    public Future<String> googlucker(String name, SimpleModel data) {
         Promise<String> promise = Promise.promise();
         System.out.println("name:" + name);
         promise.complete("lucker");
