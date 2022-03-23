@@ -4,8 +4,10 @@ import cn.vtohru.context.VerticleApplicationContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.serviceproxy.HelperUtils;
 import io.vertx.serviceproxy.ProxyHandler;
@@ -83,18 +85,40 @@ public class ServiceProxyHandler<T> extends ProxyHandler {
             if (executableMethod == null) {
                 throw new IllegalStateException("Invalid action: " + action);
             }
+            boolean futureUse = Future.class.isAssignableFrom(executableMethod.getReturnType().getType());
+
             JsonObject body = msg.body();
             Argument[] arguments = executableMethod.getArguments();
             Object[] params = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
                 Argument argument = arguments[i];
                 if (argument.getType().isAssignableFrom(Handler.class)) {
+                    futureUse = false;
                     params[i] = HelperUtils.createHandler(msg, this.includeDebugInfo);
                 } else {
-                    params[i] = body.getMap().get(argument.getName());
+                    String paramName = argument.getName();
+                    Object value = body.getMap().get(paramName);
+                    if (value != null) {
+                        if (argument.isInstance(value)) {
+                            params[i] = body.getMap().get(paramName);
+                        } else if (argument.getType().isAssignableFrom(JsonObject.class)) {
+                            params[i] = body.getJsonObject(paramName);
+                        } else if (argument.getType().isAssignableFrom(JsonArray.class)) {
+                            params[i] = body.getJsonArray(paramName);
+                        } else {
+                            JsonObject entries = body.getJsonObject(paramName);
+                            params[i] = entries.mapTo(argument.getType());
+                        }
+                    } else {
+                        params[i] = null;
+                    }
                 }
             }
-            executableMethod.invoke(context.getBean(beanDefinition), params);
+            Object invoke = executableMethod.invoke(context.getBean(beanDefinition), params);
+            if (futureUse) {
+                Future<Object> future = (Future<Object>) invoke;
+                future.onComplete(HelperUtils.createHandler(msg, this.includeDebugInfo));
+            }
         } catch (Throwable t) {
             if (includeDebugInfo) msg.reply(new ServiceException(500, t.getMessage(), HelperUtils.generateDebugInfo(t)));
             else msg.reply(new ServiceException(500, t.getMessage()));

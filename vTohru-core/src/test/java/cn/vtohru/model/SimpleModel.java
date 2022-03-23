@@ -1,6 +1,8 @@
 package cn.vtohru.model;
 
-public class SimpleModel {
+import io.vertx.core.shareddata.Shareable;
+
+public class SimpleModel implements Shareable {
     private String name;
 
     public String getName() {

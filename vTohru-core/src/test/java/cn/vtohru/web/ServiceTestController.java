@@ -1,5 +1,6 @@
 package cn.vtohru.web;
 
+import cn.vtohru.model.SimpleModel;
 import cn.vtohru.web.annotation.Controller;
 import cn.vtohru.service.HelloService;
 import io.vertx.core.Future;
@@ -24,6 +25,22 @@ public class ServiceTestController {
     public Future<String> hello() {
         Promise<String> promise = Promise.promise();
         helloService.say("hello", x -> {
+            if (x.succeeded()) {
+                promise.complete(x.result());
+            } else {
+                promise.fail(x.cause().getMessage());
+            }
+        });
+        return promise.future();
+    }
+
+    @GET
+    @Path("/good")
+    public Future<String> goodHello() {
+        Promise<String> promise = Promise.promise();
+        SimpleModel simpleModel = new SimpleModel();
+        simpleModel.setName("jdsiofsofd");
+        helloService.hello("zhansdfd", simpleModel).onComplete(x -> {
             if (x.succeeded()) {
                 promise.complete(x.result());
             } else {
