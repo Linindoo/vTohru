@@ -15,7 +15,8 @@
         <module>vTohru-orm-common</module>
         <module>vTohru-orm-mongo</module>
         <module>vTohru-task</module>
-        <module>vTohru-orm-sql</module>
+        <module>vTohru-orm-mysql</module>
+        <module>vTohru-orm</module>
     </modules>
     <groupId>cn.lindoo.vtohru</groupId>
     <version>0.0.1-dev</version>
@@ -94,8 +95,8 @@
             </dependency>
             <dependency>
                 <groupId>io.vertx</groupId>
-                <artifactId>vertx-sql-client-templates</artifactId>
-                <version>${vertx.version}</version>
+                <artifactId>vertx-mysql-client</artifactId>
+                <version>4.3.1</version>
             </dependency>
             <dependency>
                 <groupId>commons-codec</groupId>
@@ -110,6 +111,11 @@
             <dependency>
                 <groupId>cn.lindoo.vtohru</groupId>
                 <artifactId>vTohru-orm-common</artifactId>
+                <version>${vtohru.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.lindoo.vtohru</groupId>
+                <artifactId>vTohru-orm</artifactId>
                 <version>${vtohru.version}</version>
             </dependency>
             <dependency>

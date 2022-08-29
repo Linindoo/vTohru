@@ -1,0 +1,112 @@
+package cn.vtohru.mysql;
+
+import cn.vtohru.context.VerticleApplicationContext;
+import cn.vtohru.orm.*;
+import cn.vtohru.orm.entity.EntityManager;
+import cn.vtohru.orm.impl.IDataProxy;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
+import io.vertx.mysqlclient.MySQLConnectOptions;
+import io.vertx.mysqlclient.MySQLPool;
+import io.vertx.sqlclient.PoolOptions;
+
+import java.util.Map;
+
+public class MysqlDataStore implements DataStore {
+    private MySQLPool  sqlClient;
+
+
+    private VerticleApplicationContext verticleApplicationContext;
+    private DataSourceConfiguration dataSourceConfiguration;
+    private EntityManager entityManager;
+
+    public MysqlDataStore(VerticleApplicationContext verticleApplicationContext, DataSourceConfiguration dataSourceConfiguration, EntityManager entityManager) {
+        this.verticleApplicationContext = verticleApplicationContext;
+        this.dataSourceConfiguration = dataSourceConfiguration;
+        this.entityManager = entityManager;
+    }
+
+    @Override
+    public Future<Void> start() {
+        MySQLConnectOptions mySQLConnectOptions = MySQLConnectOptions.fromUri(dataSourceConfiguration.getUrl());
+        Map<String, Object> pool = this.dataSourceConfiguration.getPool();
+        JsonObject poolConfig = new JsonObject(pool);
+        PoolOptions options = new PoolOptions(poolConfig);
+        sqlClient = MySQLPool.pool(this.verticleApplicationContext.getVertx(), mySQLConnectOptions, options);
+        return Future.succeededFuture();
+    }
+
+    @Override
+    public Future<Void> stop() {
+        return sqlClient.close();
+    }
+
+    @Override
+    public <T> Future<T> persist(T model) {
+        Promise<T> promise = Promise.promise();
+        getSession().onSuccess(x -> x.persist(model).onComplete(promise)).onFailure(promise::fail);
+        return promise.future();
+    }
+
+    @Override
+    public <T> Future<T> insert(T model) {
+        Promise<T> promise = Promise.promise();
+        getSession().onSuccess(x -> x.insert(model).onComplete(promise)).onFailure(promise::fail);
+        return promise.future();
+    }
+
+    @Override
+    public <T> Future<T> update(T model) {
+        Promise<T> promise = Promise.promise();
+        getSession().onSuccess(x -> x.update(model).onComplete(promise)).onFailure(promise::fail);
+        return promise.future();
+    }
+
+    @Override
+    public <T> Future<Void> remove(T model) {
+        Promise<Void> promise = Promise.promise();
+        getSession().onSuccess(x -> x.remove(model).onComplete(promise)).onFailure(promise::fail);
+        return promise.future();
+    }
+
+    @Override
+    public <T> Future<T> fetch(T model) {
+        Promise<T> promise = Promise.promise();
+        getSession().onSuccess(x -> x.fetch(model).onComplete(promise)).onFailure(promise::fail);
+        return promise.future();
+    }
+
+    @Override
+    public <T> Query<T> build(Class<T> clazz) {
+        MysqlQuery mysqlQuery = new MysqlQuery(new IDataProxy(this, null), this.entityManager);
+        return mysqlQuery.from(clazz);
+    }
+
+    @Override
+    public Future<ClientSession> getSession() {
+        Promise<ClientSession> promise = Promise.promise();
+        sqlClient.getConnection().onSuccess(x -> promise.complete(new MysqlSession(x, entityManager))).onFailure(promise::fail);
+        return promise.future();
+    }
+
+    @Override
+    public <T> Future<T> onTransaction(TransactionFunction<T> transaction) {
+        Promise<T> promise = Promise.promise();
+        getSession().onSuccess(x -> {
+            x.beginTransaction().onSuccess(y -> {
+                transaction.commit(x).onSuccess(t -> {
+                    x.commitTransaction().onSuccess(c->{
+                        promise.complete(t);
+                    }).onFailure(promise::fail);
+                }).onFailure(e -> {
+                    x.rollbackTransaction().onSuccess(c->{
+                        promise.fail(new RuntimeException("roll back"));
+                    }).onFailure(promise::fail);
+                });
+            }).onFailure(promise::fail);
+
+        });
+        return promise.future();
+    }
+}
