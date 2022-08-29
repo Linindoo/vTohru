@@ -1,0 +1,10 @@
+vtohru:
+  web:
+    port: 8088
+  datasource:
+    mysql:
+      type: mysql
+      url: mysql://localhost:23308/dev?user=root&password=zving10301&useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false
+      pool:
+        maxSize: 10
+        coreSize: 10

@@ -1,0 +1,7 @@
+vtohru:
+  web:
+    port: 8088
+  datasource:
+    mysql:
+      type: mysql
+      url: localhost:3306/mysql
