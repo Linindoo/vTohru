@@ -1,4 +1,4 @@
-package cn.vtohru.orm.impl;
+package cn.vtohru.orm.data;
 
 import java.util.List;
 

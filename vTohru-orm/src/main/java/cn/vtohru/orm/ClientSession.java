@@ -8,8 +8,6 @@ import java.util.List;
 public interface ClientSession {
     Future<Void> close();
 
-    Future<Void> flush();
-
     <T> Future<T> persist(T model);
 
     <T> Future<T> insert(T model);
@@ -20,13 +18,10 @@ public interface ClientSession {
 
     <T> Future<T> fetch(T model);
 
-    <T> Query from(Class<T> clazz);
+    <T> Query<T> from(Class<T> clazz);
 
     Future<JsonArray> execute(String jpql, List<Object> params);
 
-    Future<Void> beginTransaction();
+    Future<ITransaction> beginTransaction();
 
-    Future<Void> commitTransaction();
-
-    Future<Void> rollbackTransaction();
 }

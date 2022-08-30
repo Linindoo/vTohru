@@ -1,9 +1,10 @@
-package cn.vtohru.mysql;
+package cn.vtohru.mysql.impl;
 
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.orm.*;
 import cn.vtohru.orm.entity.EntityManager;
-import cn.vtohru.orm.impl.IDataProxy;
+import cn.vtohru.orm.data.IDataProxy;
+import cn.vtohru.orm.exception.OrmException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
@@ -15,8 +16,6 @@ import java.util.Map;
 
 public class MysqlDataStore implements DataStore {
     private MySQLPool  sqlClient;
-
-
     private VerticleApplicationContext verticleApplicationContext;
     private DataSourceConfiguration dataSourceConfiguration;
     private EntityManager entityManager;
@@ -95,13 +94,13 @@ public class MysqlDataStore implements DataStore {
         Promise<T> promise = Promise.promise();
         getSession().onSuccess(x -> {
             x.beginTransaction().onSuccess(y -> {
-                transaction.commit(x).onSuccess(t -> {
-                    x.commitTransaction().onSuccess(c->{
+                transaction.onTransaction(x).onSuccess(t -> {
+                    y.commit().onSuccess(c->{
                         promise.complete(t);
                     }).onFailure(promise::fail);
                 }).onFailure(e -> {
-                    x.rollbackTransaction().onSuccess(c->{
-                        promise.fail(new RuntimeException("roll back"));
+                    y.rollback().onSuccess(c->{
+                        promise.fail(new OrmException("roll back"));
                     }).onFailure(promise::fail);
                 });
             }).onFailure(promise::fail);

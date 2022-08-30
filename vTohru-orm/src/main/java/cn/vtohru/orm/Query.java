@@ -1,13 +1,11 @@
 package cn.vtohru.orm;
 
-import cn.vtohru.orm.impl.PageData;
+import cn.vtohru.orm.data.PageData;
 import io.vertx.core.Future;
 
 import java.util.List;
 
-public interface Query<T> extends LamdaQuery<Query,Query> {
-
-    String toCountJpql();
+public interface Query<T> extends LamdaQuery<Query<T>,Query<T>> {
 
     Query<T> from(Class<T> table);
 
