@@ -1,11 +1,13 @@
-package cn.vtohru.mysql;
+package cn.vtohru.mysql.impl;
 
 import cn.vtohru.orm.ClientSession;
+import cn.vtohru.orm.ITransaction;
 import cn.vtohru.orm.Query;
 import cn.vtohru.orm.entity.EntityField;
 import cn.vtohru.orm.entity.EntityInfo;
 import cn.vtohru.orm.entity.EntityManager;
-import cn.vtohru.orm.impl.IDataProxy;
+import cn.vtohru.orm.data.IDataProxy;
+import cn.vtohru.orm.exception.OrmException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
@@ -22,7 +24,6 @@ public class MysqlSession implements ClientSession {
 
     private SqlConnection sqlConnection;
     private EntityManager entityManager;
-    private Transaction transaction = null;
 
     public MysqlSession(SqlConnection sqlConnection, EntityManager entityManager) {
         this.sqlConnection = sqlConnection;
@@ -32,12 +33,6 @@ public class MysqlSession implements ClientSession {
     @Override
     public Future<Void> close() {
         return this.sqlConnection.close();
-    }
-
-
-    @Override
-    public Future<Void> flush() {
-        return null;
     }
 
     @Override
@@ -142,7 +137,7 @@ public class MysqlSession implements ClientSession {
         Promise<T> promise = Promise.promise();
         sqlConnection.preparedQuery(sql.toString()).execute(Tuple.from(fieldValues)).onSuccess(x -> {
             if (x.size() <= 0) {
-                promise.fail(new RuntimeException("no value find"));
+                promise.fail(new OrmException("no value find"));
             } else {
                 for (Row row : x) {
                     for (EntityField entityField : entity.getFieldMap().values()) {
@@ -157,8 +152,8 @@ public class MysqlSession implements ClientSession {
     }
 
     @Override
-    public <T> Query from(Class<T> clazz) {
-        MysqlQuery mysqlQuery = new MysqlQuery(new IDataProxy(null, this), entityManager, new MysqlBuilder());
+    public <T> Query<T> from(Class<T> clazz) {
+        MysqlQuery<T> mysqlQuery = new MysqlQuery(new IDataProxy(null, this), entityManager);
         mysqlQuery.from(clazz);
         return mysqlQuery;
     }
@@ -182,34 +177,12 @@ public class MysqlSession implements ClientSession {
     }
 
     @Override
-    public Future<Void> beginTransaction() {
-        Promise<Void> promise = Promise.promise();
+    public Future<ITransaction> beginTransaction() {
+        Promise<ITransaction> promise = Promise.promise();
         this.sqlConnection.begin().onSuccess(x -> {
-            this.transaction = x;
-            promise.complete();
+            promise.complete(new MysqlTransaction(x));
         }).onFailure(promise::fail);
         return promise.future();
     }
 
-    @Override
-    public Future<Void> commitTransaction() {
-        Promise<Void> promise = Promise.promise();
-        if (this.transaction == null) {
-            promise.fail(new RuntimeException("no transaction"));
-        } else {
-            this.transaction.commit().onSuccess(x -> promise.complete()).onFailure(promise::fail);
-        }
-        return promise.future();
-    }
-
-    @Override
-    public Future<Void> rollbackTransaction() {
-        Promise<Void> promise = Promise.promise();
-        if (this.transaction == null) {
-            promise.fail(new RuntimeException("no transaction"));
-        } else {
-            this.transaction.rollback().onSuccess(x -> promise.complete()).onFailure(promise::fail);
-        }
-        return promise.future();
-    }
 }

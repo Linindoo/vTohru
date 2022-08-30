@@ -1,6 +1,6 @@
-package cn.vtohru.mysql;
+package cn.vtohru.mysql.impl;
 
-import cn.vtohru.orm.impl.GenericJpqlBuilder;
+import cn.vtohru.orm.builder.GenericJpqlBuilder;
 import io.micronaut.core.util.CollectionUtils;
 
 

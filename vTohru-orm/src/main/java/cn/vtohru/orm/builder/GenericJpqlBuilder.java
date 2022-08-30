@@ -1,6 +1,4 @@
-package cn.vtohru.orm.impl;
-
-import cn.vtohru.orm.JpqlBuilder;
+package cn.vtohru.orm.builder;
 
 import java.util.ArrayList;
 import java.util.Arrays;

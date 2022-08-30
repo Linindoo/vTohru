@@ -1,4 +1,4 @@
-package cn.vtohru.orm.impl;
+package cn.vtohru.orm.data;
 
 import cn.vtohru.orm.ClientSession;
 import cn.vtohru.orm.ISession;

@@ -1,10 +1,11 @@
-package cn.vtohru.orm.impl;
+package cn.vtohru.orm.builder;
 
-import cn.vtohru.orm.AbstractQuery;
-import cn.vtohru.orm.JpqlBuilder;
 import cn.vtohru.orm.Query;
+import cn.vtohru.orm.entity.EntityField;
 import cn.vtohru.orm.entity.EntityInfo;
 import cn.vtohru.orm.entity.EntityManager;
+import cn.vtohru.orm.data.IDataProxy;
+import cn.vtohru.orm.data.PageData;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
@@ -13,11 +14,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public abstract class BaseQuery extends AbstractQuery {
+public abstract class BaseQuery<T> extends AbstractQuery<T> {
     protected IDataProxy dataProxy;
     protected EntityManager entityManager;
     protected JpqlBuilder jpqlBuilder;
-    protected Class entityClass;
+    protected Class<T> entityClass;
     private boolean useColumn = false;
 
     public BaseQuery(IDataProxy dataProxy, EntityManager entityManager, JpqlBuilder jpqlBuilder) {
@@ -31,7 +32,7 @@ public abstract class BaseQuery extends AbstractQuery {
     }
 
     @Override
-    public Query from(Class entityClass) {
+    public Query<T> from(Class<T> entityClass) {
         this.entityClass = entityClass;
         EntityInfo entity = entityManager.getEntity(entityClass);
         this.jpqlBuilder.setTable(entity.getTableName());
@@ -39,18 +40,24 @@ public abstract class BaseQuery extends AbstractQuery {
     }
 
     @Override
-    public Future<?> first() {
-        Promise<Object> promise = Promise.promise();
+    public String getJpql() {
+        checkColumns();
+        return this.jpqlBuilder.toJpql();
+    }
+
+    @Override
+    public Future<T> first() {
+        Promise<T> promise = Promise.promise();
         checkColumns();
         String jpql = this.jpqlBuilder.toJpql();
         this.dataProxy.getSession().onSuccess(session -> {
             session.execute(jpql + " limit 1", jpqlBuilder.getParams()).onSuccess(x -> {
                 if (x.size() > 0) {
                     JsonObject row = x.getJsonObject(0);
-                    Object entity = entityManager.convertEntity(row, entityClass);
+                    T entity = entityManager.convertEntity(row, entityClass);
                     promise.complete(entity);
                 } else {
-                    promise.complete();
+                    promise.fail(new RuntimeException("no value find"));
                 }
             }).onFailure(promise::fail);
         }).onFailure(promise::fail);
@@ -58,17 +65,17 @@ public abstract class BaseQuery extends AbstractQuery {
     }
 
     @Override
-    public Future<List<?>> all() {
+    public Future<List<T>> all() {
         checkColumns();
-        Promise<List<?>> promise = Promise.promise();
+        Promise<List<T>> promise = Promise.promise();
         String jpql = this.jpqlBuilder.toJpql();
         this.dataProxy.getSession().onSuccess(session -> {
             session.execute(jpql, jpqlBuilder.getParams()).onSuccess(x -> {
                 if (x.size() > 0) {
-                    List<Object> results = new ArrayList<>();
+                    List<T> results = new ArrayList<>();
                     for (int i = 0; i < x.size(); i++) {
                         JsonObject row = x.getJsonObject(i);
-                        Object entity = entityManager.convertEntity(row, entityClass);
+                        T entity = entityManager.convertEntity(row, entityClass);
                         results.add(entity);
                     }
                     promise.complete(results);
@@ -81,22 +88,22 @@ public abstract class BaseQuery extends AbstractQuery {
     }
 
     @Override
-    public Future<PageData> pagination(int offset, int rowCount) {
+    public Future<PageData<T>> pagination(int offset, int rowCount) {
         checkColumns();
-        Promise<PageData> promise = Promise.promise();
+        Promise<PageData<T>> promise = Promise.promise();
         this.dataProxy.getSession().onSuccess(session -> {
             session.execute(this.jpqlBuilder.toCountJpql(), this.jpqlBuilder.getParams()).onSuccess(x -> {
-                PageData<?> pageData = new PageData<>();
+                PageData<T> pageData = new PageData<>();
                 if (x.size() > 0) {
                     JsonObject row = x.getJsonObject(0);
                     Long count = row.getLong("count");
                     pageData.setTotal(count);
                     if (count > 0) {
                         session.execute(this.jpqlBuilder.toJpql() + " limit " + offset + "," + rowCount, this.jpqlBuilder.getParams()).onSuccess(y -> {
-                            List results = new ArrayList<>();
+                            List<T> results = new ArrayList<>();
                             for (int i = 0; i < y.size(); i++) {
                                 JsonObject record = y.getJsonObject(i);
-                                Object entity = entityManager.convertEntity(record, entityClass);
+                                T entity = entityManager.convertEntity(record, entityClass);
                                 results.add(entity);
                             }
                             pageData.setRecords(results);
@@ -124,17 +131,17 @@ public abstract class BaseQuery extends AbstractQuery {
     }
 
     @Override
-    public Query select(String... params) {
+    public Query<T> select(String... params) {
         this.jpqlBuilder.select(params);
         this.useColumn = true;
         return this;
     }
 
-    private void checkColumns() {
+    protected void checkColumns() {
         if (!this.useColumn) {
             EntityInfo entity = entityManager.getEntity(this.entityClass);
-            String feilds = entity.getFieldMap().entrySet().stream().map(x -> x.getValue().getFieldName()).collect(Collectors.joining());
-            this.jpqlBuilder.select(feilds);
+            String fields = entity.getFieldMap().values().stream().map(EntityField::getFieldName).collect(Collectors.joining(","));
+            this.jpqlBuilder.select(fields);
         }
     }
 }

@@ -1,11 +1,13 @@
 package cn.vtohru.sql.controller;
 
 import cn.vtohru.orm.DataStore;
+import cn.vtohru.orm.Query;
 import cn.vtohru.sql.dao.Author;
 import cn.vtohru.sql.dao.News;
 import cn.vtohru.web.annotation.Controller;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -68,11 +70,14 @@ public class SqlController {
     @GET
     public Future<Object> query() {
         Promise<Object> promise = Promise.promise();
-        String jpql = dataStore.build(News.class).eq("id", 1).and(x -> {
-            x.eq("title", "2333");
-        }).getJpql();
-        System.out.println(jpql);
-        promise.complete(jpql);
+        dataStore.build(News.class).eq("id", 8).and(x -> {
+            x.eq("id", "8");
+        }).first().onSuccess(x -> {
+            JsonObject entries = new JsonObject();
+            entries.put("id", x.getId());
+            entries.put("title", x.getTitle());
+            promise.complete(entries);
+        }).onFailure(promise::fail);
         return promise.future();
     }
 

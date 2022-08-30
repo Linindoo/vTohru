@@ -1,15 +1,17 @@
-package cn.vtohru.mysql;
+package cn.vtohru.mysql.impl;
 
-import cn.vtohru.orm.AbstractQuery;
-import cn.vtohru.orm.JpqlBuilder;
+import cn.vtohru.orm.builder.AbstractQuery;
+import cn.vtohru.orm.builder.JpqlBuilder;
 import cn.vtohru.orm.Query;
 import cn.vtohru.orm.entity.EntityManager;
-import cn.vtohru.orm.impl.BaseQuery;
-import cn.vtohru.orm.impl.IDataProxy;
+import cn.vtohru.orm.builder.BaseQuery;
+import cn.vtohru.orm.data.IDataProxy;
 import io.micronaut.core.util.StringUtils;
 
+import java.util.function.Consumer;
 
-public class MysqlQuery extends BaseQuery {
+
+public class MysqlQuery<T> extends BaseQuery<T> {
     protected String preCondition;
 
     public MysqlQuery(IDataProxy dataProxy, EntityManager entityManager) {
@@ -17,11 +19,6 @@ public class MysqlQuery extends BaseQuery {
     }
     public MysqlQuery(IDataProxy dataProxy, EntityManager entityManager, JpqlBuilder jpqlBuilder) {
         super(dataProxy, entityManager, jpqlBuilder);
-    }
-
-    @Override
-    public String toCountJpql() {
-        return this.jpqlBuilder.toCountJpql();
     }
 
     @Override
@@ -78,11 +75,6 @@ public class MysqlQuery extends BaseQuery {
 
 
     @Override
-    public String getJpql() {
-        return this.jpqlBuilder.toJpql();
-    }
-
-    @Override
     public Query appendCondition(String condition, String expression, Object... params) {
         if (StringUtils.isNotEmpty(this.preCondition)) {
             this.jpqlBuilder.append(this.preCondition, expression, params);
@@ -95,8 +87,14 @@ public class MysqlQuery extends BaseQuery {
 
     @Override
     public AbstractQuery instance() {
-        return new MysqlQuery(this.dataProxy, this.entityManager, this.jpqlBuilder);
+        return new MysqlQuery(this.dataProxy, this.entityManager);
     }
-
+    @Override
+    public Query appendChild(Consumer consumer) {
+        Query instance = instance();
+        consumer.accept(instance);
+        this.appendCondition("", "( " + instance.getSegment() + " )", instance.getParams().toArray());
+        return this;
+    }
 
 }

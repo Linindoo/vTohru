@@ -1,6 +1,7 @@
 package cn.vtohru.mysql;
 
 import cn.vtohru.context.VerticleApplicationContext;
+import cn.vtohru.mysql.impl.MysqlDataStore;
 import cn.vtohru.orm.DataSourceConfiguration;
 import cn.vtohru.orm.DataStore;
 import cn.vtohru.orm.DataStoreSpiFactory;
