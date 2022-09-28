@@ -1,7 +1,8 @@
 vtohru:
-  mongo:
-    connection_string: mongodb://localhost/test233
-  mongoverticle:
-    name: devVerticle
-    web:
-      port: 8078
+  datasource:
+    mongo:
+      type: mongo
+      url: mongodb://localhost/test233
+      pool:
+        maxSize: 10
+        coreSize: 10

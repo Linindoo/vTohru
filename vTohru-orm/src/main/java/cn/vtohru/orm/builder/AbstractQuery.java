@@ -15,7 +15,7 @@ public abstract class AbstractQuery<T> implements Query<T> {
         return or().appendChild(consumer);
     }
 
-    public abstract Query<T> appendCondition(String condition, String expression, Object... params);
+    public abstract Query<T> appendCondition(boolean and, String column, String condition, Object value);
 
 
     public abstract Query<T> instance();

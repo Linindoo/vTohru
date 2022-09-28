@@ -1,25 +1,22 @@
-package cn.vtohru.mysql.impl;
+package cn.vtohru.mongo.impl;
 
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.orm.*;
-import cn.vtohru.orm.entity.EntityManager;
 import cn.vtohru.orm.data.IDataProxy;
+import cn.vtohru.orm.entity.EntityManager;
+import cn.vtohru.orm.exception.OrmException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
-import io.vertx.mysqlclient.MySQLConnectOptions;
-import io.vertx.mysqlclient.MySQLPool;
-import io.vertx.sqlclient.PoolOptions;
+import io.vertx.ext.mongo.MongoClient;
 
-import java.util.Map;
-
-public class MysqlDataStore implements DataStore {
-    private MySQLPool  sqlClient;
+public class MongoDataStore implements DataStore {
     private VerticleApplicationContext verticleApplicationContext;
     private DataSourceConfiguration dataSourceConfiguration;
     private EntityManager entityManager;
+    private MongoClient mongoClient;
 
-    public MysqlDataStore(VerticleApplicationContext verticleApplicationContext, DataSourceConfiguration dataSourceConfiguration, EntityManager entityManager) {
+    public MongoDataStore(VerticleApplicationContext verticleApplicationContext, DataSourceConfiguration dataSourceConfiguration, EntityManager entityManager) {
         this.verticleApplicationContext = verticleApplicationContext;
         this.dataSourceConfiguration = dataSourceConfiguration;
         this.entityManager = entityManager;
@@ -27,17 +24,15 @@ public class MysqlDataStore implements DataStore {
 
     @Override
     public Future<Void> start() {
-        MySQLConnectOptions mySQLConnectOptions = MySQLConnectOptions.fromUri(dataSourceConfiguration.getUrl());
-        Map<String, Object> pool = this.dataSourceConfiguration.getPool();
-        JsonObject poolConfig = new JsonObject(pool);
-        PoolOptions options = new PoolOptions(poolConfig);
-        sqlClient = MySQLPool.pool(this.verticleApplicationContext.getVertx(), mySQLConnectOptions, options);
+        JsonObject config = new JsonObject();
+        config.put("connection_string", dataSourceConfiguration.getUrl());
+        mongoClient = MongoClient.create(verticleApplicationContext.getVertx(), config);
         return Future.succeededFuture();
     }
 
     @Override
     public Future<Void> stop() {
-        return sqlClient.close();
+        return mongoClient.close();
     }
 
     @Override
@@ -77,15 +72,33 @@ public class MysqlDataStore implements DataStore {
 
     @Override
     public <T> Query<T> build(Class<T> clazz) {
-        MysqlQuery mysqlQuery = new MysqlQuery(new IDataProxy(this, null), this.entityManager);
-        return mysqlQuery.from(clazz);
+        MongoQuery<T> mongoQuery = new MongoQuery<>(new IDataProxy(this, null), entityManager);
+        return mongoQuery.from(clazz);
     }
+
 
     @Override
     public Future<DbSession> getSession() {
-        Promise<DbSession> promise = Promise.promise();
-        sqlClient.getConnection().onSuccess(x -> promise.complete(new MysqlSession(x, entityManager))).onFailure(promise::fail);
-        return promise.future();
+        return Future.succeededFuture(new MongoSession(mongoClient, entityManager));
     }
 
+    @Override
+    public <T> Future<T> onTransaction(TransactionFunction<T> transaction) {
+        Promise<T> promise = Promise.promise();
+        getSession().onSuccess(x -> {
+            x.beginTransaction().onSuccess(y -> {
+                transaction.onTransaction(x).onSuccess(t -> {
+                    y.commit().onSuccess(c->{
+                        promise.complete(t);
+                    }).onFailure(promise::fail);
+                }).onFailure(e -> {
+                    y.rollback().onSuccess(c->{
+                        promise.fail(new OrmException("roll back"));
+                    }).onFailure(promise::fail);
+                });
+            }).onFailure(promise::fail);
+
+        });
+        return promise.future();
+    }
 }

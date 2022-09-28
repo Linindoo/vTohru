@@ -154,6 +154,9 @@ public interface MongoClient {
      */
     Future<String> insertWithOptions(String collection, JsonObject document, WriteOption writeOption);
 
+    Future<String> insertWithOptions(ClientSession clientSession, String collection, JsonObject document, WriteOption writeOption);
+
+
     /**
      * Update matching documents in the specified collection and return the handler with {@code MongoClientUpdateResult} result
      *
@@ -206,6 +209,9 @@ public interface MongoClient {
      * Like {@link #updateCollectionWithOptions(String, JsonObject, JsonObject, UpdateOptions, Handler)} but returns a {@code Future} of the asynchronous result
      */
     Future<MongoClientUpdateResult> updateCollectionWithOptions(String collection, JsonObject query, JsonObject update, UpdateOptions options);
+
+    Future<MongoClientUpdateResult> updateCollectionWithOptions(ClientSession clientSession, String collection, JsonObject query, JsonObject update, UpdateOptions options);
+
 
     /**
      * Use an aggregation pipeline to update documents in the specified collection, specifying options and return the handler with {@code MongoClientUpdateResult} result
@@ -372,6 +378,9 @@ public interface MongoClient {
      */
     Future<JsonObject> findOne(String collection, JsonObject query, JsonObject fields);
 
+    Future<JsonObject> findOne(ClientSession clientSession, String collection, JsonObject query, JsonObject fields);
+
+
     /**
      * Find a single matching document in the specified collection and update it.
      * <p>
@@ -460,10 +469,16 @@ public interface MongoClient {
     
     MongoClient findOneAndDelete(String collection, JsonObject query, Handler<AsyncResult<JsonObject>> resultHandler);
 
+    MongoClient findOneAndDelete(ClientSession clientSession, String collection, JsonObject query, Handler<AsyncResult<JsonObject>> resultHandler);
+
+
     /**
      * Like {@link #findOneAndDelete(String, JsonObject, Handler)} but returns a {@code Future} of the asynchronous result
      */
     Future<JsonObject> findOneAndDelete(String collection, JsonObject query);
+
+    Future<JsonObject> findOneAndDelete(ClientSession clientSession, String collection, JsonObject query);
+
 
     /**
      * Find a single matching document in the specified collection and delete it.
@@ -482,6 +497,9 @@ public interface MongoClient {
      * Like {@link #findOneAndDeleteWithOptions(String, JsonObject, FindOptions, Handler)} but returns a {@code Future} of the asynchronous result
      */
     Future<JsonObject> findOneAndDeleteWithOptions(String collection, JsonObject query, FindOptions findOptions);
+
+    Future<JsonObject> findOneAndDeleteWithOptions(ClientSession clientSession, String collection, JsonObject query, FindOptions findOptions);
+
 
     /**
      * Count matching documents in a collection.
@@ -697,6 +715,9 @@ public interface MongoClient {
      * Like {@link #runCommand(String, JsonObject, Handler)} but returns a {@code Future} of the asynchronous result
      */
     Future<JsonObject> runCommand(String commandName, JsonObject command);
+
+    Future<JsonObject> runCommand(ClientSession clientSession, String commandName, JsonObject command);
+
 
     /**
      * Gets the distinct values of the specified field name.

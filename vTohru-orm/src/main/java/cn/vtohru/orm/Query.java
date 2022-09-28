@@ -1,5 +1,6 @@
 package cn.vtohru.orm;
 
+import cn.vtohru.orm.builder.JpqlBuilder;
 import cn.vtohru.orm.data.PageData;
 import io.vertx.core.Future;
 
@@ -32,20 +33,18 @@ public interface Query<T> extends LamdaQuery<Query<T>,Query<T>> {
 
     Query<T> like(String column, String param);
 
-    Query<T> appendCondition(String condition,String expression, Object... params);
+    Query<T> appendCondition(boolean and, String column, String condition, Object value);
 
-    String getJpql();
-
-    String getSegment();
+    Query<T> orderBy(String orderBy);
 
     List<Object> getParams();
+
+    JpqlBuilder geBuilder();
 
     Future<T> first();
 
     Future<List<T>> all();
 
     Future<PageData<T>> pagination(int offset, int rowCount);
-
-
 
 }
