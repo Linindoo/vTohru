@@ -4,5 +4,5 @@ import io.vertx.core.Future;
 
 @FunctionalInterface
 public interface TransactionFunction<T> {
-     Future<T> onTransaction(ClientSession clientSession);
+     Future<T> onTransaction(DbSession dbSession);
 }

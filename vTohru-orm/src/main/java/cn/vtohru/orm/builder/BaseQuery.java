@@ -1,17 +1,15 @@
 package cn.vtohru.orm.builder;
 
+import cn.vtohru.orm.Condition;
 import cn.vtohru.orm.Query;
 import cn.vtohru.orm.entity.EntityField;
 import cn.vtohru.orm.entity.EntityInfo;
 import cn.vtohru.orm.entity.EntityManager;
 import cn.vtohru.orm.data.IDataProxy;
-import cn.vtohru.orm.data.PageData;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
-import io.vertx.core.json.JsonObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public abstract class BaseQuery<T> extends AbstractQuery<T> {
@@ -20,15 +18,12 @@ public abstract class BaseQuery<T> extends AbstractQuery<T> {
     protected JpqlBuilder jpqlBuilder;
     protected Class<T> entityClass;
     private boolean useColumn = false;
+    protected String preCondition;
 
     public BaseQuery(IDataProxy dataProxy, EntityManager entityManager, JpqlBuilder jpqlBuilder) {
         this.dataProxy = dataProxy;
         this.entityManager = entityManager;
         this.jpqlBuilder = jpqlBuilder;
-    }
-
-    public enum ConditionType {
-        EQ,NOT_EQ,LE,LT,GE,GT,LIKE
     }
 
     @Override
@@ -39,96 +34,11 @@ public abstract class BaseQuery<T> extends AbstractQuery<T> {
         return this;
     }
 
-    @Override
-    public String getJpql() {
-        checkColumns();
-        return this.jpqlBuilder.toJpql();
+    public String getTableName() {
+        EntityInfo entity = entityManager.getEntity(entityClass);
+        return entity.getTableName();
     }
 
-    @Override
-    public Future<T> first() {
-        Promise<T> promise = Promise.promise();
-        checkColumns();
-        String jpql = this.jpqlBuilder.toJpql();
-        this.dataProxy.getSession().onSuccess(session -> {
-            session.execute(jpql + " limit 1", jpqlBuilder.getParams()).onSuccess(x -> {
-                if (x.size() > 0) {
-                    JsonObject row = x.getJsonObject(0);
-                    T entity = entityManager.convertEntity(row, entityClass);
-                    promise.complete(entity);
-                } else {
-                    promise.fail(new RuntimeException("no value find"));
-                }
-            }).onFailure(promise::fail);
-        }).onFailure(promise::fail);
-        return promise.future();
-    }
-
-    @Override
-    public Future<List<T>> all() {
-        checkColumns();
-        Promise<List<T>> promise = Promise.promise();
-        String jpql = this.jpqlBuilder.toJpql();
-        this.dataProxy.getSession().onSuccess(session -> {
-            session.execute(jpql, jpqlBuilder.getParams()).onSuccess(x -> {
-                if (x.size() > 0) {
-                    List<T> results = new ArrayList<>();
-                    for (int i = 0; i < x.size(); i++) {
-                        JsonObject row = x.getJsonObject(i);
-                        T entity = entityManager.convertEntity(row, entityClass);
-                        results.add(entity);
-                    }
-                    promise.complete(results);
-                } else {
-                    promise.complete();
-                }
-            }).onFailure(promise::fail);
-        }).onFailure(promise::fail);
-        return promise.future();
-    }
-
-    @Override
-    public Future<PageData<T>> pagination(int offset, int rowCount) {
-        checkColumns();
-        Promise<PageData<T>> promise = Promise.promise();
-        this.dataProxy.getSession().onSuccess(session -> {
-            session.execute(this.jpqlBuilder.toCountJpql(), this.jpqlBuilder.getParams()).onSuccess(x -> {
-                PageData<T> pageData = new PageData<>();
-                if (x.size() > 0) {
-                    JsonObject row = x.getJsonObject(0);
-                    Long count = row.getLong("count");
-                    pageData.setTotal(count);
-                    if (count > 0) {
-                        session.execute(this.jpqlBuilder.toJpql() + " limit " + offset + "," + rowCount, this.jpqlBuilder.getParams()).onSuccess(y -> {
-                            List<T> results = new ArrayList<>();
-                            for (int i = 0; i < y.size(); i++) {
-                                JsonObject record = y.getJsonObject(i);
-                                T entity = entityManager.convertEntity(record, entityClass);
-                                results.add(entity);
-                            }
-                            pageData.setRecords(results);
-                            promise.complete(pageData);
-
-                        }).onFailure(promise::fail);
-                    }
-                } else {
-                    pageData.setRecords(new ArrayList<>());
-                    promise.complete(pageData);
-                }
-            }).onFailure(promise::fail);
-        }).onFailure(promise::fail);
-        return promise.future();
-    }
-
-    @Override
-    public String getSegment() {
-        return this.jpqlBuilder.toSegment();
-    }
-
-    @Override
-    public List<Object> getParams() {
-        return this.jpqlBuilder.getParams();
-    }
 
     @Override
     public Query<T> select(String... params) {
@@ -143,5 +53,65 @@ public abstract class BaseQuery<T> extends AbstractQuery<T> {
             String fields = entity.getFieldMap().values().stream().map(EntityField::getFieldName).collect(Collectors.joining(","));
             this.jpqlBuilder.select(fields);
         }
+    }
+
+    public Query appendChild(Consumer consumer) {
+        Query instance = instance();
+        consumer.accept(instance);
+        if ("or".equalsIgnoreCase(this.preCondition)) {
+            this.jpqlBuilder.appendChild(false, instance.geBuilder());
+        } else {
+            this.jpqlBuilder.appendChild(true, instance.geBuilder());
+        }
+        return this;
+    }
+
+    @Override
+    public Query appendCondition(boolean and, String column, String condition, Object value) {
+        if ("or".equalsIgnoreCase(this.preCondition)) {
+            this.jpqlBuilder.append(false, column, condition, value);
+        } else {
+            this.jpqlBuilder.append(and, column, condition, value);
+        }
+        this.preCondition = "";
+        return this;
+    }
+
+    @Override
+    public List<Object> getParams() {
+        List<Object> params = new ArrayList<>();
+        for (Condition condition : this.jpqlBuilder.getCondition()) {
+            if (condition instanceof SingleCondition) {
+                params.add(((SingleCondition) condition).getValue());
+            } else if (condition instanceof AggregateCondition) {
+                for (SingleCondition singleCondition : ((AggregateCondition) condition).getConditions()) {
+                    params.add(singleCondition.getValue());
+                }
+            }
+        }
+        return params;
+    }
+
+    @Override
+    public JpqlBuilder geBuilder() {
+        return this.jpqlBuilder;
+    }
+
+    @Override
+    public Query<T> orderBy(String orderBy) {
+        this.jpqlBuilder.orderBy(orderBy);
+        return this;
+    }
+
+    @Override
+    public Query and() {
+        this.preCondition = "and";
+        return this;
+    }
+
+    @Override
+    public Query or() {
+        this.preCondition = "or";
+        return this;
     }
 }

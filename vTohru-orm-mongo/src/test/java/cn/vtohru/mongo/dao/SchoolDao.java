@@ -1,12 +1,14 @@
-package cn.vtohru.orm.mongo.dao;
+package cn.vtohru.mongo.dao;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Entity
 public class SchoolDao {
+    @Column
     private String name;
     @Id
+    @Column
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
 
     public String getName() {

@@ -1,6 +1,6 @@
 package cn.vtohru.mysql.impl;
 
-import cn.vtohru.orm.ClientSession;
+import cn.vtohru.orm.DbSession;
 import cn.vtohru.orm.ITransaction;
 import cn.vtohru.orm.Query;
 import cn.vtohru.orm.entity.EntityField;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class MysqlSession implements ClientSession {
+public class MysqlSession implements DbSession {
 
     private SqlConnection sqlConnection;
     private EntityManager entityManager;
@@ -29,12 +29,6 @@ public class MysqlSession implements ClientSession {
         this.sqlConnection = sqlConnection;
         this.entityManager = entityManager;
     }
-
-    @Override
-    public Future<Void> close() {
-        return this.sqlConnection.close();
-    }
-
     @Override
     public <T> Future<T> persist(T model) {
         if (entityManager.existPrimary(model)) {
@@ -129,7 +123,6 @@ public class MysqlSession implements ClientSession {
         StringBuilder sql = new StringBuilder();
         sql.append("select ").append(entity.getFieldMap().values().stream().map(EntityField::getFieldName).collect(Collectors.joining(",")))
                 .append(" from ").append(entity.getTableName()).append(" where ").append(entity.getKeyFields().stream().map(x -> x.getFieldName() + "=?").collect(Collectors.joining(" and ")));
-
         List<Object> fieldValues = new ArrayList<>();
         for (EntityField keyField : entity.getKeyFields()) {
             fieldValues.add(keyField.getProperty().get(model));

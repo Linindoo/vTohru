@@ -201,6 +201,21 @@ public class MongoClientImpl implements io.vertx.ext.mongo.MongoClient, Closeabl
     }
 
     @Override
+    public Future<String> insertWithOptions(ClientSession clientSession, String collection, JsonObject document, WriteOption writeOption) {
+        requireNonNull(collection, "collection cannot be null");
+        requireNonNull(document, "document cannot be null");
+
+        JsonObject encodedDocument = encodeKeyWhenUseObjectId(document);
+        boolean hasCustomId = document.containsKey(ID_FIELD);
+
+        MongoCollection<JsonObject> coll = getCollection(collection, writeOption);
+
+        Promise<Void> promise = vertx.promise();
+        coll.insertOne(clientSession,encodedDocument).subscribe(new CompletionSubscriber<>(promise));
+        return promise.future().map(v -> hasCustomId ? null : decodeKeyWhenUseObjectId(encodedDocument).getString(ID_FIELD));
+    }
+
+    @Override
     public io.vertx.ext.mongo.MongoClient updateCollection(String collection, JsonObject query, JsonObject update, Handler<AsyncResult<MongoClientUpdateResult>> resultHandler) {
         Future<MongoClientUpdateResult> future = updateCollection(collection, query, update);
         setHandler(future, resultHandler);
@@ -254,6 +269,36 @@ public class MongoClientImpl implements io.vertx.ext.mongo.MongoClient, Closeabl
             publisher = coll.updateMany(bquery, bupdate, updateOptions);
         } else {
             publisher = coll.updateOne(bquery, bupdate, updateOptions);
+        }
+
+        Promise<UpdateResult> promise = vertx.promise();
+        publisher.subscribe(new SingleResultSubscriber<>(promise));
+        return promise.future().map(Utils::toMongoClientUpdateResult);
+    }
+
+    @Override
+    public Future<MongoClientUpdateResult> updateCollectionWithOptions(ClientSession clientSession, String collection, JsonObject query, JsonObject update, UpdateOptions options) {
+        requireNonNull(collection, "collection cannot be null");
+        requireNonNull(query, "query cannot be null");
+        requireNonNull(update, "update cannot be null");
+        requireNonNull(options, "options cannot be null");
+
+        MongoCollection<JsonObject> coll = getCollection(collection, options.getWriteOption());
+        Bson bquery = wrap(encodeKeyWhenUseObjectId(query));
+        Bson bupdate = wrap(encodeKeyWhenUseObjectId(generateIdIfNeeded(query, update, options)));
+
+        com.mongodb.client.model.UpdateOptions updateOptions = new com.mongodb.client.model.UpdateOptions().upsert(options.isUpsert());
+        if (options.getArrayFilters() != null && !options.getArrayFilters().isEmpty()) {
+            final List<Bson> bArrayFilters = new ArrayList<>(options.getArrayFilters().size());
+            options.getArrayFilters().getList().forEach(entry -> bArrayFilters.add(wrap(JsonObject.mapFrom(entry))));
+            updateOptions.arrayFilters(bArrayFilters);
+        }
+
+        Publisher<UpdateResult> publisher;
+        if (options.isMulti()) {
+            publisher = coll.updateMany(clientSession, bquery, bupdate, updateOptions);
+        } else {
+            publisher = coll.updateOne(clientSession, bquery, bupdate, updateOptions);
         }
 
         Promise<UpdateResult> promise = vertx.promise();
@@ -412,6 +457,19 @@ public class MongoClientImpl implements io.vertx.ext.mongo.MongoClient, Closeabl
     }
 
     @Override
+    public Future<JsonObject> findOne(ClientSession clientSession, String collection, JsonObject query, JsonObject fields) {
+        requireNonNull(collection, "collection cannot be null");
+        requireNonNull(query, "query cannot be null");
+
+        JsonObject encodedQuery = encodeKeyWhenUseObjectId(query);
+
+        Bson bquery = wrap(encodedQuery);
+        Bson bfields = wrap(fields);
+        Promise<JsonObject> promise = vertx.promise();
+        getCollection(collection).find(clientSession, bquery).projection(bfields).first().subscribe(new SingleResultSubscriber<>(promise));
+        return promise.future().map(object -> object == null ? null : decodeKeyWhenUseObjectId(object));    }
+
+    @Override
     public io.vertx.ext.mongo.MongoClient findOneAndUpdate(String collection, JsonObject query, JsonObject update, Handler<AsyncResult<JsonObject>> resultHandler) {
         Future<JsonObject> future = findOneAndUpdate(collection, query, update);
         setHandler(future, resultHandler);
@@ -508,8 +566,20 @@ public class MongoClientImpl implements io.vertx.ext.mongo.MongoClient, Closeabl
     }
 
     @Override
+    public MongoClient findOneAndDelete(ClientSession clientSession, String collection, JsonObject query, Handler<AsyncResult<JsonObject>> resultHandler) {
+        Future<JsonObject> future = findOneAndDeleteWithOptions(clientSession, collection, query, DEFAULT_FIND_OPTIONS);
+        setHandler(future, resultHandler);
+        return this;
+    }
+
+    @Override
     public Future<JsonObject> findOneAndDelete(String collection, JsonObject query) {
         return findOneAndDeleteWithOptions(collection, query, DEFAULT_FIND_OPTIONS);
+    }
+
+    @Override
+    public Future<JsonObject> findOneAndDelete(ClientSession clientSession, String collection, JsonObject query) {
+        return findOneAndDeleteWithOptions(clientSession, collection, query, DEFAULT_FIND_OPTIONS);
     }
 
     @Override
@@ -535,6 +605,25 @@ public class MongoClientImpl implements io.vertx.ext.mongo.MongoClient, Closeabl
         MongoCollection<JsonObject> coll = getCollection(collection);
         Promise<JsonObject> promise = vertx.promise();
         coll.findOneAndDelete(bquery, foadOptions).subscribe(new SingleResultSubscriber<>(promise));
+        return promise.future();
+    }
+
+    @Override
+    public Future<JsonObject> findOneAndDeleteWithOptions(ClientSession clientSession, String collection, JsonObject query, FindOptions findOptions) {
+        requireNonNull(collection, "collection cannot be null");
+        requireNonNull(query, "query cannot be null");
+        requireNonNull(findOptions, "find options cannot be null");
+
+        JsonObject encodedQuery = encodeKeyWhenUseObjectId(query);
+
+        Bson bquery = wrap(encodedQuery);
+        FindOneAndDeleteOptions foadOptions = new FindOneAndDeleteOptions();
+        foadOptions.sort(wrap(findOptions.getSort()));
+        foadOptions.projection(wrap(findOptions.getFields()));
+
+        MongoCollection<JsonObject> coll = getCollection(collection);
+        Promise<JsonObject> promise = vertx.promise();
+        coll.findOneAndDelete(clientSession, bquery, foadOptions).subscribe(new SingleResultSubscriber<>(promise));
         return promise.future();
     }
 
@@ -877,6 +966,28 @@ public class MongoClientImpl implements io.vertx.ext.mongo.MongoClient, Closeabl
         holder.db.runCommand(wrap(json), JsonObject.class).subscribe(new SingleResultSubscriber<>(promise));
         return promise.future();
     }
+
+    @Override
+    public Future<JsonObject> runCommand(ClientSession clientSession, String commandName, JsonObject command) {
+        requireNonNull(commandName, "commandName cannot be null");
+        requireNonNull(command, "command cannot be null");
+        // The command name must be the first entry in the bson, so to ensure this we must recreate and add the command
+        // name as first (JsonObject is internally ordered)
+        JsonObject json = new JsonObject();
+        Object commandVal = command.getValue(commandName);
+        if (commandVal == null) {
+            throw new IllegalArgumentException("commandBody does not contain key for " + commandName);
+        }
+        json.put(commandName, commandVal);
+        command.forEach(entry -> {
+            if (!entry.getKey().equals(commandName)) {
+                json.put(entry.getKey(), entry.getValue());
+            }
+        });
+
+        Promise<JsonObject> promise = vertx.promise();
+        holder.db.runCommand(clientSession, wrap(json), JsonObject.class).subscribe(new SingleResultSubscriber<>(promise));
+        return promise.future();    }
 
     @Override
     public io.vertx.ext.mongo.MongoClient distinct(String collection, String fieldName, String resultClassname, Handler<AsyncResult<JsonArray>> resultHandler) {

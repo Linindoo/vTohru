@@ -18,7 +18,7 @@
         </dependency>
         <dependency>
             <groupId>cn.lindoo.vtohru</groupId>
-            <artifactId>vTohru-orm-common</artifactId>
+            <artifactId>vTohru-orm</artifactId>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>

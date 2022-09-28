@@ -1,6 +1,11 @@
-micronaut:
-  environments: dev
 vtohru:
+  datasource:
+    mongo:
+      type: mongo
+      url: mongodb://localhost/test233
+      pool:
+        maxSize: 10
+        coreSize: 10
   mongoverticle:
     name: devVerticle
     web:

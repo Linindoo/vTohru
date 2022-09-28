@@ -5,8 +5,7 @@ import io.vertx.core.json.JsonArray;
 
 import java.util.List;
 
-public interface ClientSession {
-    Future<Void> close();
+public interface DbSession {
 
     <T> Future<T> persist(T model);
 

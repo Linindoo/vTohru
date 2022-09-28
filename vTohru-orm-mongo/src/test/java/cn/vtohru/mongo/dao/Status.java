@@ -1,4 +1,4 @@
-package cn.vtohru.orm.mongo.dao;
+package cn.vtohru.mongo.dao;
 
 public enum Status {
     ACTIVE,DISABLE

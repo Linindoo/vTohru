@@ -1,4 +1,4 @@
-package cn.vtohru.orm.mongo;
+package cn.vtohru.mongo;
 
 import cn.vtohru.annotation.VerticleContaner;
 import cn.vtohru.web.annotation.WebAutoConfigure;

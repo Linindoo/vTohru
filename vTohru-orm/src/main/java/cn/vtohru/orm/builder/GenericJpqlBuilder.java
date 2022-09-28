@@ -1,15 +1,17 @@
 package cn.vtohru.orm.builder;
 
+import cn.vtohru.orm.Condition;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public abstract class GenericJpqlBuilder implements JpqlBuilder {
+public class GenericJpqlBuilder implements JpqlBuilder {
     protected String table;
     protected List<String> columns = new ArrayList<>();
     protected List<Condition> conditions = new ArrayList<>();
     protected List<String> orderBys = new ArrayList<>();
-    protected List<Object> params = new ArrayList<>();
     protected Integer offset;
     protected Integer rowCount;
 
@@ -20,14 +22,8 @@ public abstract class GenericJpqlBuilder implements JpqlBuilder {
     }
 
     @Override
-    public List<Object> getParams() {
-        return params;
-    }
-
-    @Override
-    public void append(String condition, String expression, Object... params) {
-        this.conditions.add(new Condition(condition, expression));
-        this.params.addAll(Arrays.asList(params));
+    public void append(boolean and, String column, String condition, Object value) {
+        this.conditions.add(new SingleCondition(and, column, condition, value));
     }
 
     @Override
@@ -46,31 +42,27 @@ public abstract class GenericJpqlBuilder implements JpqlBuilder {
         this.orderBys.add(orderBy);
     }
 
-    public static class Condition {
-        private String condition;
-        protected String expression;
 
-        public Condition(String condition, String expression) {
-            this.condition = condition;
-            this.expression = expression;
-        }
 
-        public String getCondition() {
-            return condition;
-        }
-
-        public void setCondition(String condition) {
-            this.condition = condition;
-        }
-
-        public String getExpression() {
-            return expression;
-        }
-
-        public void setExpression(String expression) {
-            this.expression = expression;
-        }
+    @Override
+    public void appendChild(boolean and, ChildBuilder builder) {
+        List<SingleCondition> singleConditions = builder.getCondition().stream().filter(x -> x instanceof SingleCondition).map(x -> (SingleCondition) x).collect(Collectors.toList());
+        Condition condition = new AggregateCondition(and, singleConditions);
+        this.conditions.add(condition);
     }
 
+    @Override
+    public List<String> columns() {
+        return this.columns;
+    }
 
+    @Override
+    public List<Condition> getCondition() {
+        return this.conditions;
+    }
+
+    @Override
+    public List<String> orders() {
+        return this.orderBys;
+    }
 }

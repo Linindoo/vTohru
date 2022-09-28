@@ -1,15 +1,18 @@
-package cn.vtohru.orm.mongo.dao;
+package cn.vtohru.mongo.dao;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 
-@Entity(name = "demo")
+@Entity(name = "user")
 public class UserDao {
     @Id
+    @Column
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public String id;
-
+    @Column
     private String name;
+    @Column
     private String gender;
+    @Column
     private int age;
 
     public String getName() {

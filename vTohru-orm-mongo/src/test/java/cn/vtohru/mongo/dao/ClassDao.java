@@ -1,29 +1,29 @@
-package cn.vtohru.orm.mongo.dao;
+package cn.vtohru.mongo.dao;
 
-import cn.vtohru.orm.annotation.Index;
-import cn.vtohru.orm.annotation.IndexField;
-import cn.vtohru.orm.annotation.Indexes;
-
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.util.Date;
-import java.util.List;
 
-@Entity(name = "demo2")
-@Indexes(@Index(name = "testIndex", fields = {
-        @IndexField(fieldName = "name"),@IndexField(fieldName = "status") }))
-
+@Entity(name = "class")
 public class ClassDao {
     @Id
+    @Column
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
+    @Column
     private String name;
+    @Column
     private int studentNum;
+    @Column
     private long max;
+    @Column
     private Date createTime;
-    private List<String> tags;
+    @Column
     private boolean enable;
+    @Column
     private double number;
+    @Column
     private float min;
+    @Column
     private Status status;
 
     public String getId() {
@@ -64,14 +64,6 @@ public class ClassDao {
 
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
-    }
-
-    public List<String> getTags() {
-        return tags;
-    }
-
-    public void setTags(List<String> tags) {
-        this.tags = tags;
     }
 
     public boolean isEnable() {

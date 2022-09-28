@@ -1,23 +1,23 @@
 package cn.vtohru.orm.data;
 
-import cn.vtohru.orm.ClientSession;
+import cn.vtohru.orm.DbSession;
 import cn.vtohru.orm.ISession;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 
 public class IDataProxy {
     private ISession sessionProxy;
-    private ClientSession clientSession;
+    private DbSession dbSession;
 
-    public IDataProxy(ISession sessionProxy, ClientSession clientSession) {
+    public IDataProxy(ISession sessionProxy, DbSession dbSession) {
         this.sessionProxy = sessionProxy;
-        this.clientSession = clientSession;
+        this.dbSession = dbSession;
     }
 
-    public Future<ClientSession> getSession() {
-        Promise<ClientSession> promise = Promise.promise();
-        if (this.clientSession != null) {
-            promise.complete(this.clientSession);
+    public Future<DbSession> getSession() {
+        Promise<DbSession> promise = Promise.promise();
+        if (this.dbSession != null) {
+            promise.complete(this.dbSession);
         } else {
             return sessionProxy.getSession();
         }

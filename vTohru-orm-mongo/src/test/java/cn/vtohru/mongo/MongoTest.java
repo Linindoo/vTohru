@@ -1,4 +1,4 @@
-package cn.vtohru.orm;
+package cn.vtohru.mongo;
 
 import cn.vtohru.context.VerticleApplicationContext;
 import org.junit.Test;
