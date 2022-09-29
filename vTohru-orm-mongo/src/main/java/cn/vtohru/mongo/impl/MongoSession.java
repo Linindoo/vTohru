@@ -137,7 +137,6 @@ public class MongoSession implements DbSession {
                 .put("aggregate", jpql)
                 .put("pipeline", array)
                 .put("cursor",new JsonObject());
-        System.out.println(command.toString());
         Future<JsonObject> aggregateFuture = (transactionSession == null || transactionSession.isClosed()) ? mongoClient.runCommand("aggregate", command) : mongoClient.runCommand(transactionSession.getClientSession(), "aggregate", command);
         aggregateFuture.onSuccess(x -> {
             JsonObject cursorData = x.getJsonObject("cursor");
