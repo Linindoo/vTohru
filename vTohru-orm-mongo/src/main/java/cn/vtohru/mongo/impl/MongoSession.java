@@ -7,6 +7,10 @@ import cn.vtohru.orm.data.IDataProxy;
 import cn.vtohru.orm.entity.EntityField;
 import cn.vtohru.orm.entity.EntityInfo;
 import cn.vtohru.orm.entity.EntityManager;
+import com.mongodb.ReadConcern;
+import com.mongodb.ReadPreference;
+import com.mongodb.TransactionOptions;
+import com.mongodb.WriteConcern;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
@@ -146,7 +150,13 @@ public class MongoSession implements DbSession {
     @Override
     public Future<ITransaction> beginTransaction() {
         Promise<ITransaction> promise = Promise.promise();
+        TransactionOptions txnOptions = TransactionOptions.builder()
+                .readPreference(ReadPreference.primary())
+                .readConcern(ReadConcern.MAJORITY)
+                .writeConcern(WriteConcern.MAJORITY)
+                .build();
         mongoClient.startSession().onSuccess(x -> {
+            x.startTransaction(txnOptions);
             MongoTransaction mongoTransaction = new MongoTransaction(x);
             this.transactionSession = mongoTransaction;
             promise.complete(mongoTransaction);
