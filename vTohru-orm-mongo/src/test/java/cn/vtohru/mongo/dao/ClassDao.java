@@ -6,7 +6,7 @@ import java.util.Date;
 @Entity(name = "class")
 public class ClassDao {
     @Id
-    @Column
+    @Column(name = "_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
     @Column
@@ -16,15 +16,15 @@ public class ClassDao {
     @Column
     private long max;
     @Column
-    private Date createTime;
+    private Long createTime;
     @Column
     private boolean enable;
     @Column
     private double number;
     @Column
-    private float min;
+    private double min;
     @Column
-    private Status status;
+    private String status;
 
     public String getId() {
         return id;
@@ -58,14 +58,6 @@ public class ClassDao {
         this.max = max;
     }
 
-    public Date getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(Date createTime) {
-        this.createTime = createTime;
-    }
-
     public boolean isEnable() {
         return enable;
     }
@@ -82,20 +74,27 @@ public class ClassDao {
         this.number = number;
     }
 
-    public float getMin() {
+    public double getMin() {
         return min;
     }
 
-    public void setMin(float min) {
+    public void setMin(double min) {
         this.min = min;
     }
 
-    public Status getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 
+    public Long getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Long createTime) {
+        this.createTime = createTime;
+    }
 }

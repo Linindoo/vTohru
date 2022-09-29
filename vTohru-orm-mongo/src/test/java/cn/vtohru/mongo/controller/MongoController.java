@@ -30,25 +30,20 @@ public class MongoController {
         classDao.setMax(100L);
         classDao.setEnable(true);
         classDao.setNumber(10.8);
-        classDao.setCreateTime(new Date());
+        classDao.setCreateTime(new Date().getTime());
         classDao.setStudentNum(77);
         classDao.setMin(8.90F);
-        classDao.setStatus(Status.ACTIVE);
+        classDao.setStatus(Status.ACTIVE.name());
 
         SchoolDao schoolDao = new SchoolDao();
         schoolDao.setName("学校");
-        SchoolDao deleteSchool = new SchoolDao();
-        deleteSchool.setId("61c477c3ed056a4b0fb53698");
         mongoDataStore.onTransaction(t -> {
             Promise<Void> transFuture = Promise.promise();
-
-//            t.persist(classDao).onSuccess(x->{
-//                transFuture.complete();
-//            }).onFailure(transFuture::fail);
             t.persist(schoolDao).onSuccess(x -> {
-                transFuture.complete();
+                t.persist(classDao).onSuccess(y->{
+                    transFuture.complete();
+                }).onFailure(transFuture::fail);
             }).onFailure(transFuture::fail);
-//            t.remove(deleteSchool);
             return transFuture.future();
         }).onSuccess(x -> {
             promise.complete();
@@ -108,10 +103,20 @@ public class MongoController {
         if (StringUtils.isEmpty(id)) {
             promise.fail("id不能为空");
         } else {
-            mongoDataStore.build(ClassDao.class).eq("id", id).first().onSuccess(x -> {
+            mongoDataStore.build(ClassDao.class).eq("_id", id).first().onSuccess(x -> {
                 promise.complete(x);
             }).onFailure(promise::fail);
         }
+        return promise.future();
+    }
+
+    @GET
+    @Path("/all")
+    public Future<Object> all() {
+        Promise<Object> promise = Promise.promise();
+        mongoDataStore.build(ClassDao.class).all().onSuccess(x -> {
+            promise.complete(x);
+        }).onFailure(promise::fail);
         return promise.future();
     }
 }

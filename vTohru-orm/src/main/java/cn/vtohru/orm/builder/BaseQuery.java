@@ -50,8 +50,8 @@ public abstract class BaseQuery<T> extends AbstractQuery<T> {
     protected void checkColumns() {
         if (!this.useColumn) {
             EntityInfo entity = entityManager.getEntity(this.entityClass);
-            String fields = entity.getFieldMap().values().stream().map(EntityField::getFieldName).collect(Collectors.joining(","));
-            this.jpqlBuilder.select(fields);
+            List<String> fields = entity.getFieldMap().values().stream().map(EntityField::getFieldName).collect(Collectors.toList());
+            this.jpqlBuilder.select(fields.toArray(new String[]{}));
         }
     }
 
