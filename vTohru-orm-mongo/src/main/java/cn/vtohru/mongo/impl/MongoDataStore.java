@@ -81,24 +81,4 @@ public class MongoDataStore implements DataStore {
     public Future<DbSession> getSession() {
         return Future.succeededFuture(new MongoSession(mongoClient, entityManager));
     }
-
-    @Override
-    public <T> Future<T> onTransaction(TransactionFunction<T> transaction) {
-        Promise<T> promise = Promise.promise();
-        getSession().onSuccess(x -> {
-            x.beginTransaction().onSuccess(y -> {
-                transaction.onTransaction(x).onSuccess(t -> {
-                    y.commit().onSuccess(c->{
-                        promise.complete(t);
-                    }).onFailure(promise::fail);
-                }).onFailure(e -> {
-                    y.rollback().onSuccess(c->{
-                        promise.fail(new OrmException("roll back"));
-                    }).onFailure(promise::fail);
-                });
-            }).onFailure(promise::fail);
-
-        });
-        return promise.future();
-    }
 }

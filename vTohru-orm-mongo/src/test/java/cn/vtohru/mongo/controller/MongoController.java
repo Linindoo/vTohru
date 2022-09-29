@@ -40,15 +40,19 @@ public class MongoController {
         SchoolDao deleteSchool = new SchoolDao();
         deleteSchool.setId("61c477c3ed056a4b0fb53698");
         mongoDataStore.onTransaction(t -> {
-            t.persist(classDao);
-            t.persist(schoolDao);
-            t.remove(deleteSchool);
-            return Future.succeededFuture();
+            Promise<Void> transFuture = Promise.promise();
+
+//            t.persist(classDao).onSuccess(x->{
+//                transFuture.complete();
+//            }).onFailure(transFuture::fail);
+            t.persist(schoolDao).onSuccess(x -> {
+                transFuture.complete();
+            }).onFailure(transFuture::fail);
+//            t.remove(deleteSchool);
+            return transFuture.future();
         }).onSuccess(x -> {
             promise.complete();
         }).onFailure(promise::fail);
-
-        promise.complete();
         return promise.future();
     }
 
