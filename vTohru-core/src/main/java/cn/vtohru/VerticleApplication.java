@@ -1,6 +1,7 @@
 package cn.vtohru;
 
 import cn.vtohru.context.VerticleApplicationContext;
+import cn.vtohru.plugin.VTohruPluginManager;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.runtime.ApplicationConfiguration;
@@ -68,6 +69,9 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
         }
         applicationContext.setVertx(vertx);
         applicationContext.registerSingleton(Vertx.class, vertx);
+        VTohruPluginManager vTohruPluginManager = new VTohruPluginManager(applicationContext);
+        vTohruPluginManager.init();
+
         Collection<AbstractVerticle> abstractVerticles = applicationContext.getBeansOfType(AbstractVerticle.class);
         Future<String> publishFuture = null;
         for (AbstractVerticle abstractVerticle : abstractVerticles) {
