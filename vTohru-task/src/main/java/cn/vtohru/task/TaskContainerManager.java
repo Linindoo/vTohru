@@ -2,9 +2,9 @@ package cn.vtohru.task;
 
 import cn.vtohru.VerticleEvent;
 import cn.vtohru.context.VerticleApplicationContext;
+import cn.vtohru.plugin.VerticleInfo;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Indexed;
-import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.Future;
 
 import javax.inject.Singleton;
@@ -20,12 +20,12 @@ public class TaskContainerManager extends VerticleEvent{
     }
 
     @Override
-    public Future<Void> start(BeanDefinition<?> beanDefinition) {
+    public Future<Void> start(VerticleInfo verticleInfo) {
         return taskHandlerRegister.register();
     }
 
     @Override
-    public Future<Void> stop(BeanDefinition<?> beanDefinition) {
+    public Future<Void> stop(VerticleInfo beanDefinition) {
         return Future.succeededFuture();
     }
 

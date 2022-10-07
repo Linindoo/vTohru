@@ -5,7 +5,7 @@ import cn.vtohru.annotation.VerticleContaner;
 import cn.vtohru.context.env.VBootstrapApplicationContext;
 import cn.vtohru.context.env.VBootstrapEnvironment;
 import cn.vtohru.context.env.VDefaultEnvironment;
-import cn.vtohru.context.env.VPropertySourcePropertyResolver;
+import cn.vtohru.plugin.PluginApplicationContext;
 import cn.vtohru.runtime.VTohru;
 import io.micronaut.aop.InterceptedProxy;
 import io.micronaut.context.*;
@@ -36,6 +36,7 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
     public static final String VTOHRU = "vtohru";
     public static final String VERTICLE_PREFIX = "vtc-";
     private Vertx vertx;
+    private Map<String, PluginApplicationContext> pluginContextMap = new HashMap<>();
     public VerticleApplicationContext(ApplicationContextConfiguration configuration) {
         super(configuration);
     }
@@ -204,6 +205,11 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
         return getEnvironment().get(verticleConfigKey, JsonObject.class).orElse(new JsonObject());
     }
 
+    public JsonObject getVConfig(String verticleName) {
+        String verticleConfigKey = VTOHRU + "." + VERTICLE_PREFIX + verticleName.toLowerCase();
+        return getEnvironment().get(verticleConfigKey, JsonObject.class).orElse(new JsonObject());
+    }
+
     public boolean isNull(Object bean) {
         if (bean == null) {
             return true;
@@ -214,6 +220,16 @@ public class VerticleApplicationContext extends DefaultApplicationContext {
             return target == null;
         }
         return false;
+    }
+
+    public PluginApplicationContext getCurentpluginContext() {
+        Context context = getVertx().getOrCreateContext();
+        String pluginId = context.get(VerticleApplicationContext.SCOPE_VERTICLE_NAME);
+        return this.pluginContextMap.get(pluginId);
+    }
+
+    public void addPluginContext(String pluginId, PluginApplicationContext pluginApplicationContext) {
+        this.pluginContextMap.put(pluginId, pluginApplicationContext);
     }
 
     private class VRuntimeConfiguredEnvironment extends VDefaultEnvironment {

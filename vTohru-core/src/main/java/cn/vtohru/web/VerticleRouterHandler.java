@@ -1,7 +1,6 @@
 package cn.vtohru.web;
 
 import cn.vtohru.annotation.GlobalScope;
-import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -27,6 +26,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
 
+import javax.inject.Singleton;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -34,7 +34,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Verticle
+@Singleton
 @GlobalScope
 @Indexed(VerticleRouterHandler.class)
 public class VerticleRouterHandler {

@@ -2,6 +2,7 @@ package cn.vtohru.microservice;
 
 import cn.vtohru.VerticleEvent;
 import cn.vtohru.microservice.annotation.ServiceAutoConfigure;
+import cn.vtohru.plugin.VerticleInfo;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Indexed;
 import io.micronaut.inject.BeanDefinition;
@@ -19,16 +20,16 @@ public class ServiceContainerManager extends VerticleEvent {
     }
 
     @Override
-    public Future<Void> start(BeanDefinition<?> beanDefinition) {
+    public Future<Void> start(VerticleInfo verticleInfo) {
         ServiceAnnotatedBuilder serviceAnnotatedBuilder = context.getBean(ServiceAnnotatedBuilder.class);
-        if (beanDefinition.hasAnnotation(ServiceAutoConfigure.class)) {
+        if (verticleInfo.getType().isAnnotationPresent(ServiceAutoConfigure.class)) {
             serviceAnnotatedBuilder.registerService();
         }
         return Future.succeededFuture();
     }
 
     @Override
-    public Future<Void> stop(BeanDefinition<?> beanDefinition) {
+    public Future<Void> stop(VerticleInfo beanDefinition) {
         return Future.succeededFuture();
     }
 }

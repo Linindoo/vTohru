@@ -2,9 +2,9 @@ package cn.vtohru.orm;
 
 import cn.vtohru.VerticleEvent;
 import cn.vtohru.context.VerticleApplicationContext;
+import cn.vtohru.plugin.VerticleInfo;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Indexed;
-import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -24,7 +24,7 @@ public class DataBaseManager extends VerticleEvent {
     }
 
     @Override
-    public Future<Void> start(BeanDefinition<?> beanDefinition) {
+    public Future<Void> start(VerticleInfo beanDefinition) {
         Promise<Void> promise = Promise.promise();
         Collection<DataStore> dataStores = applicationContext.getBeansOfType(DataStore.class);
         List<Future> startFuture = new ArrayList<>();
@@ -36,7 +36,7 @@ public class DataBaseManager extends VerticleEvent {
     }
 
     @Override
-    public Future<Void> stop(BeanDefinition<?> beanDefinition) {
+    public Future<Void> stop(VerticleInfo beanDefinition) {
         Promise<Void> promise = Promise.promise();
         Collection<DataStore> dataStores = applicationContext.getBeansOfType(DataStore.class);
         List<Future> endFuture = new ArrayList<>();

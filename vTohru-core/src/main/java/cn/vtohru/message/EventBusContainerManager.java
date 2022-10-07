@@ -2,8 +2,8 @@ package cn.vtohru.message;
 
 import cn.vtohru.VerticleEvent;
 import cn.vtohru.message.annotation.MessageAutoConfigure;
+import cn.vtohru.plugin.VerticleInfo;
 import io.micronaut.core.annotation.Indexed;
-import io.micronaut.inject.BeanDefinition;
 import io.vertx.core.Future;
 
 import javax.inject.Singleton;
@@ -18,15 +18,15 @@ public class EventBusContainerManager extends VerticleEvent {
     }
 
     @Override
-    public Future<Void> start(BeanDefinition<?> beanDefinition) {
-        if (beanDefinition.hasAnnotation(MessageAutoConfigure.class)) {
+    public Future<Void> start(VerticleInfo verticleInfo) {
+        if (verticleInfo.getType().getAnnotation(MessageAutoConfigure.class) != null) {
             eventBusMessageAnnotatedBuilder.register();
         }
         return Future.succeededFuture();
     }
 
     @Override
-    public Future<Void> stop(BeanDefinition<?> beanDefinition) {
+    public Future<Void> stop(VerticleInfo beanDefinition) {
         eventBusMessageAnnotatedBuilder.unregister();
         return Future.succeededFuture();
     }

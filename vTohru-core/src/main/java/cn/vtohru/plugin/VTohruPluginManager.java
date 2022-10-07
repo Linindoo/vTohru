@@ -1,39 +1,27 @@
-/*
- * Copyright (C) 2012-present the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package cn.vtohru.plugin;
 
 import cn.vtohru.context.VerticleApplicationContext;
-import io.micronaut.context.ApplicationContext;
-import org.pf4j.DefaultPluginManager;
-import org.pf4j.ExtensionFactory;
-
-import javax.annotation.PostConstruct;
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.json.JsonObject;
+import org.pf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * @author Decebal Suiu
  */
 public class VTohruPluginManager extends DefaultPluginManager {
+    private static final Logger log = LoggerFactory.getLogger(VTohruPluginManager.class);
 
     private VerticleApplicationContext applicationContext;
 
     public VTohruPluginManager(VerticleApplicationContext applicationContext) {
-        super();
         this.applicationContext = applicationContext;
+        initialize();
     }
 
     public VTohruPluginManager(Path... pluginsRoots) {
@@ -60,12 +48,71 @@ public class VTohruPluginManager extends DefaultPluginManager {
     /**
      * This method load, start plugins and inject extensions in Spring
      */
-    @PostConstruct
     public void init() {
         loadPlugins();
         startPlugins();
         ExtensionsInjector extensionsInjector = new ExtensionsInjector(this);
         extensionsInjector.injectExtensions();
+    }
+
+    @Override
+    public void startPlugins() {
+        for (PluginWrapper pluginWrapper : resolvedPlugins) {
+            PluginState pluginState = pluginWrapper.getPluginState();
+            if ((PluginState.DISABLED != pluginState) && (PluginState.STARTED != pluginState)) {
+                try {
+                    log.info("Start plugin '{}'", getPluginLabel(pluginWrapper.getDescriptor()));
+                    DeploymentOptions deploymentOptions = new DeploymentOptions();
+                    JsonObject map = applicationContext.getVConfig(pluginWrapper.getPluginId());
+                    deploymentOptions.setConfig(map);
+                    VerticlePlugin plugin = (VerticlePlugin) pluginWrapper.getPlugin();
+                    applicationContext.getVertx().deployVerticle(plugin, deploymentOptions).onSuccess(x -> {
+                        pluginWrapper.setPluginState(PluginState.STARTED);
+                        pluginWrapper.setFailedException(null);
+                        startedPlugins.add(pluginWrapper);
+                        firePluginStateEvent(new PluginStateEvent(this, pluginWrapper, pluginState));
+                    }).onFailure(e -> {
+                        pluginWrapper.setPluginState(PluginState.FAILED);
+                        pluginWrapper.setFailedException(e);
+                        firePluginStateEvent(new PluginStateEvent(this, pluginWrapper, pluginState));
+                    });
+                } catch (Exception | LinkageError e) {
+                    pluginWrapper.setPluginState(PluginState.FAILED);
+                    pluginWrapper.setFailedException(e);
+                    log.error("Unable to start plugin '{}'", getPluginLabel(pluginWrapper.getDescriptor()), e);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void stopPlugins() {
+        Collections.reverse(startedPlugins);
+        Iterator<PluginWrapper> itr = startedPlugins.iterator();
+        while (itr.hasNext()) {
+            PluginWrapper pluginWrapper = itr.next();
+            PluginState pluginState = pluginWrapper.getPluginState();
+            if (PluginState.STARTED == pluginState) {
+                try {
+                    log.info("Stop plugin '{}'", getPluginLabel(pluginWrapper.getDescriptor()));
+                    VerticlePlugin plugin = (VerticlePlugin) pluginWrapper.getPlugin();
+                    applicationContext.getVertx().undeploy(plugin.deploymentID()).onSuccess(x -> {
+                        pluginWrapper.setPluginState(PluginState.STOPPED);
+                        itr.remove();
+                        firePluginStateEvent(new PluginStateEvent(this, pluginWrapper, pluginState));
+                    }).onFailure(e -> {
+                        log.error(e.getMessage(), e);
+                        firePluginStateEvent(new PluginStateEvent(this, pluginWrapper, pluginState));
+                    });
+                } catch (PluginRuntimeException e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+        }
+    }
+
+    protected PluginFactory createPluginFactory() {
+        return new VerticlePluginFactory(this.applicationContext);
     }
 
 }

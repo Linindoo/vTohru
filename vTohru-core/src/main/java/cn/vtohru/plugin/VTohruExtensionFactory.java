@@ -1,6 +1,6 @@
 package cn.vtohru.plugin;
 
-import cn.vtohru.context.VerticleApplicationContext;
+import io.micronaut.context.ApplicationContext;
 import org.pf4j.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +62,7 @@ public class VTohruExtensionFactory implements ExtensionFactory {
             .orElseGet(() -> createWithoutVthoru(extensionClass));
     }
 
-    protected <T> T createWithVTohru(final Class<T> extensionClass, final VerticleApplicationContext applicationContext) {
+    protected <T> T createWithVTohru(final Class<T> extensionClass, final ApplicationContext applicationContext) {
 
         log.debug("Instantiate extension class '" + nameOf(extensionClass) + "' by using constructor autowiring.");
         // Autowire by constructor. This does not include the other types of injection (setters and/or fields).
@@ -71,17 +71,17 @@ public class VTohruExtensionFactory implements ExtensionFactory {
         return (T) bean;
     }
 
-    protected <T> Optional<VerticleApplicationContext> getApplicationContextBy(final Class<T> extensionClass) {
+    protected <T> Optional<ApplicationContext> getApplicationContextBy(final Class<T> extensionClass) {
         final Plugin plugin = Optional.ofNullable(this.pluginManager.whichPlugin(extensionClass))
             .map(PluginWrapper::getPlugin)
             .orElse(null);
 
-        final VerticleApplicationContext applicationContext;
+        final ApplicationContext applicationContext;
 
-        if (plugin instanceof VTohruPlugin) {
+        if (plugin instanceof VerticlePlugin) {
             log.debug("  Extension class ' " + nameOf(extensionClass) + "' belongs to spring-plugin '" + nameOf(plugin)
                       + "' and will be autowired by using its application context.");
-            applicationContext = ((VTohruPlugin) plugin).getApplicationContext();
+            applicationContext = (ApplicationContext) ((VerticlePlugin) plugin).getApplicationContext();
         } else if (this.pluginManager instanceof VTohruPluginManager) {
             log.debug("  Extension class ' " + nameOf(extensionClass) + "' belongs to a non spring-plugin (or main application)" +
                       " '" + nameOf(plugin) + ", but the used PF4J plugin-manager is a spring-plugin-manager. Therefore" +

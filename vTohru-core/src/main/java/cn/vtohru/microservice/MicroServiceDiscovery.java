@@ -1,7 +1,6 @@
 package cn.vtohru.microservice;
 
 import cn.vtohru.annotation.GlobalScope;
-import cn.vtohru.annotation.Verticle;
 import cn.vtohru.context.VerticleApplicationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Indexed;
@@ -13,7 +12,9 @@ import io.vertx.servicediscovery.ServiceReference;
 import io.vertx.servicediscovery.impl.DiscoveryImpl;
 import io.vertx.servicediscovery.types.EventBusService;
 
-@Verticle
+import javax.inject.Singleton;
+
+@Singleton
 @GlobalScope
 @Indexed(MicroServiceDiscovery.class)
 public class MicroServiceDiscovery extends DiscoveryImpl {

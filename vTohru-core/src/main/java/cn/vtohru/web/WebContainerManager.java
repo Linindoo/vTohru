@@ -3,6 +3,7 @@ package cn.vtohru.web;
 import cn.vtohru.VerticleEvent;
 import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.microservice.MicroServiceDiscovery;
+import cn.vtohru.plugin.VerticleInfo;
 import cn.vtohru.web.annotation.WebAutoConfigure;
 import cn.vtohru.web.annotation.WebService;
 import io.micronaut.context.ApplicationContext;
@@ -36,43 +37,56 @@ public class WebContainerManager extends VerticleEvent {
     }
 
     @Override
-    public Future<Void> start(BeanDefinition<?> beanDefinition) {
-        AnnotationValue<WebAutoConfigure> annotation = beanDefinition.getDeclaredAnnotation(WebAutoConfigure.class);
-        if (annotation == null) {
+    public Future<Void> start(VerticleInfo verticleInfo) {
+        System.out.println("thread:" + Thread.currentThread().getName());
+        WebAutoConfigure webAutoConfigure = verticleInfo.getType().getDeclaredAnnotation(WebAutoConfigure.class);
+        if (webAutoConfigure == null) {
             return Future.succeededFuture();
         }
+        long start = System.currentTimeMillis();
         JsonObject httpConfig = applicationContext.getProperty(WEB_CONFIG_PREFIX, JsonObject.class).orElse(new JsonObject());
-        int port = annotation.intValue("port").orElse(httpConfig.getInteger("port", 0));
-        String host = annotation.stringValue("host").orElse(httpConfig.getString("host", "0.0.0.0"));
+        System.out.println("thread:" + Thread.currentThread().getName() + " cost:" + (System.currentTimeMillis() - start));
+
+        int port = Optional.of(webAutoConfigure.port()).orElse(httpConfig.getInteger("port", 0));
+        String host = Optional.ofNullable(webAutoConfigure.host()).orElse(httpConfig.getString("host", "0.0.0.0"));
+        System.out.println("thread:" + Thread.currentThread().getName() + " cost:" + (System.currentTimeMillis() - start));
+
         MicroServiceDiscovery serviceDiscovery = applicationContext.getBean(MicroServiceDiscovery.class);
+        System.out.println("thread:" + Thread.currentThread().getName() + " cost:" + (System.currentTimeMillis() - start));
+
         VerticleRouterHandler verticleRouterHandler = applicationContext.getBean(VerticleRouterHandler.class);
+        System.out.println("thread:" + Thread.currentThread().getName() + " cost:" + (System.currentTimeMillis() - start));
+
         HttpServerOptions httpServerOptions = new HttpServerOptions(httpConfig);
         httpServerOptions.setPort(port);
         httpServerOptions.setHost(host);
         this.httpServer = applicationContext.getVertx().createHttpServer(httpServerOptions);
         Router router = verticleRouterHandler.buildRouter();
-        return this.httpServer.requestHandler(router).listen().compose(x->{
+        System.out.println("thread:" + Thread.currentThread().getName() + " cost:" + (System.currentTimeMillis() - start));
+        return this.httpServer.requestHandler(router).listen().compose(x -> {
+            System.out.println("thread:" + Thread.currentThread().getName() + " cost:" + (System.currentTimeMillis() - start));
             logger.info(applicationContext.getScopeName() + "-start http server success at port:" + x.actualPort());
-            Optional<AnnotationValue<WebService>> webServiceAnnotationValue = annotation.getAnnotation("service", WebService.class);
-            if (!webServiceAnnotationValue.isPresent()) {
+            WebService webService = webAutoConfigure.service();
+            if (webService == null) {
                 return Future.succeededFuture();
             }
-            String name = webServiceAnnotationValue.get().stringValue("name").orElse("");
+            String name = webService.name();
             if (StringUtils.isEmpty(name)) {
                 return Future.succeededFuture();
             }
-            String root = webServiceAnnotationValue.get().stringValue("root").orElse("/");
+            String root = Optional.ofNullable(webService.root()).orElse("/");
             Record record = HttpEndpoint.createRecord(name, host, x.actualPort(), root,
                     new JsonObject().put("api.name", name));
             return serviceDiscovery.publishService(record).compose(y -> {
                 logger.info("publish web service success:" + name);
+                System.out.println("thread:" + Thread.currentThread().getName() + " cost:" + (System.currentTimeMillis() - start));
                 return Future.succeededFuture();
             });
         });
     }
 
     @Override
-    public Future<Void> stop(BeanDefinition<?> beanDefinition) {
+    public Future<Void> stop(VerticleInfo verticleInfo) {
         if (httpServer != null) {
             return httpServer.close();
         }

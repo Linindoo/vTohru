@@ -16,6 +16,8 @@
         <module>vTohru-task</module>
         <module>vTohru-orm-mysql</module>
         <module>vTohru-orm</module>
+        <module>vTohru-app</module>
+        <module>plugins</module>
     </modules>
     <groupId>cn.lindoo.vtohru</groupId>
     <version>0.0.2-dev</version>

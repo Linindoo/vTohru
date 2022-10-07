@@ -70,33 +70,8 @@ public class VerticleApplication implements EmbeddedApplication<VerticleApplicat
         applicationContext.setVertx(vertx);
         applicationContext.registerSingleton(Vertx.class, vertx);
         VTohruPluginManager vTohruPluginManager = new VTohruPluginManager(applicationContext);
+        applicationContext.registerSingleton(VTohruPluginManager.class, vTohruPluginManager);
         vTohruPluginManager.init();
-
-        Collection<AbstractVerticle> abstractVerticles = applicationContext.getBeansOfType(AbstractVerticle.class);
-        Future<String> publishFuture = null;
-        for (AbstractVerticle abstractVerticle : abstractVerticles) {
-            BeanDefinition<? extends AbstractVerticle> beanDefinition = applicationContext.getBeanDefinition(abstractVerticle.getClass());
-            JsonObject map = applicationContext.getVConfig(beanDefinition);
-            DeploymentOptions deploymentOptions = new DeploymentOptions();
-            deploymentOptions.setConfig(map);
-            if (publishFuture == null) {
-                publishFuture = applicationContext.getVertx().deployVerticle(abstractVerticle, deploymentOptions);
-            } else {
-                publishFuture = publishFuture.compose(x->{
-                    return applicationContext.getVertx().deployVerticle(abstractVerticle, deploymentOptions);
-                },e->{
-                    return applicationContext.getVertx().deployVerticle(abstractVerticle, deploymentOptions);
-                });
-            }
-        }
-        if (publishFuture != null) {
-            publishFuture.onFailure(e -> {
-                e.printStackTrace();
-                logger.error(e);
-            }).onSuccess(x -> {
-                logger.info("all verticle publish success");
-            });
-        }
         return this;
     }
 
