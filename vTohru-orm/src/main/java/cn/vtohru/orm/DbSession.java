@@ -11,6 +11,8 @@ public interface DbSession {
 
     <T> Future<T> insert(T model);
 
+    <T> Future<Long> insertBatch(List<T> model);
+
     <T> Future<T> update(T model);
 
     <T> Future<Void> remove(T model);

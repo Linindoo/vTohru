@@ -11,6 +11,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
+import io.micronaut.core.convert.ConversionService;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
@@ -18,6 +19,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.*;
 
 import javax.persistence.GenerationType;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MongoSession implements DbSession {
@@ -45,7 +47,7 @@ public class MongoSession implements DbSession {
         EntityInfo entity = entityManager.getEntity(model.getClass());
         JsonObject document = new JsonObject();
         for (EntityField entityField : entity.getFieldMap().values()) {
-            if (!GenerationType.IDENTITY.name().equals(entityField.getGenerationType())) {
+            if (!entityField.isPrimary()) {
                 document.put(entityField.getFieldName(), entityField.getProperty().get(model));
             }
         }
@@ -60,12 +62,44 @@ public class MongoSession implements DbSession {
     }
 
     @Override
+    public <T> Future<Long> insertBatch(List<T> model) {
+        Promise<Long> promise = Promise.promise();
+        if (model == null || model.size() == 0) {
+            promise.complete(0L);
+        } else {
+            EntityInfo entity = entityManager.getEntity(model.get(0).getClass());
+            List<BulkOperation> bulkOperations = new ArrayList<>();
+            for (T dt : model) {
+                JsonObject document = new JsonObject();
+                for (EntityField entityField : entity.getFieldMap().values()) {
+                    if (!entityField.isPrimary()) {
+                        document.put(entityField.getFieldName(), entityField.getProperty().get(dt));
+                    }
+                }
+                JsonObject opt = new JsonObject();
+                opt.put("type", BulkOperationType.INSERT.name());
+                opt.put("document", document);
+                opt.put("upsert", true);
+                opt.put("multi", true);
+                BulkOperation bulkOperation = new BulkOperation(opt);
+                bulkOperations.add(bulkOperation);
+            }
+            Future<MongoClientBulkWriteResult> opFuture = (transactionSession == null || transactionSession.isClosed()) ? mongoClient.bulkWrite(entity.getTableName(), bulkOperations) : mongoClient.bulkWrite(transactionSession.getClientSession(), entity.getTableName(), bulkOperations);
+            opFuture.onSuccess(x -> {
+                promise.complete(x.getInsertedCount());
+            }).onFailure(promise::fail);
+        }
+
+        return promise.future();
+    }
+
+    @Override
     public <T> Future<T> update(T model) {
         Promise<T> promise = Promise.promise();
         EntityInfo entity = entityManager.getEntity(model.getClass());
         JsonObject document = new JsonObject();
         for (EntityField entityField : entity.getFieldMap().values()) {
-            if (!GenerationType.IDENTITY.name().equals(entityField.getGenerationType())) {
+            if (!entityField.isPrimary()) {
                 document.put(entityField.getFieldName(), entityField.getProperty().get(model));
             }
         }
@@ -74,7 +108,9 @@ public class MongoSession implements DbSession {
             query.put(keyField.getFieldName(), keyField.getProperty().get(model));
         }
         UpdateOptions updateOptions = new UpdateOptions();
-        Future<MongoClientUpdateResult> updateFuture = (transactionSession == null || transactionSession.isClosed()) ? mongoClient.updateCollectionWithOptions(entity.getTableName(), query, document, updateOptions) : mongoClient.updateCollectionWithOptions(transactionSession.getClientSession(), entity.getTableName(), query, document, updateOptions);
+        updateOptions.setUpsert(true);
+        JsonObject command = new JsonObject().put("$set", document);
+        Future<MongoClientUpdateResult> updateFuture = (transactionSession == null || transactionSession.isClosed()) ? mongoClient.updateCollectionWithOptions(entity.getTableName(), query, command, updateOptions) : mongoClient.updateCollectionWithOptions(transactionSession.getClientSession(), entity.getTableName(), query, command, updateOptions);
         updateFuture.onSuccess(x -> {
             System.out.println(x.toJson());
 //            for (EntityField keyField : entity.getKeyFields()) {
@@ -128,20 +164,22 @@ public class MongoSession implements DbSession {
 
     @Override
     public Future<JsonArray> execute(String jpql, List<Object> params) {
-        JsonArray array = new JsonArray();
         Promise<JsonArray> promise = Promise.promise();
-        for (Object param : params) {
-            array.add(param);
-        }
-        JsonObject command = new JsonObject()
-                .put("aggregate", jpql)
-                .put("pipeline", array)
-                .put("cursor",new JsonObject());
-        Future<JsonObject> aggregateFuture = (transactionSession == null || transactionSession.isClosed()) ? mongoClient.runCommand("aggregate", command) : mongoClient.runCommand(transactionSession.getClientSession(), "aggregate", command);
+        JsonObject param = (JsonObject) params.get(0);
+        Future<JsonObject> aggregateFuture = (transactionSession == null || transactionSession.isClosed()) ? mongoClient.runCommand(jpql, param) : mongoClient.runCommand(transactionSession.getClientSession(), jpql, param);
         aggregateFuture.onSuccess(x -> {
             JsonObject cursorData = x.getJsonObject("cursor");
-            JsonArray firstBatch = cursorData.getJsonArray("firstBatch");
-            promise.complete(firstBatch);
+            if (cursorData != null) {
+                JsonArray firstBatch = cursorData.getJsonArray("firstBatch");
+                promise.complete(firstBatch);
+            } else  {
+                Integer number = x.getInteger("n");
+                if (number != null) {
+                    promise.complete();
+                } else {
+                    promise.fail(new RuntimeException("no value"));
+                }
+            }
         }).onFailure(promise::fail);
         return promise.future();
     }

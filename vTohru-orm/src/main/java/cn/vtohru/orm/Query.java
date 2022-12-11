@@ -4,6 +4,7 @@ import cn.vtohru.orm.builder.JpqlBuilder;
 import cn.vtohru.orm.data.PageData;
 import io.vertx.core.Future;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface Query<T> extends LamdaQuery<Query<T>,Query<T>> {
@@ -21,17 +22,19 @@ public interface Query<T> extends LamdaQuery<Query<T>,Query<T>> {
 
     Query<T> eq(String column, Object param);
 
-    Query<T> ne(String column, String param);
+    Query<T> ne(String column, Object param);
 
-    Query<T> le(String column, String param);
+    Query<T> le(String column, Object param);
 
-    Query<T> lt(String column, String param);
+    Query<T> lt(String column, Object param);
 
-    Query<T> ge(String column, String param);
+    Query<T> in(String column, Collection<Object> params);
 
-    Query<T> gt(String column, String param);
+    Query<T> ge(String column, Object param);
 
-    Query<T> like(String column, String param);
+    Query<T> gt(String column, Object param);
+
+    Query<T> like(String column, Object param);
 
     Query<T> appendCondition(boolean and, String column, String condition, Object value);
 
@@ -42,6 +45,12 @@ public interface Query<T> extends LamdaQuery<Query<T>,Query<T>> {
     JpqlBuilder geBuilder();
 
     Future<T> first();
+
+    Future<T> first(boolean errorOnNull);
+
+    Future<Long> count();
+
+    Future<Void> delete();
 
     Future<List<T>> all();
 

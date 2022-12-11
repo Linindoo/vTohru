@@ -9,6 +9,7 @@ import cn.vtohru.orm.builder.SingleCondition;
 import cn.vtohru.orm.data.IDataProxy;
 import cn.vtohru.orm.data.PageData;
 import cn.vtohru.orm.entity.EntityManager;
+import cn.vtohru.orm.exception.OrmException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
@@ -36,32 +37,37 @@ public class MongoQuery<T> extends BaseQuery<T> {
     }
 
     @Override
-    public Query<T> ne(String column, String param) {
+    public Query<T> ne(String column, Object param) {
         return appendCondition(true,column, "$ne", param);
     }
 
     @Override
-    public Query<T> le(String column, String param) {
+    public Query<T> le(String column, Object param) {
         return appendCondition(true,column, "$lte", param);
     }
 
     @Override
-    public Query<T> lt(String column, String param) {
+    public Query<T> lt(String column, Object param) {
         return appendCondition(true,column, "$lt", param);
     }
 
     @Override
-    public Query<T> ge(String column, String param) {
+    public Query<T> in(String column, Collection<Object> params) {
+        return appendCondition(true,column, "$in", params);
+    }
+
+    @Override
+    public Query<T> ge(String column, Object param) {
         return appendCondition(true,column, "$gte", param);
     }
 
     @Override
-    public Query<T> gt(String column, String param) {
+    public Query<T> gt(String column, Object param) {
         return appendCondition(true,column, "$gt", param);
     }
 
     @Override
-    public Query<T> like(String column, String param) {
+    public Query<T> like(String column, Object param) {
         return appendCondition(true,column, "$regex", param);
     }
 
@@ -78,29 +84,87 @@ public class MongoQuery<T> extends BaseQuery<T> {
 
     @Override
     public Future<T> first() {
+        return first(false);
+    }
+
+    @Override
+    public Future<T> first(boolean errorOnNull) {
         Promise<T> promise = Promise.promise();
         checkColumns();
-
-        List<Object> list = new ArrayList<>();
-        list.add(getMatch());
-        list.add(new JsonObject().put("$skip", 0));
-        list.add(new JsonObject().put("$limit", 1));
+        JsonArray pipeline = new JsonArray();
+        JsonObject command = new JsonObject()
+                .put("aggregate", getTableName())
+                .put("pipeline", pipeline)
+                .put("cursor", new JsonObject());
+        pipeline.add(getMatch());
+        pipeline.add(new JsonObject().put("$skip", 0));
+        pipeline.add(new JsonObject().put("$limit", 1));
         JsonObject field = new JsonObject();
-        list.add(new JsonObject().put("$project", field));
+        pipeline.add(new JsonObject().put("$project", field));
         List<String> columns = jpqlBuilder.columns();
 
         for (String column : columns) {
             field.put(column, 1);
         }
+        List<Object> list = new ArrayList<>();
+        list.add(command);
         this.dataProxy.getSession().onSuccess(session -> {
-            session.execute(getTableName(), list).onSuccess(x -> {
-                if (x.size() > 0) {
+            session.execute("aggregate", list).onSuccess(x -> {
+                if (x != null && x.size() > 0) {
                     JsonObject row = x.getJsonObject(0);
                     T entity = entityManager.convertEntity(row, entityClass);
                     promise.complete(entity);
+                } else if (errorOnNull) {
+                    promise.fail(new OrmException("no match record"));
                 } else {
                     promise.complete();
                 }
+            }).onFailure(promise::fail);
+        }).onFailure(promise::fail);
+        return promise.future();
+    }
+
+    @Override
+    public Future<Long> count() {
+        Promise<Long> promise = Promise.promise();
+        checkColumns();
+        JsonArray pipeline = new JsonArray();
+        JsonObject command = new JsonObject()
+                .put("aggregate", getTableName())
+                .put("pipeline", pipeline)
+                .put("cursor", new JsonObject());
+        JsonObject match = getMatch();
+        pipeline.add(match);
+        pipeline.add(new JsonObject().put("$count", "total"));
+        List<Object> list = new ArrayList<>();
+        list.add(command);
+        this.dataProxy.getSession().onSuccess(session -> {
+            session.execute("aggregate", list).onSuccess(x -> {
+                if (x != null && x.size() > 0) {
+                    JsonObject ret = x.getJsonObject(0);
+                    Long total = ret.getLong("total");
+                    promise.complete(total);
+                } else {
+                    promise.complete(0L);
+                }
+            }).onFailure(promise::fail);
+        }).onFailure(promise::fail);
+        return promise.future();
+    }
+
+    @Override
+    public Future<Void> delete() {
+        Promise<Void> promise = Promise.promise();
+        checkColumns();
+        List<Object> list = new ArrayList<>();
+        JsonObject match = getMatch();
+        JsonObject command = new JsonObject()
+                .put("delete", getTableName())
+                .put("deletes", new JsonArray().add(new JsonObject().put("q", match.getJsonObject("$match")).put("limit", 0)));
+        list.add(command);
+        this.dataProxy.getSession().onSuccess(session -> {
+            session.execute("delete", list).onSuccess(x -> {
+                promise.complete();
             }).onFailure(promise::fail);
         }).onFailure(promise::fail);
         return promise.future();
@@ -147,17 +211,23 @@ public class MongoQuery<T> extends BaseQuery<T> {
     public Future<List<T>> all() {
         Promise<List<T>> promise = Promise.promise();
         checkColumns();
-        List<Object> list = new ArrayList<>();
-        list.add(getMatch());
         JsonObject field = new JsonObject();
-        list.add(new JsonObject().put("$project", field));
         List<String> columns = jpqlBuilder.columns();
 
         for (String column : columns) {
             field.put(column, 1);
         }
+        JsonArray pipeline = new JsonArray();
+        pipeline.add(getMatch());
+        pipeline.add(new JsonObject().put("$project", field));
+        JsonObject command = new JsonObject()
+                .put("aggregate", getTableName())
+                .put("pipeline", pipeline)
+                .put("cursor", new JsonObject());
+        List<Object> list = new ArrayList<>();
+        list.add(command);
         this.dataProxy.getSession().onSuccess(session -> {
-            session.execute(getTableName(), list).onSuccess(x -> {
+            session.execute("aggregate", list).onSuccess(x -> {
                 if (x.size() > 0) {
                     List<T> data = new ArrayList<>();
                     for (int i = 0; i < x.size(); i++) {
@@ -177,46 +247,43 @@ public class MongoQuery<T> extends BaseQuery<T> {
     @Override
     public Future<PageData<T>> pagination(int offset, int rowCount) {
         Promise<PageData<T>> promise = Promise.promise();
-        checkColumns();
-        List<Object> list = new ArrayList<>();
-        JsonObject match = getMatch();
-        list.add(match);
-
-        list.add(new JsonObject().put("$count", "total"));
-        this.dataProxy.getSession().onSuccess(session -> {
-            session.execute(getTableName(), list).onSuccess(x -> {
-                if (x.size() > 0) {
-                    PageData<T> pageData = new PageData<>();
-                    JsonObject ret = x.getJsonObject(0);
-                    Long total = ret.getLong("total");
-                    if (total > 0) {
-                        List<Object> pageQuery = new ArrayList<>();
-                        pageQuery.add(match);
-                        pageQuery.add(new JsonObject().put("$skip", offset));
-                        pageQuery.add(new JsonObject().put("$limit", rowCount));
-                        JsonObject field = new JsonObject();
-                        List<String> columns = jpqlBuilder.columns();
-                        for (String column : columns) {
-                            field.put(column, 1);
-                        }
-                        pageQuery.add(new JsonObject().put("$project", field));
-                        session.execute(getTableName(), pageQuery).onSuccess(y -> {
-                            List<T> results = new ArrayList<>();
-                            for (int i = 0; i < y.size(); i++) {
-                                JsonObject record = y.getJsonObject(i);
-                                T entity = entityManager.convertEntity(record, entityClass);
-                                results.add(entity);
-                            }
-                            pageData.setRecords(results);
-                            promise.complete(pageData);
-                        }).onFailure(promise::fail);
-                    } else {
-                        promise.complete(pageData);
-                    }
-                } else {
-                    promise.fail(new RuntimeException("no value find"));
+        count().onSuccess(x -> {
+            PageData<T> pageData = new PageData<>();
+            pageData.setTotal(x);
+            if (x > 0) {
+                JsonObject match = getMatch();
+                JsonArray pipeline = new JsonArray();
+                pipeline.add(match);
+                pipeline.add(new JsonObject().put("$skip", offset));
+                pipeline.add(new JsonObject().put("$limit", rowCount));
+                JsonObject field = new JsonObject();
+                List<String> columns = jpqlBuilder.columns();
+                for (String column : columns) {
+                    field.put(column, 1);
                 }
-            }).onFailure(promise::fail);
+                pipeline.add(new JsonObject().put("$project", field));
+                JsonObject command = new JsonObject()
+                        .put("aggregate", getTableName())
+                        .put("pipeline", pipeline)
+                        .put("cursor", new JsonObject());
+                List<Object> list = new ArrayList<>();
+                list.add(command);
+                this.dataProxy.getSession().onSuccess(session -> {
+                    session.execute("aggregate", list).onSuccess(y -> {
+                        List<T> results = new ArrayList<>();
+                        for (int i = 0; i < y.size(); i++) {
+                            JsonObject record = y.getJsonObject(i);
+                            T entity = entityManager.convertEntity(record, entityClass);
+                            results.add(entity);
+                        }
+                        pageData.setRecords(results);
+                        promise.complete(pageData);
+                    }).onFailure(promise::fail);
+                });
+            } else {
+                pageData.setRecords(new ArrayList<>());
+                promise.complete(pageData);
+            }
         }).onFailure(promise::fail);
         return promise.future();
     }

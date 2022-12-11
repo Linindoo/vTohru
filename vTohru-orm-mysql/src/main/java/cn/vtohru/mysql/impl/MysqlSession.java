@@ -73,6 +73,43 @@ public class MysqlSession implements DbSession {
     }
 
     @Override
+    public <T> Future<Long> insertBatch(List<T> model) {
+        Promise<Long> promise = Promise.promise();
+        if (model == null || model.size() == 0) {
+            promise.complete(0L);
+        } else {
+            EntityInfo entity = entityManager.getEntity(model.get(0).getClass());
+            JsonObject entries = new JsonObject();
+
+            StringBuilder sql = new StringBuilder();
+            sql.append("insert into ").append(entity.getTableName()).append(" (");
+            List<String> fields = new ArrayList<>();
+            List<Object> fieldValues = new ArrayList<>();
+            for (Map.Entry<String, EntityField> fieldEntry : entity.getFieldMap().entrySet()) {
+                if (!GenerationType.IDENTITY.name().equals(fieldEntry.getValue().getGenerationType())) {
+                    fields.add(fieldEntry.getValue().getFieldName());
+                    fieldValues.add(fieldEntry.getValue().getProperty().get(model));
+                }
+            }
+            sql.append(String.join(",", fields)).append(")").append("values ")
+                    .append(model.stream().map(x -> "( " + fields.stream().map(y -> "?").collect(Collectors.joining(",")) + " )").collect(Collectors.joining(",")));
+
+            for (T dt : model) {
+                for (Map.Entry<String, EntityField> fieldEntry : entity.getFieldMap().entrySet()) {
+                    EntityField entityField = fieldEntry.getValue();
+                    if (!entityField.isPrimary()) {
+                        entries.put(entityField.getFieldName(), entityField.getProperty().get(dt));
+                    }
+                }
+            }
+            sqlConnection.preparedQuery(sql.toString()).execute(Tuple.from(fieldValues)).onSuccess(x -> {
+                promise.complete((long) x.size());
+            }).onFailure(promise::fail);
+        }
+        return promise.future();
+    }
+
+    @Override
     public <T> Future<T> update(T model) {
         EntityInfo entity = entityManager.getEntity(model.getClass());
         StringBuilder sql = new StringBuilder();

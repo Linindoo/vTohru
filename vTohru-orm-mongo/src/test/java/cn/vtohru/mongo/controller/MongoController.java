@@ -55,7 +55,7 @@ public class MongoController {
     @GET
     public Future<Object> list() {
         Promise<Object> promise = Promise.promise();
-        mongoDataStore.build(ClassDao.class).eq("_id", 1).first().onSuccess(x -> {
+        mongoDataStore.build(ClassDao.class).pagination(0, 10).onSuccess(x -> {
             promise.complete(x);
         }).onFailure(promise::fail);
         return promise.future();
@@ -116,6 +116,16 @@ public class MongoController {
         Promise<Object> promise = Promise.promise();
         mongoDataStore.build(ClassDao.class).all().onSuccess(x -> {
             promise.complete(x);
+        }).onFailure(promise::fail);
+        return promise.future();
+    }
+
+    @GET
+    @Path("/deleteAll")
+    public Future<Boolean> deleteAll(@QueryParam("id") String id) {
+        Promise<Boolean> promise = Promise.promise();
+        mongoDataStore.build(ClassDao.class).eq("_id", id).delete().onSuccess(x -> {
+            promise.complete(true);
         }).onFailure(promise::fail);
         return promise.future();
     }

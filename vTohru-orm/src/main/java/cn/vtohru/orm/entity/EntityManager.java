@@ -4,14 +4,12 @@ import cn.vtohru.orm.exception.OrmException;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.convert.ConversionService;
 import io.vertx.core.json.JsonObject;
 
 import javax.inject.Singleton;
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
@@ -24,7 +22,9 @@ public class EntityManager {
         if (entityInfo != null) {
             return entityInfo;
         }
-       return createEntity(entityClass);
+        EntityInfo entity = createEntity(entityClass);
+        entityInfoMap.put(entityClass, entity);
+        return entity;
     }
 
     protected EntityInfo createEntity(Class<?> entityClass) {
@@ -82,7 +82,14 @@ public class EntityManager {
         EntityInfo entity = getEntity(entityClass);
         T bean = (T) entity.getBeanIntrospection().instantiate();
         for (Map.Entry<String, EntityField> fieldEntry : entity.getFieldMap().entrySet()) {
-            fieldEntry.getValue().getProperty().set(bean, row.getValue(fieldEntry.getValue().getFieldName()));
+            String fieldName = fieldEntry.getValue().getFieldName();
+            Object value = row.getValue(fieldName);
+            if (value != null) {
+                Optional ret = ConversionService.SHARED.convert(value, fieldEntry.getValue().getProperty().getType());
+                if (ret.isPresent()) {
+                    fieldEntry.getValue().getProperty().set(bean, ret.get());
+                }
+            }
         }
         return bean;
     }

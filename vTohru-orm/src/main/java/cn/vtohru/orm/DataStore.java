@@ -7,6 +7,8 @@ import io.vertx.core.Promise;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 
+import java.util.List;
+
 public interface DataStore extends ISession{
     Logger logger = LoggerFactory.getLogger(DataStore.class);
 
@@ -17,6 +19,8 @@ public interface DataStore extends ISession{
     <T> Future<T> persist(T model);
 
     <T> Future<T> insert(T model);
+
+    <T> Future<Long> insertBatch(List<T> model);
 
     <T> Future<T> update(T model);
 

@@ -11,6 +11,7 @@ import io.vertx.mysqlclient.MySQLConnectOptions;
 import io.vertx.mysqlclient.MySQLPool;
 import io.vertx.sqlclient.PoolOptions;
 
+import java.util.List;
 import java.util.Map;
 
 public class MysqlDataStore implements DataStore {
@@ -53,6 +54,12 @@ public class MysqlDataStore implements DataStore {
         getSession().onSuccess(x -> x.insert(model).onComplete(promise)).onFailure(promise::fail);
         return promise.future();
     }
+
+    @Override
+    public <T> Future<Long> insertBatch(List<T> model) {
+        Promise<Long> promise = Promise.promise();
+        getSession().onSuccess(x -> x.insertBatch(model).onComplete(promise)).onFailure(promise::fail);
+        return promise.future();    }
 
     @Override
     public <T> Future<T> update(T model) {

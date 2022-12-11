@@ -4,11 +4,12 @@ import cn.vtohru.context.VerticleApplicationContext;
 import cn.vtohru.orm.*;
 import cn.vtohru.orm.data.IDataProxy;
 import cn.vtohru.orm.entity.EntityManager;
-import cn.vtohru.orm.exception.OrmException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
+
+import java.util.List;
 
 public class MongoDataStore implements DataStore {
     private VerticleApplicationContext verticleApplicationContext;
@@ -46,6 +47,13 @@ public class MongoDataStore implements DataStore {
     public <T> Future<T> insert(T model) {
         Promise<T> promise = Promise.promise();
         getSession().onSuccess(x -> x.insert(model).onComplete(promise)).onFailure(promise::fail);
+        return promise.future();
+    }
+
+    @Override
+    public <T> Future<Long> insertBatch(List<T> model) {
+        Promise<Long> promise = Promise.promise();
+        getSession().onSuccess(x -> x.insertBatch(model).onComplete(promise)).onFailure(promise::fail);
         return promise.future();
     }
 

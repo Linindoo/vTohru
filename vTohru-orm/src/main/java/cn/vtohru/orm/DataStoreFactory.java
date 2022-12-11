@@ -6,17 +6,26 @@ import cn.vtohru.orm.entity.EntityManager;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.core.convert.ConversionService;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.json.JsonObject;
 
 import javax.inject.Inject;
 import java.util.Collection;
+import java.util.Date;
+import java.util.Optional;
 
 @Factory
 public class DataStoreFactory {
     private static final Logger logger = LoggerFactory.getLogger(DataStoreFactory.class);
-    @Inject
     private EntityManager entityManager;
+
+    public DataStoreFactory(EntityManager entityManager) {
+        this.entityManager = entityManager;
+        ConversionService.SHARED.addConverter(Long.class, Date.class, (object, targetType, context1) -> Optional.of(new Date(object)));
+        ConversionService.SHARED.addConverter(JsonObject.class, Object.class, (jsonObject, targetType, context2) -> Optional.of(jsonObject.mapTo(targetType)));
+    }
 
     @EachBean(DataSourceConfiguration.class)
     @Verticle

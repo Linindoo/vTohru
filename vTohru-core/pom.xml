@@ -5,11 +5,13 @@
     <parent>
         <artifactId>vTohru</artifactId>
         <groupId>cn.lindoo.vtohru</groupId>
-        <version>0.0.2-dev</version>
+        <version>0.0.3-dev</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>vTohru-core</artifactId>
+    <properties>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -80,6 +82,7 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
 </project>

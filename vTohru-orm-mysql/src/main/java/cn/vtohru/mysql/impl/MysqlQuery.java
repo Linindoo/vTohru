@@ -6,12 +6,14 @@ import cn.vtohru.orm.Query;
 import cn.vtohru.orm.data.PageData;
 import cn.vtohru.orm.entity.EntityManager;
 import cn.vtohru.orm.data.IDataProxy;
+import cn.vtohru.orm.exception.OrmException;
 import io.micronaut.core.util.CollectionUtils;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -38,51 +40,97 @@ public class MysqlQuery<T> extends BaseQuery<T> {
     }
 
     @Override
-    public Query ne(String column, String param) {
+    public Query ne(String column, Object param) {
         return appendCondition(true,column, "!=", param);
     }
 
     @Override
-    public Query le(String column, String param) {
+    public Query le(String column, Object param) {
         return appendCondition(true,column, ">=", param);
     }
 
     @Override
-    public Query lt(String column, String param) {
+    public Query lt(String column, Object param) {
         return appendCondition(true,column, ">", param);
     }
 
     @Override
-    public Query ge(String column, String param) {
+    public Query<T> in(String column, Collection<Object> params) {
+        return appendCondition(true, column, "in", params);
+    }
+
+    @Override
+    public Query ge(String column, Object param) {
         return appendCondition(true,column,  "<=", param);
     }
 
     @Override
-    public Query gt(String column, String param) {
+    public Query gt(String column, Object param) {
         return appendCondition(true,column, "<", param);
     }
 
     @Override
-    public Query like(String column, String param) {
+    public Query like(String column, Object param) {
         return appendCondition(true,column, "like", param);
     }
 
     @Override
     public Future<T> first() {
+        return first(false);
+    }
+
+    @Override
+    public Future<T> first(boolean errorOnNull) {
         Promise<T> promise = Promise.promise();
         checkColumns();
         String jpql = getSql();
         System.out.println(jpql);
         this.dataProxy.getSession().onSuccess(session -> {
             session.execute(jpql + " limit 1", getParams()).onSuccess(x -> {
-                if (x.size() > 0) {
+                if (x != null && x.size() > 0) {
                     JsonObject row = x.getJsonObject(0);
                     T entity = entityManager.convertEntity(row, entityClass);
                     promise.complete(entity);
+                } else if (errorOnNull) {
+                    promise.fail(new OrmException("no value find"));
+                } else {
+                    promise.complete();
+                }
+            }).onFailure(promise::fail);
+        }).onFailure(promise::fail);
+        return promise.future();
+    }
+
+    @Override
+    public Future<Long> count() {
+        Promise<Long> promise = Promise.promise();
+        StringBuilder countBuilder = new StringBuilder();
+        countBuilder.append("select count(1) ").append(" from ").append(getTableName()).append(" where ").append(getWhereSegment());
+        this.dataProxy.getSession().onSuccess(session -> {
+            session.execute(countBuilder.toString(), getParams()).onSuccess(x -> {
+                if (x.size() > 0) {
+                    JsonObject row = x.getJsonObject(0);
+                    Long count = row.getLong("count");
+                    promise.complete(count);
                 } else {
                     promise.fail(new RuntimeException("no value find"));
                 }
             }).onFailure(promise::fail);
+
+        }).onFailure(promise::fail);
+        return promise.future();
+    }
+
+    @Override
+    public Future<Void> delete() {
+        Promise<Void> promise = Promise.promise();
+        StringBuilder countBuilder = new StringBuilder();
+        countBuilder.append("delete ").append(" from ").append(getTableName()).append(" where ").append(getWhereSegment());
+        this.dataProxy.getSession().onSuccess(session -> {
+            session.execute(countBuilder.toString(), getParams()).onSuccess(x -> {
+                promise.complete();
+            }).onFailure(promise::fail);
+
         }).onFailure(promise::fail);
         return promise.future();
     }
