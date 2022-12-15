@@ -114,7 +114,7 @@ public class MongoController {
     @Path("/all")
     public Future<Object> all() {
         Promise<Object> promise = Promise.promise();
-        mongoDataStore.build(ClassDao.class).all().onSuccess(x -> {
+        mongoDataStore.build(ClassDao.class).orderBy("_id", true).all().onSuccess(x -> {
             promise.complete(x);
         }).onFailure(promise::fail);
         return promise.future();

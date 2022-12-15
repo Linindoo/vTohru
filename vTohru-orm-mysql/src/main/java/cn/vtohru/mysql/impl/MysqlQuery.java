@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 
 public class MysqlQuery<T> extends BaseQuery<T> {
@@ -219,7 +220,7 @@ public class MysqlQuery<T> extends BaseQuery<T> {
         StringBuilder pqlBuilder = new StringBuilder();
         pqlBuilder.append("select").append(" ").append(String.join(",", this.jpqlBuilder.columns())).append(" from ").append(getTableName()).append(" where ").append(getWhereSegment());
         if (CollectionUtils.isNotEmpty(this.jpqlBuilder.orders())) {
-            pqlBuilder.append(String.join(",", this.jpqlBuilder.orders()));
+            pqlBuilder.append("order by ").append(this.jpqlBuilder.orders().stream().map(x->x.getOrder() + (x.isReverse()?" ":" desc ")).collect(Collectors.joining(",")));
         }
         return pqlBuilder.toString();
     }

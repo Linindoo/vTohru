@@ -99,7 +99,13 @@ public abstract class BaseQuery<T> extends AbstractQuery<T> {
 
     @Override
     public Query<T> orderBy(String orderBy) {
-        this.jpqlBuilder.orderBy(orderBy);
+        this.jpqlBuilder.orderBy(orderBy, false);
+        return this;
+    }
+
+    @Override
+    public Query<T> orderBy(String orderBy, boolean reverse) {
+        this.jpqlBuilder.orderBy(orderBy, true);
         return this;
     }
 

@@ -1,6 +1,7 @@
 package cn.vtohru.mongo.impl;
 
 import cn.vtohru.orm.Condition;
+import cn.vtohru.orm.OrderCondition;
 import cn.vtohru.orm.Query;
 import cn.vtohru.orm.builder.AggregateCondition;
 import cn.vtohru.orm.builder.BaseQuery;
@@ -10,6 +11,7 @@ import cn.vtohru.orm.data.IDataProxy;
 import cn.vtohru.orm.data.PageData;
 import cn.vtohru.orm.entity.EntityManager;
 import cn.vtohru.orm.exception.OrmException;
+import io.micronaut.core.util.CollectionUtils;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
@@ -97,6 +99,9 @@ public class MongoQuery<T> extends BaseQuery<T> {
                 .put("pipeline", pipeline)
                 .put("cursor", new JsonObject());
         pipeline.add(getMatch());
+        if (CollectionUtils.isNotEmpty(jpqlBuilder.orders())) {
+            pipeline.add(getOrder());
+        }
         pipeline.add(new JsonObject().put("$skip", 0));
         pipeline.add(new JsonObject().put("$limit", 1));
         JsonObject field = new JsonObject();
@@ -205,6 +210,16 @@ public class MongoQuery<T> extends BaseQuery<T> {
         return new JsonObject().put("$match", query);
     }
 
+    private JsonObject getOrder() {
+        JsonObject sort = new JsonObject();
+        if (jpqlBuilder.orders() != null) {
+            for (OrderCondition order : jpqlBuilder.orders()) {
+                sort.put(order.getOrder(), order.isReverse() ? -1 : 1);
+            }
+        }
+        return new JsonObject().put("$sort", sort);
+    }
+
 
 
     @Override
@@ -219,6 +234,9 @@ public class MongoQuery<T> extends BaseQuery<T> {
         }
         JsonArray pipeline = new JsonArray();
         pipeline.add(getMatch());
+        if (CollectionUtils.isNotEmpty(jpqlBuilder.orders())) {
+            pipeline.add(getOrder());
+        }
         pipeline.add(new JsonObject().put("$project", field));
         JsonObject command = new JsonObject()
                 .put("aggregate", getTableName())
@@ -254,6 +272,9 @@ public class MongoQuery<T> extends BaseQuery<T> {
                 JsonObject match = getMatch();
                 JsonArray pipeline = new JsonArray();
                 pipeline.add(match);
+                if (CollectionUtils.isNotEmpty(jpqlBuilder.orders())) {
+                    pipeline.add(getOrder());
+                }
                 pipeline.add(new JsonObject().put("$skip", offset));
                 pipeline.add(new JsonObject().put("$limit", rowCount));
                 JsonObject field = new JsonObject();

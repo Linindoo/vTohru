@@ -1,6 +1,7 @@
 package cn.vtohru.orm.builder;
 
 import cn.vtohru.orm.Condition;
+import cn.vtohru.orm.OrderCondition;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,9 +12,7 @@ public class GenericJpqlBuilder implements JpqlBuilder {
     protected String table;
     protected List<String> columns = new ArrayList<>();
     protected List<Condition> conditions = new ArrayList<>();
-    protected List<String> orderBys = new ArrayList<>();
-    protected Integer offset;
-    protected Integer rowCount;
+    protected List<OrderCondition> orderBys = new ArrayList<>();
 
 
     @Override
@@ -32,14 +31,8 @@ public class GenericJpqlBuilder implements JpqlBuilder {
     }
 
     @Override
-    public void limit(Integer offset, Integer rowCount) {
-        this.offset = offset;
-        this.rowCount = rowCount;
-    }
-
-    @Override
-    public void orderBy(String orderBy) {
-        this.orderBys.add(orderBy);
+    public void orderBy(String orderBy, boolean reverse) {
+        this.orderBys.add(new OrderCondition(orderBy, reverse));
     }
 
 
@@ -62,7 +55,7 @@ public class GenericJpqlBuilder implements JpqlBuilder {
     }
 
     @Override
-    public List<String> orders() {
+    public List<OrderCondition> orders() {
         return this.orderBys;
     }
 }

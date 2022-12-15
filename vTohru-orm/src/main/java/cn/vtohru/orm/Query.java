@@ -38,6 +38,8 @@ public interface Query<T> extends LamdaQuery<Query<T>,Query<T>> {
 
     Query<T> appendCondition(boolean and, String column, String condition, Object value);
 
+    Query<T> orderBy(String orderBy, boolean reverse);
+
     Query<T> orderBy(String orderBy);
 
     List<Object> getParams();
