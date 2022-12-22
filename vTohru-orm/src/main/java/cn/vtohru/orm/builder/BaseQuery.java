@@ -2,12 +2,16 @@ package cn.vtohru.orm.builder;
 
 import cn.vtohru.orm.Condition;
 import cn.vtohru.orm.Query;
+import cn.vtohru.orm.SFunction;
 import cn.vtohru.orm.entity.EntityField;
 import cn.vtohru.orm.entity.EntityInfo;
 import cn.vtohru.orm.entity.EntityManager;
 import cn.vtohru.orm.data.IDataProxy;
+import cn.vtohru.orm.exception.OrmException;
+import io.micronaut.core.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -50,7 +54,7 @@ public abstract class BaseQuery<T> extends AbstractQuery<T> {
     protected void checkColumns() {
         if (!this.useColumn) {
             EntityInfo entity = entityManager.getEntity(this.entityClass);
-            List<String> fields = entity.getFieldMap().values().stream().map(EntityField::getFieldName).collect(Collectors.toList());
+            List<String> fields = entity.getFieldMap().values().stream().map(EntityField::getFieldName).filter(StringUtils::isNotEmpty).collect(Collectors.toList());
             this.jpqlBuilder.select(fields.toArray(new String[]{}));
         }
     }
@@ -120,4 +124,104 @@ public abstract class BaseQuery<T> extends AbstractQuery<T> {
         this.preCondition = "or";
         return this;
     }
+
+    @Override
+    public Query<T> eq(SFunction<T, ?> function, Object param) {
+        EntityField entityField = entityManager.getLambdaField(function, this.entityClass);
+        if (entityField == null) {
+            throw new OrmException("获取lambda字段失败");
+        }
+        return eq(entityField.getFieldName(), param);
+    }
+
+    @Override
+    public Query<T> where(SFunction<T, ?> function, Object params) {
+        EntityField entityField = entityManager.getLambdaField(function, this.entityClass);
+        if (entityField == null) {
+            throw new OrmException("获取lambda字段失败");
+        }
+        return where(entityField.getFieldName(), params);
+    }
+
+    @Override
+    public Query<T> ne(SFunction<T, ?> function, Object param) {
+        EntityField entityField = entityManager.getLambdaField(function, this.entityClass);
+        if (entityField == null) {
+            throw new OrmException("获取lambda字段失败");
+        }
+        return ne(entityField.getFieldName(), param);
+    }
+
+    @Override
+    public Query<T> le(SFunction<T, ?> function, Object param) {
+        EntityField entityField = entityManager.getLambdaField(function, this.entityClass);
+        if (entityField == null) {
+            throw new OrmException("获取lambda字段失败");
+        }
+        return le(entityField.getFieldName(), param);
+    }
+
+    @Override
+    public Query<T> lt(SFunction<T, ?> function, Object param) {
+        EntityField entityField = entityManager.getLambdaField(function, this.entityClass);
+        if (entityField == null) {
+            throw new OrmException("获取lambda字段失败");
+        }
+        return lt(entityField.getFieldName(), param);
+    }
+
+    @Override
+    public Query<T> in(SFunction<T, ?> function, Collection<Object> params) {
+        EntityField entityField = entityManager.getLambdaField(function, this.entityClass);
+        if (entityField == null) {
+            throw new OrmException("获取lambda字段失败");
+        }
+        return in(entityField.getFieldName(), params);
+    }
+
+    @Override
+    public Query<T> ge(SFunction<T, ?> function, Object param) {
+        EntityField entityField = entityManager.getLambdaField(function, this.entityClass);
+        if (entityField == null) {
+            throw new OrmException("获取lambda字段失败");
+        }
+        return ge(entityField.getFieldName(), param);
+    }
+
+    @Override
+    public Query<T> gt(SFunction<T, ?> function, Object param) {
+        EntityField entityField = entityManager.getLambdaField(function, this.entityClass);
+        if (entityField == null) {
+            throw new OrmException("获取lambda字段失败");
+        }
+        return gt(entityField.getFieldName(), param);
+    }
+
+    @Override
+    public Query<T> like(SFunction<T, ?> function, Object param) {
+        EntityField entityField = entityManager.getLambdaField(function, this.entityClass);
+        if (entityField == null) {
+            throw new OrmException("获取lambda字段失败");
+        }
+        return like(entityField.getFieldName(), param);
+    }
+
+    @Override
+    public Query<T> orderBy(SFunction<T, ?> function, boolean reverse) {
+        EntityField entityField = entityManager.getLambdaField(function, this.entityClass);
+        if (entityField == null) {
+            throw new OrmException("获取lambda字段失败");
+        }
+        return orderBy(entityField.getFieldName(), reverse);
+    }
+
+    @Override
+    public Query<T> orderBy(SFunction<T, ?> function) {
+        EntityField entityField = entityManager.getLambdaField(function, this.entityClass);
+        if (entityField == null) {
+            throw new OrmException("获取lambda字段失败");
+        }
+        return orderBy(entityField.getFieldName());
+    }
+
 }

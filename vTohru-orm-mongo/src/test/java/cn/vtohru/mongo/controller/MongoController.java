@@ -103,7 +103,7 @@ public class MongoController {
         if (StringUtils.isEmpty(id)) {
             promise.fail("id不能为空");
         } else {
-            mongoDataStore.build(ClassDao.class).eq("_id", id).first().onSuccess(x -> {
+            mongoDataStore.build(ClassDao.class).eq(ClassDao::getId, id).first().onSuccess(x -> {
                 promise.complete(x);
             }).onFailure(promise::fail);
         }

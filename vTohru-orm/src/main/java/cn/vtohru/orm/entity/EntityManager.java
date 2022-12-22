@@ -1,21 +1,25 @@
 package cn.vtohru.orm.entity;
 
+import cn.vtohru.orm.SFunction;
 import cn.vtohru.orm.exception.OrmException;
+import cn.vtohru.orm.utils.LambdaUtils;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.util.StringUtils;
 import io.vertx.core.json.JsonObject;
 
 import javax.inject.Singleton;
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 public class EntityManager {
     private Map<Class<?>, EntityInfo> entityInfoMap = new ConcurrentHashMap<>();
-
+    private Map<Serializable, String> CACHE_FIELD_NAME = new ConcurrentHashMap<>(8);
 
     public EntityInfo getEntity(Class<?> entityClass) {
         EntityInfo entityInfo = entityInfoMap.get(entityClass);
@@ -93,4 +97,22 @@ public class EntityManager {
         }
         return bean;
     }
+
+    public <T> EntityField<T> getLambdaField(SFunction<T, ?> function, Class<T> eClass) {
+        EntityInfo entity = getEntity(eClass);
+        EntityField<T> entityField = entity.getField(function);
+        if (entityField != null) {
+            return entityField;
+        }
+        String fieldName = LambdaUtils.getLambdaFieldName(function);
+        if (StringUtils.isEmpty(fieldName)) {
+            return null;
+        }
+        entityField = entity.getFieldMap().get(fieldName);
+        if (entityField != null) {
+            entity.setLambdaField(function, fieldName);
+        }
+        return entityField;
+    }
+
 }
