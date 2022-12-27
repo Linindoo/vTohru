@@ -11,6 +11,8 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.inject.ExecutableMethod;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 
 import javax.ws.rs.core.Context;
 
@@ -19,6 +21,8 @@ import javax.ws.rs.core.Context;
 public class TaskHandlerRegister {
     private VerticleApplicationContext context;
     private TaskAnnotatedMethodHandler taskAnnotatedMethodHandler;
+    private static final Logger logger = LoggerFactory.getLogger(TaskHandlerRegister.class);
+
 
     public TaskHandlerRegister(ApplicationContext context, TaskAnnotatedMethodHandler taskAnnotatedMethodHandler) {
         this.context = (VerticleApplicationContext) context;
@@ -36,7 +40,11 @@ public class TaskHandlerRegister {
                     if (delay != 0) {
                         context.getVertx().setTimer(delay, x -> {
                             Object[] args = getArgs(x, executableMethod);
-                            executableMethod.invoke(contextBean, args);
+                            try {
+                                executableMethod.invoke(contextBean, args);
+                            } catch (Exception e) {
+                                logger.error(e);
+                            }
                         });
                     }
                 } else {
@@ -45,11 +53,15 @@ public class TaskHandlerRegister {
                         long delay = periodicAnnotationValue.longValue("delay").orElse(0);
                         if (delay != 0) {
                             context.getVertx().setPeriodic(delay,x->{
-                                Object invokeResult = executableMethod.invoke(contextBean, getArgs(x, executableMethod));
-                                if (invokeResult instanceof Future) {
-                                    ((Future<?>) invokeResult).onFailure(e->{
-                                        context.getVertx().cancelTimer(x);
-                                    });
+                                try {
+                                    Object invokeResult = executableMethod.invoke(contextBean, getArgs(x, executableMethod));
+                                    if (invokeResult instanceof Future) {
+                                        ((Future<?>) invokeResult).onFailure(e->{
+                                            context.getVertx().cancelTimer(x);
+                                        });
+                                    }
+                                } catch (Exception e) {
+                                    logger.error(e);
                                 }
                             });
                         }
