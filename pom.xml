@@ -28,6 +28,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.compilerVersion>1.8</maven.compiler.compilerVersion>
         <vtohru.version>0.0.3-dev</vtohru.version>
+        <jackson.version>2.14.2</jackson.version>
         <main.class></main.class>
     </properties>
     <dependencyManagement>
@@ -110,11 +111,6 @@
             </dependency>
             <dependency>
                 <groupId>cn.lindoo.vtohru</groupId>
-                <artifactId>vTohru-orm-common</artifactId>
-                <version>${vtohru.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>cn.lindoo.vtohru</groupId>
                 <artifactId>vTohru-orm</artifactId>
                 <version>${vtohru.version}</version>
             </dependency>
@@ -131,17 +127,17 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
-                <version>2.12.7</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>2.12.7</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
-                <version>2.12.7</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>cn.lindoo.vtohru</groupId>
