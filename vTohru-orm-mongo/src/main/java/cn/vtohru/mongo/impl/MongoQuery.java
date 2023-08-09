@@ -86,7 +86,7 @@ public class MongoQuery<T> extends BaseQuery<T> {
 
     @Override
     public Future<T> first() {
-        return first(false);
+        return first(true);
     }
 
     @Override

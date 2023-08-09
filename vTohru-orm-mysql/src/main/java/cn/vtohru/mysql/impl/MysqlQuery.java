@@ -77,7 +77,7 @@ public class MysqlQuery<T> extends BaseQuery<T> {
 
     @Override
     public Future<T> first() {
-        return first(false);
+        return first(true);
     }
 
     @Override
