@@ -28,7 +28,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.compilerVersion>1.8</maven.compiler.compilerVersion>
         <vtohru.version>0.0.3-dev</vtohru.version>
-        <jackson.version>2.14.2</jackson.version>
+        <jackson.version>2.15.0</jackson.version>
         <main.class></main.class>
     </properties>
     <dependencyManagement>
